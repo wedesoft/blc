@@ -23,7 +23,6 @@ int main(void)
       break;
     putchar(c);
   };
-  printf("n");
   return 0;
 }
 
