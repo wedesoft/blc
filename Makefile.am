@@ -10,7 +10,7 @@ mini_LDADD =
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING
 
 CLEANFILES = *~
 
