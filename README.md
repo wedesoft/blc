@@ -14,3 +14,8 @@ Installation
 Usage
 -----
 
+External Links
+--------------
+
+* [Revised⁶ Report on the Algorithmic Language Scheme](http://www.r6rs.org/)
+
