@@ -15,6 +15,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdio.h>
 
+typedef enum {
+  CAR = 0,
+  CDR
+} type_t;
+
+typedef struct pair_t *pair_p;
+
+typedef struct {
+  type_t type;
+  pair_p pair;
+} pair_t;
+
+pair_t *make_pair(type_t type, pair_p *pair)
+{
+  pair_t *retval = (pair_t *)malloc(sizeof(pair_t));
+  retval->type = type;
+  retval->pair = pair;
+  return retval;
+}
+
 int main(void)
 {
   while (1) {
