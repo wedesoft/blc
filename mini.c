@@ -13,8 +13,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#include <stdio.h>
+
 int main(void)
 {
+  while (1) {
+    int c = getchar();
+    if (c == EOF)
+      break;
+    putchar(c);
+  };
   return 0;
 }
 

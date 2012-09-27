@@ -10,7 +10,10 @@ mini_LDADD =
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING mini_spec.sh
+
+test: mini$(EXEEXT)
+	$(SH) mini_spec.sh
 
 CLEANFILES = *~
 
