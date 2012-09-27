@@ -1,4 +1,4 @@
-SUFFIXES = .c .h
+SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -12,8 +12,11 @@ BUILT_SOURCES =
 
 EXTRA_DIST = Makefile.dist configure.ac README.md COPYING mini_spec.sh
 
-test: mini$(EXEEXT)
-	$(SH) mini_spec.sh
+test: test.tmp
+
+test.tmp: mini$(EXEEXT)
+	$(CAT) input.txt | ./mini$(EXEEXT) > output.tmp
+	$(DIFF) output.txt output.tmp && $(TOUCH) $@
 
 CLEANFILES = *~
 

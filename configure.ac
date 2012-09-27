@@ -3,6 +3,9 @@ AM_INIT_AUTOMAKE([bracket], [0.1.0])
 AC_CONFIG_MACRO_DIR([m4])
 AM_PROG_LIBTOOL
 AC_PROG_CC
-AC_CHECK_PROG(SH,sh,sh)
+AC_CHECK_PROG(CAT,cat,cat)
+AC_CHECK_PROG(TOUCH,touch,touch)
+AC_CHECK_PROG(DIFF,diff,diff)
 
 AC_OUTPUT(Makefile)
+

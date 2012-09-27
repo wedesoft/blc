@@ -23,6 +23,12 @@ int main(void)
       break;
     putchar(c);
   };
+  printf("n");
   return 0;
 }
+
+// > ((lambda (x y) x) 3 2)
+// 3
+// > ((lambda (x y) y) 3 2)
+// 2
 
