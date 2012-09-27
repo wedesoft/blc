@@ -1,6 +1,6 @@
 # AC_PREREQ([2.68])
 AC_INIT(aclocal.m4)
-AM_INIT_AUTOMAKE([bracket], [0.1.1])
+AM_INIT_AUTOMAKE([bracket], [0.1.0])
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 AC_PROG_CC
