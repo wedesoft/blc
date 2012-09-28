@@ -15,39 +15,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdio.h>
 
-typedef enum {
-  CAR = 0,
-  CDR
-} type_t;
-
-typedef struct pair_t *pair_p;
-
-typedef struct {
-  type_t type;
-  pair_p pair;
-} pair_t;
-
-pair_t *make_pair(type_t type, pair_p *pair)
-{
-  pair_t *retval = (pair_t *)malloc(sizeof(pair_t));
-  retval->type = type;
-  retval->pair = pair;
-  return retval;
-}
-
 int main(void)
 {
+  int length = 0;
   while (1) {
     int c = getchar();
-    if (c == EOF)
+    if (c == EOF) break;
+    switch(c) {
+    case ' ':
+    case '\n':
+    case '\r':
+    case '\t':
+      if (length > 0) putchar('\n');
+      length = 0;
       break;
-    putchar(c);
+    case '(':
+    case ')':
+      if (length > 0) putchar('\n');
+      length = 0;
+      putchar(c);
+      putchar('\n');
+      break;
+    default:
+      length += 1;
+      putchar(c);
+    };
   };
+  if (length > 0) putchar('\n');
   return 0;
 }
 
-// > ((lambda (x y) x) 3 2)
-// 3
-// > ((lambda (x y) y) 3 2)
-// 2
-
+// car, cdr, cond, gt, lt, eq, define, lambda, eval, quote

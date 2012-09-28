@@ -17,5 +17,5 @@ install-sh
 libtool
 ltmain.sh
 m4
-mini
+tokenize
 missing

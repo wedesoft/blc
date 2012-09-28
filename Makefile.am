@@ -2,23 +2,24 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = mini
+bin_PROGRAMS = tokenize
 
-mini_SOURCES = mini.c
-mini_LDFLAGS =
-mini_LDADD =
+tokenize_SOURCES = tokenize.c
+tokenize_LDFLAGS =
+tokenize_LDADD =
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING mini_spec.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING \
+	test_tokenize_in.txt test_tokenize_out.txt
 
 test: test.tmp
 
-test.tmp: mini$(EXEEXT)
-	$(CAT) input.txt | ./mini$(EXEEXT) > output.tmp
-	$(DIFF) output.txt output.tmp && $(TOUCH) $@
+test.tmp: tokenize$(EXEEXT)
+	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
+	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-CLEANFILES = *~
+CLEANFILES = *~ *.tmp
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \
