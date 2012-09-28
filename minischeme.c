@@ -31,11 +31,13 @@ typedef struct {
   int cdr;
 } pair_t;
 
+typedef char symbol_t[TOKENSIZE + 3];
+
 typedef struct {
   type_t type;
   union {
     pair_t pair;
-    char symbol[TOKENSIZE + 3];
+    symbol_t symbol;
   };
 } cell_t;
 
@@ -84,14 +86,17 @@ int parse(void)
     fprintf(stderr, "Error: Unexpected end of input\n");
     exit(1);
   };
-  if (strcmp(str, "(") == 0) {
+  switch (str[0]) {
+  case '(':
     n++;
     cells[retval].type = PAIR;
     cells[retval].pair.car = parse_list();
     cells[retval].pair.cdr = NIL;
-  } else if (strcmp(str, ")") == 0) {
+    break;
+  case ')':
     retval = -1;
-  } else {
+    break;
+  default:
     n++;
     cells[retval].type = SYMBOL;
   };
