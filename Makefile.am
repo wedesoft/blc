@@ -15,13 +15,18 @@ minischeme_LDADD =
 BUILT_SOURCES =
 
 EXTRA_DIST = Makefile.dist configure.ac README.md COPYING \
-	test_tokenize_in.txt test_tokenize_out.txt
+	test_tokenize_in.txt test_tokenize_out.txt \
+	test_minischeme_in.txt test_minischeme_out.txt
 
-test: test.tmp
+test: test_tokenize.tmp test_minischeme.tmp
 
-test.tmp: tokenize$(EXEEXT)
+test_tokenize.tmp: tokenize$(EXEEXT)
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
+
+test_minischeme.tmp: minischeme$(EXEEXT)
+	$(CAT) test_minischeme_in.txt | ./minischeme$(EXEEXT) > out.tmp
+	$(DIFF) test_minischeme_out.txt out.tmp && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
 
