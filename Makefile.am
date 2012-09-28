@@ -2,11 +2,15 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = tokenize
+bin_PROGRAMS = tokenize minischeme
 
 tokenize_SOURCES = tokenize.c
 tokenize_LDFLAGS =
 tokenize_LDADD =
+
+minischeme_SOURCES = minischeme.c
+minischeme_LDFLAGS =
+minischeme_LDADD =
 
 BUILT_SOURCES =
 
