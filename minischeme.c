@@ -13,7 +13,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#include <stdio.h>
+
+#define TOKENSIZE 8
+
+
 int main(void)
 {
+  char line[TOKENSIZE + 1];
+  size_t linecapp = TOKENSIZE;
+  fgets(&line[0], TOKENSIZE, stdin);
+  printf("%s", line);
   return 0;
 }
