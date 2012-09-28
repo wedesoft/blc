@@ -14,15 +14,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdio.h>
+#include <string.h>
 
 #define TOKENSIZE 8
 
+char *read_token(char *str)
+{
+  char *retval = fgets(str, TOKENSIZE + 3, stdin);
+  if (retval) {
+    int len = strlen(retval) - 1;
+    retval[len] = '\0';
+    if (len <= 0) {
+      fprintf(stderr, "Error: Encountered empty token.\n");
+      exit(1);
+    };
+    if (len > TOKENSIZE) {
+      fprintf(stderr, "Error: Token %s... longer than %d characters.\n",
+              retval, TOKENSIZE);
+      exit(1);
+    };
+  };
+  return retval;
+}
 
 int main(void)
 {
-  char line[TOKENSIZE + 1];
-  size_t linecapp = TOKENSIZE;
-  fgets(&line[0], TOKENSIZE, stdin);
-  printf("%s", line);
+  while (1) {
+    char line[TOKENSIZE + 3];
+    char *str = read_token(line);
+    if (!str) break;
+    printf("%s\n", str);
+  };
   return 0;
 }
