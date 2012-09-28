@@ -19,29 +19,29 @@ int main(void)
 {
   int length = 0;
   while (1) {
-    int c = getchar();
+    int c = fgetc(stdin);
     if (c == EOF) break;
     switch(c) {
     case ' ':
     case '\n':
     case '\r':
     case '\t':
-      if (length > 0) putchar('\n');
+      if (length > 0) fputc('\n', stdout);
       length = 0;
       break;
     case '(':
     case ')':
-      if (length > 0) putchar('\n');
+      if (length > 0) fputc('\n', stdout);
       length = 0;
-      putchar(c);
-      putchar('\n');
+      fputc(c, stdout);
+      fputc('\n', stdout);
       break;
     default:
       length += 1;
-      putchar(c);
+      fputc(c, stdout);
     };
   };
-  if (length > 0) putchar('\n');
+  if (length > 0) fputc('\n', stdout);
   return 0;
 }
 
