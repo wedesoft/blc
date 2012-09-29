@@ -43,21 +43,26 @@ typedef struct {
 
 char *read_token(char *str)
 {
-  char *retval = fgets(str, TOKENSIZE + 3, stdin);
-  if (retval) {
-    int len = strlen(retval) - 1;
-    retval[len] = '\0';
-    if (len <= 0) {
-      fprintf(stderr, "Error: Encountered empty token\n");
-      exit(1);
-    };
+  int len = 0;
+  char *p = str;
+  while (1) {
+    char c = fgetc(stdin);
+    if (c == EOF || c == '\n') break;
+    *p++ = c;
+    len++;
     if (len > TOKENSIZE) {
+      *p = '\0';
       fprintf(stderr, "Error: Token %s... longer than %d characters\n",
-              retval, TOKENSIZE);
+              str, TOKENSIZE);
       exit(1);
     };
   };
-  return retval;
+  if (len <= 0) {
+    fprintf(stderr, "Error: Encountered empty token\n");
+    exit(1);
+  };
+  *p = '\0';
+  return str;
 }
 
 int n = 0;
@@ -118,6 +123,10 @@ void print_list(int i)
 
 void print(int i)
 {
+  if (i == -1) {
+    fprintf(stderr, "Error: Expression started with ')'\n");
+    exit(1);
+  };
   if (cells[i].type == PAIR) {
     fputc('(', stdout);
     print_list(cells[i].pair.car);
