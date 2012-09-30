@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PAIRS 128
+#define MAX_PAIRS 128
 #define TOKENSIZE 8
 #define NIL -1
 
@@ -65,15 +65,15 @@ char *read_token(char *str)
   return str;
 }
 
-int n = 0;
-cell_t cells[PAIRS];
+int n_cells = 0;
+cell_t cells[MAX_PAIRS];
 
 int parse_list(void)
 {
   int retval;
   int cell = parse();
   if (cell != NIL) {
-    retval = n++;
+    retval = n_cells++;
     cells[retval].type = PAIR;
     cells[retval].pair.car = cell;
     cells[retval].pair.cdr = parse_list();
@@ -85,7 +85,7 @@ int parse_list(void)
 
 int parse(void)
 {
-  int retval = n;
+  int retval = n_cells;
   char *str = read_token(cells[retval].symbol);
   if (!str) {
     fprintf(stderr, "Error: Unexpected end of input\n");
@@ -93,7 +93,7 @@ int parse(void)
   };
   switch (str[0]) {
   case '(':
-    n++;
+    n_cells++;
     cells[retval].type = PAIR;
     cells[retval].pair.car = parse_list();
     cells[retval].pair.cdr = NIL;
@@ -102,7 +102,7 @@ int parse(void)
     retval = -1;
     break;
   default:
-    n++;
+    n_cells++;
     cells[retval].type = SYMBOL;
   };
   return retval;
@@ -137,9 +137,15 @@ void print(int i)
   }
 }
 
+int eval(int i)
+{
+  int retval = i;
+  return retval;
+}
+
 int main(void)
 {
-  print(parse());
+  print(eval(parse()));
   fputc('\n', stdout);
   return 0;
 }
