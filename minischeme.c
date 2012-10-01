@@ -68,22 +68,29 @@ char *read_token(char *str)
 int n_cells = 0;
 cell_t cells[MAX_PAIRS];
 
-int parse_list(void)
+int read_list(void)
 {
   int retval;
-  int cell = parse();
+  int cell = read_expression();
   if (cell != NIL) {
     retval = n_cells++;
     cells[retval].type = PAIR;
     cells[retval].pair.car = cell;
-    cells[retval].pair.cdr = parse_list();
+    cells[retval].pair.cdr = read_list();
   } else {
     retval = -1;
   };
   return retval;
 }
 
-int parse(void)
+void make_pair(int cell, int car, int cdr)
+{
+  cells[cell].type = PAIR;
+  cells[cell].pair.car = car;
+  cells[cell].pair.cdr = cdr;
+}
+
+int read_expression(void)
 {
   int retval = n_cells;
   char *str = read_token(cells[retval].symbol);
@@ -94,9 +101,7 @@ int parse(void)
   switch (str[0]) {
   case '(':
     n_cells++;
-    cells[retval].type = PAIR;
-    cells[retval].pair.car = parse_list();
-    cells[retval].pair.cdr = NIL;
+    make_pair(retval, read_list(), NIL);
     break;
   case ')':
     retval = -1;
@@ -108,12 +113,12 @@ int parse(void)
   return retval;
 }
 
-void print(int i);
+void print_expression(int i);
 
 void print_list(int i)
 {
   if (cells[i].type == PAIR) {
-    print(cells[i].pair.car);
+    print_expression(cells[i].pair.car);
     if (cells[i].pair.cdr != NIL) {
       fputc(' ', stdout);
       print_list(cells[i].pair.cdr);
@@ -121,13 +126,12 @@ void print_list(int i)
   };
 }
 
-void print(int i)
+void print_expression(int i)
 {
   if (i == -1) {
-    fprintf(stderr, "Error: Expression started with ')'\n");
-    exit(1);
-  };
-  if (cells[i].type == PAIR) {
+    fputc('(', stdout);
+    fputc(')', stdout);
+  } else if (cells[i].type == PAIR) {
     fputc('(', stdout);
     print_list(cells[i].pair.car);
     fputc(')', stdout);
@@ -139,14 +143,31 @@ void print(int i)
 
 int eval(int i)
 {
-  int retval = i;
+  int retval;
+  if (cells[i].type == PAIR) {
+    retval = cells[i].pair.cdr;
+  } else {
+    retval = i;
+  };
   return retval;
 }
 
 int main(void)
 {
-  print(eval(parse()));
-  fputc('\n', stdout);
+  int i;
+  int expr = read_expression();
+#if 0
+  for (i=0; i<n_cells; i++) {
+    if (cells[i].type == PAIR)
+      fprintf(stderr, "%2d: car = %2d, cdr = %2d\n", i, cells[i].pair.car, cells[i].pair.cdr);
+    else
+      fprintf(stderr, "%2d: symbol = %s\n", i, cells[i].symbol);
+  };
+  fputc('\n', stderr);
+#endif
+  // print_expression(eval(expr));
+  print_expression(expr);
+  fprintf(stdout, "\n");
   return 0;
 }
 

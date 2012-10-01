@@ -24,8 +24,8 @@ test_tokenize.tmp: tokenize$(EXEEXT)
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-test_minischeme.tmp: minischeme$(EXEEXT)
-	$(CAT) test_minischeme_in.txt | ./minischeme$(EXEEXT) > out.tmp
+test_minischeme.tmp: tokenize$(EXEEXT) minischeme$(EXEEXT)
+	$(CAT) test_minischeme_in.txt | ./tokenize $(EXEEXT) | ./minischeme$(EXEEXT) > out.tmp
 	$(DIFF) test_minischeme_out.txt out.tmp && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
