@@ -99,9 +99,7 @@ int read_expression(void)
   if (str) {
     switch (str[0]) {
     case '(':
-      // n_cells++;
       retval = read_list();
-      // make_pair(retval, read_list(), NIL);
       break;
     case ')':
       retval = NIL;
@@ -149,6 +147,29 @@ int eval(int i)
   if (cells[i].type == PAIR) {
     retval = i;
     // retval = cells[cells[i].pair.cdr].pair.car;
+    //
+    // pair (not atom)
+    // eq (also compares with nil)
+    // car
+    // cdr
+    // cons
+    //
+    // cond
+    // define
+    // lambda
+    //
+    // subst
+    // equal
+    // null
+    // cadr
+    // caddr
+    // append
+    // pair
+    // assoc
+    // sublis (hash)
+    //
+    // eval
+    // quote
   } else {
     retval = i;
   };
