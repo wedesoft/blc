@@ -44,6 +44,7 @@ typedef struct {
 char *read_token(char *str)
 {
   int len = 0;
+  char *retval;
   char *p = str;
   while (1) {
     char c = fgetc(stdin);
@@ -57,12 +58,13 @@ char *read_token(char *str)
       exit(1);
     };
   };
-  if (len <= 0) {
-    fprintf(stderr, "Error: Encountered empty token\n");
-    exit(1);
+  if (len <= 0)
+    retval = NULL;
+  else {
+    *p = '\0';
+    retval = str;
   };
-  *p = '\0';
-  return str;
+  return retval;
 }
 
 int n_cells = 0;
@@ -78,7 +80,7 @@ int read_list(void)
     cells[retval].pair.car = cell;
     cells[retval].pair.cdr = read_list();
   } else {
-    retval = -1;
+    retval = NIL;
   };
   return retval;
 }
@@ -94,22 +96,22 @@ int read_expression(void)
 {
   int retval = n_cells;
   char *str = read_token(cells[retval].symbol);
-  if (!str) {
-    fprintf(stderr, "Error: Unexpected end of input\n");
-    exit(1);
-  };
-  switch (str[0]) {
-  case '(':
-    n_cells++;
-    make_pair(retval, read_list(), NIL);
-    break;
-  case ')':
-    retval = -1;
-    break;
-  default:
-    n_cells++;
-    cells[retval].type = SYMBOL;
-  };
+  if (str) {
+    switch (str[0]) {
+    case '(':
+      // n_cells++;
+      retval = read_list();
+      // make_pair(retval, read_list(), NIL);
+      break;
+    case ')':
+      retval = NIL;
+      break;
+    default:
+      n_cells++;
+      cells[retval].type = SYMBOL;
+    };
+  } else
+    retval = NIL;
   return retval;
 }
 
@@ -128,12 +130,12 @@ void print_list(int i)
 
 void print_expression(int i)
 {
-  if (i == -1) {
+  if (i == NIL) {
     fputc('(', stdout);
     fputc(')', stdout);
   } else if (cells[i].type == PAIR) {
     fputc('(', stdout);
-    print_list(cells[i].pair.car);
+    print_list(i);
     fputc(')', stdout);
   } else {
     char *symbol = cells[i].symbol;
@@ -145,7 +147,8 @@ int eval(int i)
 {
   int retval;
   if (cells[i].type == PAIR) {
-    retval = cells[i].pair.cdr;
+    retval = i;
+    // retval = cells[cells[i].pair.cdr].pair.car;
   } else {
     retval = i;
   };
@@ -155,19 +158,26 @@ int eval(int i)
 int main(void)
 {
   int i;
-  int expr = read_expression();
-#if 0
-  for (i=0; i<n_cells; i++) {
-    if (cells[i].type == PAIR)
-      fprintf(stderr, "%2d: car = %2d, cdr = %2d\n", i, cells[i].pair.car, cells[i].pair.cdr);
-    else
-      fprintf(stderr, "%2d: symbol = %s\n", i, cells[i].symbol);
-  };
-  fputc('\n', stderr);
+  while (!feof(stdin)) {
+    int expr = read_expression();
+#ifndef NDEBUG
+    for (i=0; i<n_cells; i++) {
+      if (i == expr)
+        fprintf(stderr, "-> ");
+      else
+        fprintf(stderr, "   ");
+      fprintf(stderr, "%2d: ", i);
+      if (cells[i].type == PAIR)
+        fprintf(stderr, "car = %2d, cdr = %2d\n", cells[i].pair.car, cells[i].pair.cdr);
+      else
+        fprintf(stderr, "symbol = %s\n", cells[i].symbol);
+    };
+    fputc('\n', stderr);
 #endif
-  // print_expression(eval(expr));
-  print_expression(expr);
-  fprintf(stdout, "\n");
+    if (expr == NIL) break;
+    print_expression(eval(expr)); fprintf(stdout, "\n");
+    // print_expression(expr); fprintf(stdout, "\n");
+  };
   return 0;
 }
 

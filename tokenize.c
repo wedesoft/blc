@@ -40,6 +40,7 @@ int main(void)
       length += 1;
       fputc(c, stdout);
     };
+    fflush(stdout);
   };
   if (length > 0) fputc('\n', stdout);
   return 0;
