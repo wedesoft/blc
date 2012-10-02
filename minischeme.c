@@ -103,23 +103,23 @@ int cdr(int i)
   return cells[i].pair.cdr;
 }
 
-void make_pair(int cell, int car, int cdr)
+int make_pair(int car, int cdr)
 {
-  cells[cell].type = PAIR;
-  cells[cell].pair.car = car;
-  cells[cell].pair.cdr = cdr;
+  int retval = n_cells++;
+  cells[retval].type = PAIR;
+  cells[retval].pair.car = car;
+  cells[retval].pair.cdr = cdr;
+  return retval;
 }
 
 int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (!null(cell)) {
-    retval = n_cells++;
-    make_pair(retval, cell, read_list());
-  } else {
+  if (null(cell))
     retval = NIL;
-  };
+  else
+    retval = make_pair(cell, read_list());
   return retval;
 }
 
@@ -136,8 +136,7 @@ int read_expression(void)
       retval = NIL;
       break;
     };
-  } else
-    retval = NIL;
+  };
   return retval;
 }
 
