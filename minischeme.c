@@ -21,20 +21,20 @@
 #define TOKENSIZE 8
 #define NIL -1
 
-typedef enum { PAIR, SYMBOL } type_t;
+typedef enum { PAIR, TOKEN } type_t;
 
 typedef struct {
   int car;
   int cdr;
 } pair_t;
 
-typedef char symbol_t[TOKENSIZE + 3];
+typedef char token_t[TOKENSIZE + 3];
 
 typedef struct {
   type_t type;
   union {
     pair_t pair;
-    symbol_t symbol;
+    token_t token;
   };
 } cell_t;
 
@@ -45,8 +45,8 @@ int read_token(void)
 {
   int retval = n_cells++;
   int len = 0;
-  char *p = cells[retval].symbol;
-  cells[retval].type = SYMBOL;
+  char *p = cells[retval].token;
+  cells[retval].type = TOKEN;
   while (1) {
     char c = fgetc(stdin);
     if (c == EOF || c == '\n') break;
@@ -55,7 +55,7 @@ int read_token(void)
     if (len > TOKENSIZE) {
       *p = '\0';
       fprintf(stderr, "Error: Token %s... longer than %d characters\n",
-              cells[retval].symbol, TOKENSIZE);
+              cells[retval].token, TOKENSIZE);
       exit(1);
     };
   };
@@ -76,13 +76,13 @@ int pair(int i)
   return cells[i].type == PAIR;
 }
 
-char *symbol(int i)
+char *token(int i)
 {
   if (pair(i)) {
-    fprintf(stderr, "Not a symbol\n");
+    fprintf(stderr, "Not a token\n");
     exit(1);
   };
-  return cells[i].symbol;
+  return cells[i].token;
 }
 
 int car(int i)
@@ -127,7 +127,7 @@ int read_expression(void)
 {
   int retval = read_token();
   if (!null(retval)) {
-    char *str = symbol(retval);
+    char *str = token(retval);
     switch (str[0]) {
     case '(':
       retval = read_list();
@@ -165,7 +165,7 @@ void print_expression(int i)
     print_list(i);
     fputc(')', stdout);
   } else {
-    char *p = symbol(i);
+    char *p = token(i);
     while (*p) fputc(*p++, stdout);
   }
 }
@@ -174,7 +174,7 @@ int eval_list(int i)
 {
   int retval;
   if (pair(car(i))) {
-    char *p = symbol(car(i));
+    char *p = token(car(i));
     if (strcmp(p, "car") == 0)
       retval = car(car(cdr(i)));
     else if (strcmp(p, "cdr") == 0)
@@ -236,7 +236,7 @@ int main(void)
       if (pair(i))
         fprintf(stderr, "car = %2d, cdr = %2d\n", car(i), cdr(i));
       else
-        fprintf(stderr, "symbol = %s\n", symbol(i));
+        fprintf(stderr, "token = %s\n", token(i));
     };
     fputc('\n', stderr);
 #endif
