@@ -66,6 +66,15 @@ int read_token(void)
   return retval;
 }
 
+int make_pair(int car, int cdr)
+{
+  int retval = n_cells++;
+  cells[retval].type = PAIR;
+  cells[retval].pair.car = car;
+  cells[retval].pair.cdr = cdr;
+  return retval;
+}
+
 int null(int i)
 {
   return i == NIL;
@@ -101,15 +110,6 @@ int cdr(int i)
     exit(1);
   };
   return cells[i].pair.cdr;
-}
-
-int make_pair(int car, int cdr)
-{
-  int retval = n_cells++;
-  cells[retval].type = PAIR;
-  cells[retval].pair.car = car;
-  cells[retval].pair.cdr = cdr;
-  return retval;
 }
 
 int read_list(void)
