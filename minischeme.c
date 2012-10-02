@@ -21,10 +21,7 @@
 #define TOKENSIZE 8
 #define NIL -1
 
-typedef enum {
-  PAIR = 0,
-  SYMBOL
-} type_t;
+typedef enum { PAIR, SYMBOL } type_t;
 
 typedef struct {
   int car;
@@ -44,16 +41,12 @@ typedef struct {
 int n_cells = 0;
 cell_t cells[MAX_PAIRS];
 
-char *symbol(int i)
+int read_token(void)
 {
-  return cells[i].symbol;
-}
-
-char *read_token(char *str)
-{
+  int retval = n_cells++;
   int len = 0;
-  char *retval;
-  char *p = str;
+  char *p = cells[retval].symbol;
+  cells[retval].type = SYMBOL;
   while (1) {
     char c = fgetc(stdin);
     if (c == EOF || c == '\n') break;
@@ -62,22 +55,47 @@ char *read_token(char *str)
     if (len > TOKENSIZE) {
       *p = '\0';
       fprintf(stderr, "Error: Token %s... longer than %d characters\n",
-              str, TOKENSIZE);
+              cells[retval].symbol, TOKENSIZE);
       exit(1);
     };
   };
   if (len <= 0)
-    retval = NULL;
-  else {
+    retval = NIL;
+  else
     *p = '\0';
-    retval = str;
-  };
   return retval;
 }
 
-type_t type(int i)
+int pair(int i)
 {
-  return cells[i].type;
+  return cells[i].type == PAIR;
+}
+
+char *symbol(int i)
+{
+  if (pair(i)) {
+    fprintf(stderr, "Not a symbol\n");
+    exit(1);
+  };
+  return cells[i].symbol;
+}
+
+int car(int i)
+{
+  if (!pair(i)) {
+    fprintf(stderr, "Argument to 'car' must be a pair\n");
+    exit(1);
+  };
+  return cells[i].pair.car;
+}
+
+int cdr(int i)
+{
+  if (!pair(i)) {
+    fprintf(stderr, "Argument to 'cdr' must be a pair\n");
+    exit(1);
+  };
+  return cells[i].pair.cdr;
 }
 
 void make_pair(int cell, int car, int cdr)
@@ -102,9 +120,9 @@ int read_list(void)
 
 int read_expression(void)
 {
-  int retval = n_cells;
-  char *str = read_token(symbol(retval));
-  if (str) {
+  int retval = read_token();
+  if (retval != NIL) {
+    char *str = symbol(retval);
     switch (str[0]) {
     case '(':
       retval = read_list();
@@ -112,9 +130,6 @@ int read_expression(void)
     case ')':
       retval = NIL;
       break;
-    default:
-      n_cells++;
-      cells[retval].type = SYMBOL;
     };
   } else
     retval = NIL;
@@ -125,7 +140,7 @@ void print_expression(int i);
 
 void print_list(int i)
 {
-  if (type(i) == PAIR) {
+  if (pair(i)) {
     print_expression(car(i));
     if (cdr(i) != NIL) {
       fputc(' ', stdout);
@@ -140,7 +155,7 @@ void print_expression(int i)
   if (i == NIL) {
     fputc('(', stdout);
     fputc(')', stdout);
-  } else if (type(i) == PAIR) {
+  } else if (pair(i)) {
     fputc('(', stdout);
     print_list(i);
     fputc(')', stdout);
@@ -150,28 +165,10 @@ void print_expression(int i)
   }
 }
 
-int car(int i)
-{
-  if (type(i) != PAIR) {
-    fprintf(stderr, "Argument to 'car' must be a pair\n");
-    exit(1);
-  };
-  return cells[i].pair.car;
-}
-
-int cdr(int i)
-{
-  if (type(i) != PAIR) {
-    fprintf(stderr, "Argument to 'cdr' must be a pair\n");
-    exit(1);
-  };
-  return cells[i].pair.cdr;
-}
-
 int eval_list(int i)
 {
   int retval;
-  if (type(car(i)) == SYMBOL) {
+  if (pair(car(i))) {
     char *p = symbol(car(i));
     if (strcmp(p, "car") == 0)
       retval = car(car(cdr(i)));
@@ -187,7 +184,7 @@ int eval_list(int i)
 int eval_expression(int i)
 {
   int retval;
-  if (type(i) == PAIR) {
+  if (pair(i)) {
     retval = eval_list(i);
     // retval = cells[cells[i].pair.cdr].pair.car;
     //
@@ -231,7 +228,7 @@ int main(void)
       else
         fprintf(stderr, "   ");
       fprintf(stderr, "%2d: ", i);
-      if (type(i) == PAIR)
+      if (pair(i))
         fprintf(stderr, "car = %2d, cdr = %2d\n", car(i), cdr(i));
       else
         fprintf(stderr, "symbol = %s\n", symbol(i));
