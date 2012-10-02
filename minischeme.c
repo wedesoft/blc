@@ -66,6 +66,11 @@ int read_token(void)
   return retval;
 }
 
+int null(int i)
+{
+  return i == NIL;
+}
+
 int pair(int i)
 {
   return cells[i].type == PAIR;
@@ -109,7 +114,7 @@ int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (cell != NIL) {
+  if (!null(cell)) {
     retval = n_cells++;
     make_pair(retval, cell, read_list());
   } else {
@@ -121,7 +126,7 @@ int read_list(void)
 int read_expression(void)
 {
   int retval = read_token();
-  if (retval != NIL) {
+  if (!null(retval)) {
     char *str = symbol(retval);
     switch (str[0]) {
     case '(':
@@ -142,7 +147,7 @@ void print_list(int i)
 {
   if (pair(i)) {
     print_expression(car(i));
-    if (cdr(i) != NIL) {
+    if (!null(cdr(i))) {
       fputc(' ', stdout);
       print_list(cdr(i));
     }
@@ -152,7 +157,7 @@ void print_list(int i)
 
 void print_expression(int i)
 {
-  if (i == NIL) {
+  if (null(i)) {
     fputc('(', stdout);
     fputc(')', stdout);
   } else if (pair(i)) {
@@ -235,7 +240,7 @@ int main(void)
     };
     fputc('\n', stderr);
 #endif
-    if (expr == NIL) break;
+    if (null(expr)) break;
     print_expression(eval_expression(expr)); fprintf(stdout, "\n");
     // print_expression(expr); fprintf(stdout, "\n");
   };
