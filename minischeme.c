@@ -77,21 +77,6 @@ int read_token(void)
   return retval;
 }
 
-int make_pair(int first, int rest)
-{
-  int retval = add_cell();
-  if (!empty(rest) && !pair(rest)) {
-    fprintf(stderr,
-            "Error: Rest of pair must be a list (but was %s)\n",
-            cells[rest].token);
-    exit(1);
-  };
-  cells[retval].type = PAIR;
-  cells[retval].pair.first = first;
-  cells[retval].pair.rest = rest;
-  return retval;
-}
-
 int empty(int i)
 {
   return i == NIL;
@@ -129,6 +114,21 @@ int rest(int i)
   return cells[i].pair.rest;
 }
 
+int cons(int first, int rest)
+{
+  int retval = add_cell();
+  if (!empty(rest) && !pair(rest)) {
+    fprintf(stderr,
+            "Error: Rest of pair must be a list (but was %s)\n",
+            cells[rest].token);
+    exit(1);
+  };
+  cells[retval].type = PAIR;
+  cells[retval].pair.first = first;
+  cells[retval].pair.rest = rest;
+  return retval;
+}
+
 int read_list(void)
 {
   int retval;
@@ -136,7 +136,7 @@ int read_list(void)
   if (empty(cell))
     retval = NIL;
   else
-    retval = make_pair(cell, read_list());
+    retval = cons(cell, read_list());
   return retval;
 }
 
@@ -204,9 +204,9 @@ int eval_list(int i)
       retval = first(eval_expression(first(rest(i))));
     else if (strcmp(p, "rest") == 0)
       retval = rest(eval_expression(first(rest(i))));
-    else if (strcmp(p, "pair") == 0)
-      retval = make_pair(eval_expression(first(rest(i))),
-                         eval_expression(first(rest(rest(i)))));
+    else if (strcmp(p, "cons") == 0)
+      retval = cons(eval_expression(first(rest(i))),
+                    eval_expression(first(rest(rest(i)))));
     else
       retval = i;
   };
