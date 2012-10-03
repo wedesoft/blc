@@ -198,6 +198,9 @@ int eval_list(int i)
       retval = first(eval_expression(first(rest(i))));
     else if (strcmp(p, "rest") == 0)
       retval = rest(eval_expression(first(rest(i))));
+    else if (strcmp(p, "pair") == 0)
+      retval = make_pair(eval_expression(first(rest(i))),
+                         eval_expression(first(rest(rest(i)))));
     else
       retval = i;
   };
