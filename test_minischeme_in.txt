@@ -1,3 +1,4 @@
 (quote (+ (* 2 x) 3))
-(car (1 2 3))
-(cdr (1 2 3))
+(car (quote (1 2 3)))
+(cdr (quote (1 2 3)))
+

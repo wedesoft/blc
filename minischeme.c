@@ -43,7 +43,7 @@ cell_t cells[MAX_PAIRS];
 
 int read_token(void)
 {
-  int retval = n_cells++;
+  int retval = n_cells;
   int len = 0;
   char *p = cells[retval].token;
   cells[retval].type = TOKEN;
@@ -61,8 +61,10 @@ int read_token(void)
   };
   if (len <= 0)
     retval = NIL;
-  else
+  else {
+    n_cells++;
     *p = '\0';
+  };
   return retval;
 }
 
@@ -157,16 +159,21 @@ void print_list(int i)
 void print_expression(int i)
 {
   if (null(i)) {
-    fputc('(', stdout);
-    fputc(')', stdout);
+    fputs("()", stdout);
   } else if (pair(i)) {
     fputc('(', stdout);
     print_list(i);
     fputc(')', stdout);
   } else {
-    char *p = token(i);
-    while (*p) fputc(*p++, stdout);
+    fputs(token(i), stdout);
   }
+}
+
+void print_quoted(int i)
+{
+  fputs("(quote ", stdout);
+  print_expression(i);
+  fputc(')', stdout);
 }
 
 int eval_list(int i)
@@ -176,10 +183,12 @@ int eval_list(int i)
     retval = i;
   else {
     char *p = token(car(i));
-    if (strcmp(p, "car") == 0)
-      retval = car(car(cdr(i)));
+    if (strcmp(p, "quote") == 0)
+      retval = car(cdr(i));
+    else if (strcmp(p, "car") == 0)
+      retval = car(eval_expression(car(cdr(i))));
     else if (strcmp(p, "cdr") == 0)
-      retval = cdr(car(cdr(i)));
+      retval = cdr(eval_expression(car(cdr(i))));
     else
       retval = i;
   };
@@ -193,28 +202,28 @@ int eval_expression(int i)
     retval = eval_list(i);
     // retval = cells[cells[i].pair.cdr].pair.car;
     //
-    // pair (not atom)
-    // eq (also compares with nil)
-    // car
-    // cdr
-    // cons
+    //   pair (not atom)
+    //   eq (also compares with nil)
+    // x car
+    // x cdr
+    //   cons
     //
-    // cond
-    // define
-    // lambda
+    //   cond
+    //   define
+    //   lambda
     //
-    // subst
-    // equal
-    // null
-    // cadr
-    // caddr
-    // append
-    // pair
-    // assoc
-    // sublis (hash)
+    //   subst
+    //   equal
+    //   null
+    //   cadr
+    //   caddr
+    //   append
+    //   pair
+    //   assoc
+    //   sublis (hash)
     //
-    // eval
-    // quote
+    //   eval
+    // x quote
   } else {
     retval = i;
   };
@@ -241,7 +250,7 @@ int main(void)
     fputc('\n', stderr);
 #endif
     if (null(expr)) break;
-    print_expression(eval_expression(expr)); fprintf(stdout, "\n");
+    print_quoted(eval_expression(expr)); fprintf(stdout, "\n");
     // print_expression(expr); fprintf(stdout, "\n");
   };
   return 0;
