@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_PAIRS 128
+#define MAX_CELLS 128
 #define TOKENSIZE 8
 #define NIL -1
 
@@ -39,11 +39,21 @@ typedef struct {
 } cell_t;
 
 int n_cells = 0;
-cell_t cells[MAX_PAIRS];
+cell_t cells[MAX_CELLS];
+
+int add_cell(void)
+{
+  int retval = n_cells++;
+  if (n_cells >= MAX_CELLS) {
+    fprintf(stderr, "Error: Program requires more than %d cells\n", MAX_CELLS);
+    exit(1);
+  };
+  return retval;
+}
 
 int read_token(void)
 {
-  int retval = n_cells;
+  int retval = add_cell();
   int len = 0;
   char *p = cells[retval].token;
   cells[retval].type = TOKEN;
@@ -54,23 +64,22 @@ int read_token(void)
     len++;
     if (len > TOKENSIZE) {
       *p = '\0';
-      fprintf(stderr, "Error: Token %s... longer than %d characters\n",
+      fprintf(stderr,
+              "Error: Token %s... longer than %d characters\n",
               cells[retval].token, TOKENSIZE);
       exit(1);
     };
   };
   if (len <= 0)
     retval = NIL;
-  else {
-    n_cells++;
+  else
     *p = '\0';
-  };
   return retval;
 }
 
 int make_pair(int car, int cdr)
 {
-  int retval = n_cells++;
+  int retval = add_cell();
   cells[retval].type = PAIR;
   cells[retval].pair.car = car;
   cells[retval].pair.cdr = cdr;
@@ -251,7 +260,7 @@ int main(void)
 #endif
     if (null(expr)) break;
     print_quoted(eval_expression(expr)); fprintf(stdout, "\n");
-    // print_expression(expr); fprintf(stdout, "\n");
+    // print_quoted(expr); fprintf(stdout, "\n");
   };
   return 0;
 }
