@@ -1,2 +1,2 @@
 #!/bin/sh
-cat | ./tokenize | ./minischeme
+cat | ./tokenize | ./miniracket

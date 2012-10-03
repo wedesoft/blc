@@ -17,6 +17,6 @@ install-sh
 libtool
 ltmain.sh
 m4
-minischeme
+miniracket
 missing
 tokenize
