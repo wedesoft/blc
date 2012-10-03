@@ -172,17 +172,17 @@ void print_expression(int i)
 int eval_list(int i)
 {
   int retval;
-  if (pair(car(i))) {
+  if (pair(car(i)))
+    retval = i;
+  else {
     char *p = token(car(i));
-    printf("token %s\n", p);
     if (strcmp(p, "car") == 0)
       retval = car(car(cdr(i)));
     else if (strcmp(p, "cdr") == 0)
       retval = cdr(car(cdr(i)));
     else
       retval = i;
-  } else
-    retval = i;
+  };
   return retval;
 }
 
@@ -226,7 +226,7 @@ int main(void)
   int i;
   while (!feof(stdin)) {
     int expr = read_expression();
-#if 0
+#ifndef NDEBUG
     for (i=0; i<n_cells; i++) {
       if (i == expr)
         fprintf(stderr, "-> ");
