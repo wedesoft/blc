@@ -86,7 +86,7 @@ int make_pair(int first, int rest)
   return retval;
 }
 
-int null(int i)
+int empty(int i)
 {
   return i == NIL;
 }
@@ -127,7 +127,7 @@ int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (null(cell))
+  if (empty(cell))
     retval = NIL;
   else
     retval = make_pair(cell, read_list());
@@ -137,7 +137,7 @@ int read_list(void)
 int read_expression(void)
 {
   int retval = read_token();
-  if (!null(retval)) {
+  if (!empty(retval)) {
     char *str = token(retval);
     switch (str[0]) {
     case '(':
@@ -157,7 +157,7 @@ void print_list(int i)
 {
   if (pair(i)) {
     print_expression(first(i));
-    if (!null(rest(i))) {
+    if (!empty(rest(i))) {
       fputc(' ', stdout);
       print_list(rest(i));
     }
@@ -167,7 +167,7 @@ void print_list(int i)
 
 void print_expression(int i)
 {
-  if (null(i)) {
+  if (empty(i)) {
     fputs("()", stdout);
   } else if (pair(i)) {
     fputc('(', stdout);
@@ -213,8 +213,8 @@ int eval_expression(int i)
     //
     //   pair (not atom)
     //   eq (also compares with nil)
-    // x first
-    // x rest
+    // x car
+    // x cdr
     //   cons
     //
     //   cond
@@ -258,7 +258,7 @@ int main(void)
     };
     fputc('\n', stderr);
 #endif
-    if (null(expr)) break;
+    if (empty(expr)) break;
     print_quoted(eval_expression(expr)); fprintf(stdout, "\n");
     // print_quoted(expr); fprintf(stdout, "\n");
   };
