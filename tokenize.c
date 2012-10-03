@@ -46,4 +46,3 @@ int main(void)
   return 0;
 }
 
-// car, cdr, cond, gt, lt, eq, define, lambda, eval, quote

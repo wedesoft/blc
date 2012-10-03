@@ -24,8 +24,8 @@
 typedef enum { PAIR, TOKEN } type_t;
 
 typedef struct {
-  int car;
-  int cdr;
+  int first;
+  int rest;
 } pair_t;
 
 typedef char token_t[TOKENSIZE + 3];
@@ -77,12 +77,12 @@ int read_token(void)
   return retval;
 }
 
-int make_pair(int car, int cdr)
+int make_pair(int first, int rest)
 {
   int retval = add_cell();
   cells[retval].type = PAIR;
-  cells[retval].pair.car = car;
-  cells[retval].pair.cdr = cdr;
+  cells[retval].pair.first = first;
+  cells[retval].pair.rest = rest;
   return retval;
 }
 
@@ -105,22 +105,22 @@ char *token(int i)
   return cells[i].token;
 }
 
-int car(int i)
+int first(int i)
 {
   if (!pair(i)) {
-    fprintf(stderr, "Argument to 'car' must be a pair\n");
+    fprintf(stderr, "Argument to 'first' must be a pair\n");
     exit(1);
   };
-  return cells[i].pair.car;
+  return cells[i].pair.first;
 }
 
-int cdr(int i)
+int rest(int i)
 {
   if (!pair(i)) {
-    fprintf(stderr, "Argument to 'cdr' must be a pair\n");
+    fprintf(stderr, "Argument to 'rest' must be a pair\n");
     exit(1);
   };
-  return cells[i].pair.cdr;
+  return cells[i].pair.rest;
 }
 
 int read_list(void)
@@ -156,10 +156,10 @@ void print_expression(int i);
 void print_list(int i)
 {
   if (pair(i)) {
-    print_expression(car(i));
-    if (!null(cdr(i))) {
+    print_expression(first(i));
+    if (!null(rest(i))) {
       fputc(' ', stdout);
-      print_list(cdr(i));
+      print_list(rest(i));
     }
   } else
     print_expression(i);
@@ -188,16 +188,16 @@ void print_quoted(int i)
 int eval_list(int i)
 {
   int retval;
-  if (pair(car(i)))
+  if (pair(first(i)))
     retval = i;
   else {
-    char *p = token(car(i));
+    char *p = token(first(i));
     if (strcmp(p, "quote") == 0)
-      retval = car(cdr(i));
-    else if (strcmp(p, "car") == 0)
-      retval = car(eval_expression(car(cdr(i))));
-    else if (strcmp(p, "cdr") == 0)
-      retval = cdr(eval_expression(car(cdr(i))));
+      retval = first(rest(i));
+    else if (strcmp(p, "first") == 0)
+      retval = first(eval_expression(first(rest(i))));
+    else if (strcmp(p, "rest") == 0)
+      retval = rest(eval_expression(first(rest(i))));
     else
       retval = i;
   };
@@ -209,12 +209,12 @@ int eval_expression(int i)
   int retval;
   if (pair(i)) {
     retval = eval_list(i);
-    // retval = cells[cells[i].pair.cdr].pair.car;
+    // retval = cells[cells[i].pair.rest].pair.first;
     //
     //   pair (not atom)
     //   eq (also compares with nil)
-    // x car
-    // x cdr
+    // x first
+    // x rest
     //   cons
     //
     //   cond
@@ -252,7 +252,7 @@ int main(void)
         fprintf(stderr, "   ");
       fprintf(stderr, "%2d: ", i);
       if (pair(i))
-        fprintf(stderr, "car = %2d, cdr = %2d\n", car(i), cdr(i));
+        fprintf(stderr, "first = %2d, rest = %2d\n", first(i), rest(i));
       else
         fprintf(stderr, "token = %s\n", token(i));
     };
