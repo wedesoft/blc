@@ -80,6 +80,12 @@ int read_token(void)
 int make_pair(int first, int rest)
 {
   int retval = add_cell();
+  if (!empty(rest) && !pair(rest)) {
+    fprintf(stderr,
+            "Error: Rest of pair must be a list (but was %s)\n",
+            cells[rest].token);
+    exit(1);
+  };
   cells[retval].type = PAIR;
   cells[retval].pair.first = first;
   cells[retval].pair.rest = rest;
@@ -218,7 +224,8 @@ int eval_expression(int i)
     //   eq (also compares with nil)
     // x car
     // x cdr
-    //   cons
+    // x cons
+    //   null
     //
     //   cond
     //   define
@@ -226,7 +233,6 @@ int eval_expression(int i)
     //
     //   subst
     //   equal
-    //   null
     //   cadr
     //   caddr
     //   append
