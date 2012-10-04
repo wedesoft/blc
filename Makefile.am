@@ -20,11 +20,11 @@ EXTRA_DIST = Makefile.dist configure.ac README.md COPYING \
 
 test: test_tokenize.tmp test_miniracket.tmp
 
-test_tokenize.tmp: tokenize$(EXEEXT)
+test_tokenize.tmp: tokenize$(EXEEXT) test_tokenize_in.txt test_tokenize_out.txt
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-test_miniracket.tmp: tokenize$(EXEEXT) miniracket$(EXEEXT)
+test_miniracket.tmp: tokenize$(EXEEXT) miniracket$(EXEEXT) test_miniracket_in.txt test_miniracket_out.txt
 	$(CAT) test_miniracket_in.txt | ./tokenize $(EXEEXT) | ./miniracket$(EXEEXT) > out.tmp
 	$(DIFF) test_miniracket_out.txt out.tmp && $(TOUCH) $@
 
