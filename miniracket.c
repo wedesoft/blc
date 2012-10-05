@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_CELLS 128
+#define MAX_CELLS 256
 #define TOKENSIZE 8
 #define NIL -1
 
@@ -78,7 +78,7 @@ int read_token(void)
   } else {
     *p = '\0';
 #ifndef NDEBUG
-    fprintf(stderr, "Reading token %s\n", cells[retval].token);
+    fprintf(stderr, "Reading token \"%s\"\n", cells[retval].token);
 #endif
   }
   return retval;
@@ -135,11 +135,31 @@ int cons(int first, int rest)
 
 int read_expression(void);
 
+int push(int i)
+{
+  int retval;
+  if (!nil(i) && !pair(i))
+    retval = token(i)[0] == '(';
+  else
+    retval = 0;
+  return retval;
+}
+
+int pop(int i)
+{
+  int retval;
+  if (!nil(i) && !pair(i))
+    retval = token(i)[0] == ')';
+  else
+    retval = 0;
+  return retval;
+}
+
 int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (nil(cell))
+  if (pop(cell))
     retval = NIL;
   else
     retval = cons(cell, read_list());
@@ -148,18 +168,12 @@ int read_list(void)
 
 int read_expression(void)
 {
-  int retval = read_token();
-  if (!nil(retval)) {
-    char *str = token(retval);
-    switch (str[0]) {
-    case '(':
-      retval = read_list();
-      break;
-    case ')':
-      retval = NIL;
-      break;
-    };
-  };
+  int retval;
+  int cell = read_token();
+  if (push(cell))
+    retval = read_list();
+  else
+    retval = cell;
   return retval;
 }
 
@@ -197,6 +211,8 @@ void print_quoted(int i)
   print_expression(i);
   fputs(")\n", stdout);
 }
+
+int eval_expression(int i);
 
 int eval_list(int i)
 {
@@ -268,7 +284,7 @@ int main(void)
 {
   while (!feof(stdin)) {
     int expr = read_expression();
-#ifndef NEBUG
+#ifndef NDEBUG
     int i;
     for (i=0; i<n_cells; i++) {
       if (i == expr)
@@ -281,10 +297,12 @@ int main(void)
       else
         fprintf(stderr, "token = %s\n", token(i));
     };
+#endif
+    // print_quoted(expr);
+    print_quoted(eval_expression(expr));
+#ifndef NDEBUG
     fputc('\n', stderr);
 #endif
-    print_quoted(expr);
-    // print_quoted(eval_expression(expr));
   };
   return 0;
 }
