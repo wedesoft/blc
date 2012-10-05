@@ -1,7 +1,6 @@
 (quote (+ (* 2 x) 3))
-empty
 (first (quote (1 2 3)))
 (rest (quote (1 2 3)))
 (cons 1 (quote (2 3)))
-(cons 1 empty)
-(cons 1 (cons 2 (cons 3 empty)))
+(cons 1 (quote ()))
+(cons 1 (cons 2 (cons 3 (quote ()))))

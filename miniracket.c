@@ -84,12 +84,12 @@ int empty(int i)
 
 int pair(int i)
 {
-  return cells[i].type == PAIR;
+  return empty(i) ? 0 : cells[i].type == PAIR;
 }
 
 char *token(int i)
 {
-  if (pair(i)) {
+  if (empty(i) || pair(i)) {
     fprintf(stderr, "Not a token\n");
     exit(1);
   };
@@ -98,20 +98,17 @@ char *token(int i)
 
 int first(int i)
 {
-  if (!pair(i)) {
-    fprintf(stderr, "Argument to 'first' must be a pair\n");
-    exit(1);
-  };
-  return cells[i].pair.first;
+  return pair(i) ? cells[i].pair.first : NIL;
 }
 
 int rest(int i)
 {
-  if (!pair(i)) {
-    fprintf(stderr, "Argument to 'rest' must be a pair\n");
-    exit(1);
-  };
-  return cells[i].pair.rest;
+  return pair(i) ? cells[i].pair.rest : NIL;
+}
+
+int quote(int i)
+{
+  return i;
 }
 
 int cons(int first, int rest)
@@ -119,7 +116,7 @@ int cons(int first, int rest)
   int retval = add_cell();
   if (!empty(rest) && !pair(rest)) {
     fprintf(stderr,
-            "Error: Rest of pair must be a list (but was %s)\n",
+            "Error: Rest of pair must be empty or a list (but was %s)\n",
             cells[rest].token);
     exit(1);
   };
@@ -186,9 +183,11 @@ void print_expression(int i)
 
 void print_quoted(int i)
 {
-  fputs("(quote ", stdout);
-  print_expression(i);
-  fputc(')', stdout);
+  if (!empty(i)) {
+    fputs("(quote ", stdout);
+    print_expression(i);
+    fputs(")\n", stdout);
+  }
 }
 
 int eval_list(int i)
@@ -199,7 +198,7 @@ int eval_list(int i)
   else {
     char *p = token(first(i));
     if (strcmp(p, "quote") == 0)
-      retval = first(rest(i));
+      retval = quote(first(rest(i)));
     else if (strcmp(p, "first") == 0)
       retval = first(eval_expression(first(rest(i))));
     else if (strcmp(p, "rest") == 0)
@@ -245,11 +244,12 @@ int eval_expression(int i)
     //   eval
     // x quote
   } else {
-    char *p = token(i);
+    /* char *p = token(i);
     if (strcmp(p, "empty") == 0)
       retval = NIL;
     else
-      retval = i;
+      retval = i; */
+    retval = i;
   };
   return retval;
 }
@@ -259,7 +259,7 @@ int main(void)
   int i;
   while (!feof(stdin)) {
     int expr = read_expression();
-#ifndef NDEBUG
+#if 0
     for (i=0; i<n_cells; i++) {
       if (i == expr)
         fprintf(stderr, "-> ");
@@ -273,9 +273,8 @@ int main(void)
     };
     fputc('\n', stderr);
 #endif
-    if (empty(expr)) break;
-    print_quoted(eval_expression(expr)); fprintf(stdout, "\n");
-    // print_quoted(expr); fprintf(stdout, "\n");
+    // print_quoted(expr);
+    print_quoted(eval_expression(expr));
   };
   return 0;
 }

@@ -1,5 +1,4 @@
 (quote (+ (* 2 x) 3))
-(quote ())
 (quote 1)
 (quote (2 3))
 (quote (1 2 3))
