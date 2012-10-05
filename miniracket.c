@@ -216,7 +216,9 @@ int eval_list(int i)
 int eval_expression(int i)
 {
   int retval;
-  if (pair(i)) {
+  if (empty(i)) {
+    retval = i;
+  } else if (pair(i)) {
     retval = eval_list(i);
     // retval = cells[cells[i].pair.rest].pair.first;
     //
@@ -243,7 +245,11 @@ int eval_expression(int i)
     //   eval
     // x quote
   } else {
-    retval = i;
+    char *p = token(i);
+    if (strcmp(p, "empty") == 0)
+      retval = NIL;
+    else
+      retval = i;
   };
   return retval;
 }
