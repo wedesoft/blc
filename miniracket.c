@@ -113,11 +113,6 @@ int rest(int i)
   return pair(i) ? cells[i].pair.rest : NIL;
 }
 
-int quote(int i)
-{
-  return i;
-}
-
 int cons(int first, int rest)
 {
   int retval = add_cell();
@@ -218,13 +213,13 @@ int eval_list(int i)
 {
   int retval;
   if (nil(i))
-    retval = NIL;
+    retval = i;
   else if (pair(first(i)))
     retval = i;
   else {
     char *p = token(first(i));
     if (strcmp(p, "quote") == 0)
-      retval = quote(first(rest(i)));
+      retval = first(rest(i));
     else if (strcmp(p, "first") == 0)
       retval = first(eval_expression(first(rest(i))));
     else if (strcmp(p, "rest") == 0)
@@ -232,6 +227,8 @@ int eval_list(int i)
     else if (strcmp(p, "cons") == 0)
       retval = cons(eval_expression(first(rest(i))),
                     eval_expression(first(rest(rest(i)))));
+    else if (strcmp(p, "define") == 0)
+      retval = NIL; //eval_expression(first(rest(rest(i))));
     else
       retval = i;
   };
@@ -245,45 +242,40 @@ int eval_expression(int i)
     retval = i;
   } else if (pair(i)) {
     retval = eval_list(i);
-    // retval = cells[cells[i].pair.rest].pair.first;
-    //
-    //   pair (not atom)
-    //   eq (also compares with nil)
-    // x car
-    // x cdr
-    // x cons
-    //   null
-    //
-    // 1 define (local environment? substitution?)
-    // 3 lambda (vau, wrap (http://web.cs.wpi.edu/~jshutt/kernel.html))
-    //   cond
-    //
-    // 2 subst
-    //   equal
-    //   cadr
-    //   caddr
-    //   append
-    //   pair
-    //   assoc
-    //   sublis (hash)
-    //
-    //   eval
-    // x quote
   } else {
-    /* char *p = token(i);
-    if (strcmp(p, "empty") == 0)
-      retval = NIL;
-    else
-      retval = i; */
     retval = i;
   };
   return retval;
 }
 
+//   pair (not atom)
+//   eq (also compares with nil)
+// x car
+// x cdr
+// x cons
+//   null
+//
+// 1 define (local environment?), (define id ...)
+// 3 lambda (lambda (arg) (body))
+//   cond
+//
+// 2 subst
+//   equal
+//   cadr
+//   caddr
+//   append
+//   pair
+//   assoc
+//   sublis (hash)
+//
+//   eval
+// x quote
+
 int main(void)
 {
-  while (!feof(stdin)) {
+  while (1) {
     int expr = read_expression();
+    if (feof(stdin)) break;
 #ifndef NDEBUG
     int i;
     for (i=0; i<n_cells; i++) {
