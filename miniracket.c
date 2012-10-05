@@ -70,26 +70,33 @@ int read_token(void)
       exit(1);
     };
   };
-  if (len <= 0)
+  if (len <= 0) {
     retval = NIL;
-  else
+#ifndef NDEBUG
+    fprintf(stderr, "Reading NIL token\n");
+#endif
+  } else {
     *p = '\0';
+#ifndef NDEBUG
+    fprintf(stderr, "Reading token %s\n", cells[retval].token);
+#endif
+  }
   return retval;
 }
 
-int empty(int i)
+int nil(int i)
 {
   return i == NIL;
 }
 
 int pair(int i)
 {
-  return empty(i) ? 0 : cells[i].type == PAIR;
+  return nil(i) ? 0 : cells[i].type == PAIR;
 }
 
 char *token(int i)
 {
-  if (empty(i) || pair(i)) {
+  if (nil(i) || pair(i)) {
     fprintf(stderr, "Not a token\n");
     exit(1);
   };
@@ -114,7 +121,7 @@ int quote(int i)
 int cons(int first, int rest)
 {
   int retval = add_cell();
-  if (!empty(rest) && !pair(rest)) {
+  if (!nil(rest) && !pair(rest)) {
     fprintf(stderr,
             "Error: Rest of pair must be empty or a list (but was %s)\n",
             cells[rest].token);
@@ -130,7 +137,7 @@ int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (empty(cell))
+  if (nil(cell))
     retval = NIL;
   else
     retval = cons(cell, read_list());
@@ -139,8 +146,9 @@ int read_list(void)
 
 int read_expression(void)
 {
+  int list;
   int retval = read_token();
-  if (!empty(retval)) {
+  if (!nil(retval)) {
     char *str = token(retval);
     switch (str[0]) {
     case '(':
@@ -160,7 +168,7 @@ void print_list(int i)
 {
   if (pair(i)) {
     print_expression(first(i));
-    if (!empty(rest(i))) {
+    if (!nil(rest(i))) {
       fputc(' ', stdout);
       print_list(rest(i));
     }
@@ -170,30 +178,31 @@ void print_list(int i)
 
 void print_expression(int i)
 {
-  if (empty(i)) {
-    fputs("()", stdout);
-  } else if (pair(i)) {
-    fputc('(', stdout);
-    print_list(i);
-    fputc(')', stdout);
+  if (!nil(i)) {
+    if (pair(i)) {
+      fputc('(', stdout);
+      print_list(i);
+      fputc(')', stdout);
+    } else
+      fputs(token(i), stdout);
   } else {
-    fputs(token(i), stdout);
+    fputs("()", stdout);
   }
 }
 
 void print_quoted(int i)
 {
-  if (!empty(i)) {
-    fputs("(quote ", stdout);
-    print_expression(i);
-    fputs(")\n", stdout);
-  }
+  fputs("(quote ", stdout);
+  print_expression(i);
+  fputs(")\n", stdout);
 }
 
 int eval_list(int i)
 {
   int retval;
-  if (pair(first(i)))
+  if (nil(i))
+    retval = NIL;
+  else if (pair(first(i)))
     retval = i;
   else {
     char *p = token(first(i));
@@ -215,7 +224,7 @@ int eval_list(int i)
 int eval_expression(int i)
 {
   int retval;
-  if (empty(i)) {
+  if (nil(i)) {
     retval = i;
   } else if (pair(i)) {
     retval = eval_list(i);
@@ -273,8 +282,8 @@ int main(void)
     };
     fputc('\n', stderr);
 #endif
-    // print_quoted(expr);
-    print_quoted(eval_expression(expr));
+    print_quoted(expr);
+    // print_quoted(eval_expression(expr));
   };
   return 0;
 }
