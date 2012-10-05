@@ -227,7 +227,7 @@ int eval_expression(int i)
     // x cons
     //   null
     //
-    // 1 define
+    // 1 define (local environment? substitution?)
     // 3 lambda (vau, wrap (http://web.cs.wpi.edu/~jshutt/kernel.html))
     //   cond
     //
