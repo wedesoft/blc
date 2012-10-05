@@ -28,3 +28,5 @@ External Links
 * [Qemu open source processor emulator](http://qemu.org/Manual)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [STEPS Toward Espressive Programming Systems, 2011 Progress Report](http://www.vpri.org/pdf/tr2011004_steps11.pdf)
+* [LYSP: a tiny, lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
+* [Kivy cross platform UI](http://kivy.org)
