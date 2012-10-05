@@ -133,6 +133,8 @@ int cons(int first, int rest)
   return retval;
 }
 
+int read_expression(void);
+
 int read_list(void)
 {
   int retval;
@@ -146,7 +148,6 @@ int read_list(void)
 
 int read_expression(void)
 {
-  int list;
   int retval = read_token();
   if (!nil(retval)) {
     char *str = token(retval);
@@ -265,10 +266,10 @@ int eval_expression(int i)
 
 int main(void)
 {
-  int i;
   while (!feof(stdin)) {
     int expr = read_expression();
-#if 0
+#ifndef NEBUG
+    int i;
     for (i=0; i<n_cells; i++) {
       if (i == expr)
         fprintf(stderr, "-> ");
