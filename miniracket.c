@@ -237,6 +237,18 @@ int eval_list(int i)
   return retval;
 }
 
+int lookup(int i, int env)
+{
+  int retval;
+  if (nil(env))
+    retval = i;
+  else if (strcmp(token(i), token(first(first(env)))) == 0)
+    retval = rest(first(env));
+  else
+    retval = lookup(i, rest(env));
+  return retval;
+}
+
 int eval_expression(int i)
 {
   int retval;
@@ -245,7 +257,7 @@ int eval_expression(int i)
   } else if (pair(i)) {
     retval = eval_list(i);
   } else {
-    retval = i;
+    retval = lookup(i, environment);
   };
   return retval;
 }
@@ -257,7 +269,7 @@ int eval_expression(int i)
 // x cons
 //   null
 //
-// 1 define (local environment?), (define id ...)
+// x define (local environment?), (define id ...)
 // 3 lambda (lambda (arg) (body))
 //   cond
 //
