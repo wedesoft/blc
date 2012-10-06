@@ -5,3 +5,4 @@
 (cons 1 (quote (2 3)))
 (cons 1 (quote ()))
 (cons 1 (cons 2 (cons 3 (quote ()))))
+(define x 3)

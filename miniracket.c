@@ -40,6 +40,7 @@ typedef struct {
 
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
+int environment = NIL;
 
 int add_cell(void)
 {
@@ -116,16 +117,16 @@ int rest(int i)
 int cons(int first, int rest)
 {
   int retval = add_cell();
-  if (!nil(rest) && !pair(rest)) {
-    fprintf(stderr,
-            "Error: Rest of pair must be empty or a list (but was %s)\n",
-            cells[rest].token);
-    exit(1);
-  };
   cells[retval].type = PAIR;
   cells[retval].pair.first = first;
   cells[retval].pair.rest = rest;
   return retval;
+}
+
+int define(int id, int body)
+{
+  environment = cons(cons(id, body), environment);
+  return body;
 }
 
 int read_expression(void);
@@ -228,7 +229,8 @@ int eval_list(int i)
       retval = cons(eval_expression(first(rest(i))),
                     eval_expression(first(rest(rest(i)))));
     else if (strcmp(p, "define") == 0)
-      retval = NIL; //eval_expression(first(rest(rest(i))));
+      retval = define(first(rest(i)),
+                      eval_expression(first(rest(rest(i)))));
     else
       retval = i;
   };
