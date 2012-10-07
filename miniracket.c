@@ -41,6 +41,7 @@ typedef struct {
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
 int environment = NIL;
+int stack = NIL;
 
 int add_cell(void)
 {
@@ -129,6 +130,19 @@ int define(int id, int body)
   return body;
 }
 
+int push_stack(int arg)
+{
+  stack = cons(arg, stack);
+  return arg;
+}
+
+int pop_stack(void)
+{
+  int retval = first(stack);
+  stack = rest(stack);
+  return retval;
+}
+
 int read_expression(void);
 
 int push(int i)
@@ -210,14 +224,46 @@ void print_quoted(int i)
 
 int eval_expression(int i);
 
+int lookup(int i, int env)
+{
+  int retval;
+  if (nil(env))
+    retval = i;
+  else if (strcmp(token(i), token(first(first(env)))) == 0)
+#ifndef NDEBUG
+    fprintf(stderr, "%s == %s\n", token(i), token(first(first(env))));
+#endif
+    retval = rest(first(env));
+  else {
+#ifndef NDEBUG
+    fprintf(stderr, "%s != %s\n", token(i), token(first(first(env))));
+#endif
+    retval = lookup(i, rest(env));
+  }
+  return retval;
+}
+
+int eval_each(int i)
+{
+  int retval;
+  if (nil(i))
+    retval = i;
+  else
+    retval = cons(eval_expression(first(i)), eval_each(rest(i)));
+  return retval;
+}
+
+
 int eval_list(int i)
 {
   int retval;
   if (nil(i))
     retval = i;
-  else if (pair(first(i)))
-    retval = i;
-  else {
+  else if (pair(first(i))) {
+    // put value on stack.
+    push_stack(first(rest(i)));
+    retval = eval_expression(first(i));
+  } else {
     char *p = token(first(i));
     if (strcmp(p, "quote") == 0)
       retval = first(rest(i));
@@ -231,21 +277,20 @@ int eval_list(int i)
     else if (strcmp(p, "define") == 0)
       retval = define(first(rest(i)),
                       eval_expression(first(rest(rest(i)))));
-    else
-      retval = i;
+    else if (strcmp(p, "lambda") == 0) {
+      if (nil(stack))
+        retval = i;
+      else {
+        // temporarily replace value.
+        int backup = environment;
+        define(first(rest(i)), pop_stack());
+        retval = eval_expression(first(rest(rest(i))));
+        environment = backup;
+      }
+    } else {
+      retval = eval_each(i);
+    }
   };
-  return retval;
-}
-
-int lookup(int i, int env)
-{
-  int retval;
-  if (nil(env))
-    retval = i;
-  else if (strcmp(token(i), token(first(first(env)))) == 0)
-    retval = rest(first(env));
-  else
-    retval = lookup(i, rest(env));
   return retval;
 }
 
@@ -257,6 +302,9 @@ int eval_expression(int i)
   } else if (pair(i)) {
     retval = eval_list(i);
   } else {
+#ifndef NDEBUG
+    fprintf(stderr, "looking up %s\n", token(i));
+#endif
     retval = lookup(i, environment);
   };
   return retval;
@@ -269,11 +317,10 @@ int eval_expression(int i)
 // x cons
 //   null
 //
-// x define (local environment?), (define id ...)
-// 3 lambda (lambda (arg) (body))
+// x define (local environment?)
+// 3 lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
 //   cond
 //
-// 2 subst
 //   equal
 //   cadr
 //   caddr

@@ -10,3 +10,6 @@ x
 (define y (quote (1 2 3)))
 y
 (cons x y)
+(lambda v (v))
+((lambda z (z)) 3)
+

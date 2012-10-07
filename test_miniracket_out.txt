@@ -10,3 +10,5 @@
 (quote (1 2 3))
 (quote (1 2 3))
 (quote (0 1 2 3))
+(quote (lambda v (v)))
+(quote 3)
