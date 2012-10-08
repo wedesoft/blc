@@ -143,8 +143,6 @@ int pop_stack(void)
   return retval;
 }
 
-int read_expression(void);
-
 int push(int i)
 {
   int retval;
@@ -164,6 +162,8 @@ int pop(int i)
     retval = 0;
   return retval;
 }
+
+int read_expression(void);
 
 int read_list(void)
 {
@@ -218,7 +218,7 @@ int lookup(int i, int env)
 {
   int retval;
   if (nil(env))
-    retval = i;
+    retval = NIL;
   else if (strcmp(token(i), token(first(first(env)))) == 0)
     retval = rest(first(env));
   else
@@ -274,13 +274,15 @@ int eval_expression(int i)
           environment = backup;
         }
       } else if (!nil(lookup(first(i), environment))) {
-        retval = i; //eval_expression(cons(lookup(first(i), environment), rest(i)));
+        retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       } else {
         retval = cons(first(i), eval_each(rest(i)));
       }
     }
-  } else
+  } else if (!nil(lookup(i, environment)))
     retval = lookup(i, environment);
+  else
+    retval = i;
   return retval;
 }
 
