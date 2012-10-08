@@ -22,9 +22,16 @@ This is how to build the project under GNU/Linux.
 Usage
 -----
 
-The [REPL](http://en.wikipedia.org/wiki/Read-eval-print\_loop) can be started as follows
+The [REPL](http://en.wikipedia.org/wiki/Read-eval-print\_loop) can be started as follows.
 
     ./run.sh
+
+Testing
+-------
+
+The tests can be run using the following command.
+
+    make test
 
 External Links
 --------------
