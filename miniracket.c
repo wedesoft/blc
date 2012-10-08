@@ -187,39 +187,39 @@ int read_expression(void)
   return retval;
 }
 
-void print_expression(int i);
+void print_expression(int i, FILE *stream);
 
-void print_list(int i)
+void print_list(int i, FILE *stream)
 {
   if (pair(i)) {
-    print_expression(first(i));
+    print_expression(first(i), stream);
     if (!nil(rest(i))) {
-      fputc(' ', stdout);
-      print_list(rest(i));
+      fputc(' ', stream);
+      print_list(rest(i), stream);
     }
   } else
-    print_expression(i);
+    print_expression(i, stream);
 }
 
-void print_expression(int i)
+void print_expression(int i, FILE *stream)
 {
   if (!nil(i)) {
     if (pair(i)) {
-      fputc('(', stdout);
-      print_list(i);
-      fputc(')', stdout);
+      fputc('(', stream);
+      print_list(i, stream);
+      fputc(')', stream);
     } else
-      fputs(token(i), stdout);
+      fputs(token(i), stream);
   } else {
-    fputs("()", stdout);
+    fputs("()", stream);
   }
 }
 
-void print_quoted(int i)
+void print_quoted(int i, FILE *stream)
 {
-  fputs("(quote ", stdout);
-  print_expression(i);
-  fputs(")\n", stdout);
+  fputs("(quote ", stream);
+  print_expression(i, stream);
+  fputs(")\n", stream);
 }
 
 int eval_expression(int i);
@@ -248,6 +248,9 @@ int eval_each(int i)
 
 int eval_list(int i)
 {
+#ifndef NDEBUG
+  print_expression(i, stderr); fputs("\n", stream);
+#endif
   int retval;
   if (nil(i))
     retval = i;
@@ -279,8 +282,10 @@ int eval_list(int i)
         retval = eval_expression(first(rest(rest(i))));
         environment = backup;
       }
+    } else if (!nil(lookup(first(i), environment))) {
+      retval = i; //eval_expression(cons(lookup(first(i), environment), rest(i)));
     } else {
-      retval = eval_each(i);
+      retval = cons(first(i), eval_each(rest(i)));
     }
   };
   return retval;
@@ -343,8 +348,8 @@ int main(void)
         fprintf(stderr, "token = %s\n", token(i));
     };
 #endif
-    // print_quoted(expr);
-    print_quoted(eval_expression(expr));
+    // print_quoted(expr, stdout);
+    print_quoted(eval_expression(expr), stdout);
 #ifndef NDEBUG
     fputc('\n', stderr);
 #endif
