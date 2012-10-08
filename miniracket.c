@@ -246,7 +246,7 @@ int eval_each(int i)
   return retval;
 }
 
-int eval_list(int i)
+int eval_expression(int i)
 {
 #ifndef NDEBUG
   print_expression(i, stderr); fputs("\n", stderr);
@@ -254,56 +254,43 @@ int eval_list(int i)
   int retval;
   if (nil(i))
     retval = i;
-  else if (pair(first(i))) {
-    // put value on stack.
-    push_stack(first(rest(i)));
-    retval = eval_expression(first(i));
-  } else {
-    char *p = token(first(i));
-    if (strcmp(p, "quote") == 0)
-      retval = first(rest(i));
-    else if (strcmp(p, "first") == 0)
-      retval = first(eval_expression(first(rest(i))));
-    else if (strcmp(p, "rest") == 0)
-      retval = rest(eval_expression(first(rest(i))));
-    else if (strcmp(p, "cons") == 0)
-      retval = cons(eval_expression(first(rest(i))),
-                    eval_expression(first(rest(rest(i)))));
-    else if (strcmp(p, "define") == 0)
-      retval = define(first(rest(i)),
-                      eval_expression(first(rest(rest(i)))));
-    else if (strcmp(p, "lambda") == 0) {
-      if (nil(stack))
-        retval = i;
-      else {
-        // temporarily replace value.
-        int backup = environment;
-        define(first(rest(i)), pop_stack());
-        retval = eval_expression(first(rest(rest(i))));
-        environment = backup;
-      }
-    } else if (!nil(lookup(first(i), environment))) {
-      retval = i; //eval_expression(cons(lookup(first(i), environment), rest(i)));
+  else if (pair(i)) {
+    if (pair(first(i))) {
+      // put value on stack.
+      push_stack(first(rest(i)));
+      retval = eval_expression(first(i));
     } else {
-      retval = cons(first(i), eval_each(rest(i)));
+      char *p = token(first(i));
+      if (strcmp(p, "quote") == 0)
+        retval = first(rest(i));
+      else if (strcmp(p, "first") == 0)
+        retval = first(eval_expression(first(rest(i))));
+      else if (strcmp(p, "rest") == 0)
+        retval = rest(eval_expression(first(rest(i))));
+      else if (strcmp(p, "cons") == 0)
+        retval = cons(eval_expression(first(rest(i))),
+                      eval_expression(first(rest(rest(i)))));
+      else if (strcmp(p, "define") == 0)
+        retval = define(first(rest(i)),
+                        eval_expression(first(rest(rest(i)))));
+      else if (strcmp(p, "lambda") == 0) {
+        if (nil(stack))
+          retval = i;
+        else {
+          // temporarily replace value.
+          int backup = environment;
+          define(first(rest(i)), pop_stack());
+          retval = eval_expression(first(rest(rest(i))));
+          environment = backup;
+        }
+      } else if (!nil(lookup(first(i), environment))) {
+        retval = i; //eval_expression(cons(lookup(first(i), environment), rest(i)));
+      } else {
+        retval = cons(first(i), eval_each(rest(i)));
+      }
     }
-  };
-  return retval;
-}
-
-int eval_expression(int i)
-{
-  int retval;
-  if (nil(i)) {
-    retval = i;
-  } else if (pair(i)) {
-    retval = eval_list(i);
-  } else {
-#ifndef NDEBUG
-    fprintf(stderr, "looking up %s\n", token(i));
-#endif
+  } else
     retval = lookup(i, environment);
-  };
   return retval;
 }
 
