@@ -249,7 +249,7 @@ int eval_each(int i)
 int eval_list(int i)
 {
 #ifndef NDEBUG
-  print_expression(i, stderr); fputs("\n", stream);
+  print_expression(i, stderr); fputs("\n", stderr);
 #endif
   int retval;
   if (nil(i))
