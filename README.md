@@ -13,6 +13,9 @@ Attempt at writing a small Racket interpreter.
 Installation
 ------------
 
+This is how to build the project under GNU/Linux.
+
+    make -f Makefile.dist
     ./configure
     make
 
