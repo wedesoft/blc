@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_CELLS 256
+#define MAX_CELLS 1024
 #define TOKENSIZE 8
 #define NIL -1
 
@@ -230,16 +230,9 @@ int lookup(int i, int env)
   if (nil(env))
     retval = i;
   else if (strcmp(token(i), token(first(first(env)))) == 0)
-#ifndef NDEBUG
-    fprintf(stderr, "%s == %s\n", token(i), token(first(first(env))));
-#endif
     retval = rest(first(env));
-  else {
-#ifndef NDEBUG
-    fprintf(stderr, "%s != %s\n", token(i), token(first(first(env))));
-#endif
+  else
     retval = lookup(i, rest(env));
-  }
   return retval;
 }
 
@@ -252,7 +245,6 @@ int eval_each(int i)
     retval = cons(eval_expression(first(i)), eval_each(rest(i)));
   return retval;
 }
-
 
 int eval_list(int i)
 {
