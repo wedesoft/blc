@@ -187,32 +187,22 @@ int read_expression(void)
   return retval;
 }
 
-void print_expression(int i, FILE *stream);
-
-void print_list(int i, FILE *stream)
-{
-  if (pair(i)) {
-    print_expression(first(i), stream);
-    if (!nil(rest(i))) {
-      fputc(' ', stream);
-      print_list(rest(i), stream);
-    }
-  } else
-    print_expression(i, stream);
-}
-
 void print_expression(int i, FILE *stream)
 {
-  if (!nil(i)) {
-    if (pair(i)) {
-      fputc('(', stream);
-      print_list(i, stream);
-      fputc(')', stream);
-    } else
-      fputs(token(i), stream);
-  } else {
+  if (nil(i))
     fputs("()", stream);
-  }
+  else if (pair(i)) {
+    fputc('(', stream);
+    print_expression(first(i), stream);
+    int r = rest(i);
+    while (!nil(r)) {
+      fputc(' ', stream);
+      print_expression(first(r), stream);
+      r = rest(r);
+    }
+    fputc(')', stream);
+  } else
+    fputs(token(i), stream);
 }
 
 void print_quoted(int i, FILE *stream)
