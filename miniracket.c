@@ -41,7 +41,6 @@ typedef struct {
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
 int environment = NIL;
-int stack = NIL;
 
 int add_cell(void)
 {
@@ -99,6 +98,9 @@ int pair(int i)
 char *token(int i)
 {
   if (nil(i) || pair(i)) {
+#ifndef NDEBUG
+  print_expression(i, stderr); fputc('\n', stderr);
+#endif
     fprintf(stderr, "Not a token\n");
     exit(1);
   };
@@ -124,23 +126,18 @@ int cons(int first, int rest)
   return retval;
 }
 
+int lambda(int arg, int body)
+{
+  int token = add_cell();
+  cells[token].type = TOKEN;
+  strcpy(cells[token].token, "lambda");
+  return cons(token, cons(arg, body));
+}
+
 int define(int id, int body)
 {
   environment = cons(cons(id, body), environment);
   return body;
-}
-
-int push_stack(int arg)
-{
-  stack = cons(arg, stack);
-  return arg;
-}
-
-int pop_stack(void)
-{
-  int retval = first(stack);
-  stack = rest(stack);
-  return retval;
 }
 
 int push(int i)
@@ -219,7 +216,7 @@ int lookup(int i, int env)
   int retval;
   if (nil(env))
     retval = NIL;
-  else if (strcmp(token(i), token(first(first(env)))) == 0)
+  else if (!strcmp(token(i), token(first(first(env)))))
     retval = rest(first(env));
   else
     retval = lookup(i, rest(env));
@@ -236,34 +233,33 @@ int eval_expression(int i)
     retval = i;
   else if (pair(i)) {
     if (pair(first(i))) {
-      push_stack(first(rest(i)));
-      retval = eval_expression(first(i));
-      pop_stack();
+      int fun = eval_expression(first(i));
+      if (strcmp(token(first(fun)), "lambda")) {
+        print_expression(fun, stderr);
+        fputc('\n', stderr);
+        fprintf(stderr, "Error: Expecting lambda-expression\n");
+        exit(1);
+      };
+      int backup = environment;
+      define(first(rest(fun)), first(rest(i)));
+      retval = eval_expression(first(rest(rest(fun))));
+      environment = backup;
     } else {
       char *p = token(first(i));
-      if (strcmp(p, "quote") == 0)
+      if (!strcmp(p, "quote"))
         retval = first(rest(i));
-      else if (strcmp(p, "first") == 0)
+      else if (!strcmp(p, "first"))
         retval = first(eval_expression(first(rest(i))));
-      else if (strcmp(p, "rest") == 0)
+      else if (!strcmp(p, "rest"))
         retval = rest(eval_expression(first(rest(i))));
-      else if (strcmp(p, "cons") == 0)
+      else if (!strcmp(p, "cons"))
         retval = cons(eval_expression(first(rest(i))),
                       eval_expression(first(rest(rest(i)))));
-      else if (strcmp(p, "define") == 0)
+      else if (!strcmp(p, "define"))
         retval = define(first(rest(i)),
                         eval_expression(first(rest(rest(i)))));
-      else if (strcmp(p, "lambda") == 0) {
-        if (nil(stack))
-          retval = i;
-        else {
-          int backup = environment;
-          int value = pop_stack();
-          define(first(rest(i)), value);
-          retval = eval_expression(first(rest(rest(i))));
-          push_stack(value);
-          environment = backup;
-        }
+      else if (!strcmp(p, "lambda")) {
+        retval = lambda(first(rest(i)), eval_expression(rest(rest(i))));
       } else if (!nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else
