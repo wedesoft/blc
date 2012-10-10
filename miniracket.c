@@ -226,16 +226,6 @@ int lookup(int i, int env)
   return retval;
 }
 
-int eval_each(int i)
-{
-  int retval;
-  if (nil(i))
-    retval = i;
-  else
-    retval = cons(eval_expression(first(i)), eval_each(rest(i)));
-  return retval;
-}
-
 int eval_expression(int i)
 {
 #ifndef NDEBUG
@@ -246,9 +236,9 @@ int eval_expression(int i)
     retval = i;
   else if (pair(i)) {
     if (pair(first(i))) {
-      // put value on stack.
       push_stack(first(rest(i)));
       retval = eval_expression(first(i));
+      pop_stack();
     } else {
       char *p = token(first(i));
       if (strcmp(p, "quote") == 0)
@@ -267,17 +257,17 @@ int eval_expression(int i)
         if (nil(stack))
           retval = i;
         else {
-          // temporarily replace value.
           int backup = environment;
-          define(first(rest(i)), pop_stack());
+          int value = pop_stack();
+          define(first(rest(i)), value);
           retval = eval_expression(first(rest(rest(i))));
+          push_stack(value);
           environment = backup;
         }
-      } else if (!nil(lookup(first(i), environment))) {
+      } else if (!nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
-      } else {
-        retval = cons(first(i), eval_each(rest(i)));
-      }
+      else
+        retval = cons(first(i), eval_expression(rest(i)));
     }
   } else if (!nil(lookup(i, environment)))
     retval = lookup(i, environment);
@@ -287,14 +277,14 @@ int eval_expression(int i)
 }
 
 //   pair (not atom)
-//   eq (also compares with nil)
+// 1 eq (also compares with nil)
 // x car
 // x cdr
 // x cons
 //   null
 //
 // x define (local environment?)
-// 3 lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
+// x lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
 //   cond
 //
 //   equal
