@@ -36,6 +36,7 @@ The tests can be run using the following command.
 External Links
 --------------
 
+* [Racket Programming Language](http://www.racket-lang.org/)
 * [Revised⁶ Report on the Algorithmic Language Scheme](http://www.r6rs.org/)
 * [Maru metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Scheme implemented in Ruby](https://github.com/jcoglan/heist)
