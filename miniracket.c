@@ -131,6 +131,11 @@ int define(int id, int body)
   return body;
 }
 
+int undefine(int id)
+{
+  return define(id, NIL);
+}
+
 int push(int i)
 {
   int retval;
@@ -250,7 +255,10 @@ int eval_expression(int i)
         retval = define(first(rest(i)),
                         eval_expression(first(rest(rest(i)))));
       else if (!strcmp(p, "lambda")) {
+        int backup = environment;
+        undefine(first(rest(i)));
         retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
+        environment = backup;
       } else if (!nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else
