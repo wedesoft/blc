@@ -37,8 +37,9 @@ External Links
 --------------
 
 * [Revised⁶ Report on the Algorithmic Language Scheme](http://www.r6rs.org/)
-* [Qemu open source processor emulator](http://qemu.org/Manual)
+* [Maru metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/)
+* [Scheme implemented in Ruby](https://github.com/jcoglan/heist)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [STEPS Toward Espressive Programming Systems, 2011 Progress Report](http://www.vpri.org/pdf/tr2011004\_steps11.pdf)
-* [LYSP: a tiny, lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
 * [Kivy cross platform UI](http://kivy.org)
+* [Qemu open source processor emulator](http://qemu.org/Manual)
