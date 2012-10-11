@@ -10,9 +10,9 @@ x
 (define y (quote (1 2 3)))
 y
 (cons x y)
-(lambda v (v))
+(lambda v v)
 ((lambda z z) 3)
-((lambda z (1 2 3)) 2)
+((lambda z (quote (1 2 3))) 2)
 ((lambda y (lambda x (+ x y))) 2)
 (((lambda y (lambda x (+ x y))) 2) 3)
 (define f (lambda x (+ x x)))
