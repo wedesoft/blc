@@ -73,14 +73,8 @@ int read_token(void)
   };
   if (len <= 0) {
     retval = NIL;
-#ifndef NDEBUG
-    fprintf(stderr, "Reading NIL token\n");
-#endif
   } else {
     *p = '\0';
-#ifndef NDEBUG
-    fprintf(stderr, "Reading token \"%s\"\n", cells[retval].token);
-#endif
   }
   return retval;
 }
@@ -98,9 +92,6 @@ int pair(int i)
 char *token(int i)
 {
   if (nil(i) || pair(i)) {
-#ifndef NDEBUG
-  print_expression(i, stderr); fputc('\n', stderr);
-#endif
     fprintf(stderr, "Not a token\n");
     exit(1);
   };
@@ -225,9 +216,6 @@ int lookup(int i, int env)
 
 int eval_expression(int i)
 {
-#ifndef NDEBUG
-  print_expression(i, stderr); fputs("\n", stderr);
-#endif
   int retval;
   if (nil(i))
     retval = i;
@@ -269,6 +257,13 @@ int eval_expression(int i)
     retval = lookup(i, environment);
   else
     retval = i;
+#ifndef NDEBUG
+  fputs("  ", stderr);
+  print_expression(i, stderr);
+  fputs(" -> ", stderr);
+  print_expression(retval, stderr);
+  fputs("\n", stderr);
+#endif
   return retval;
 }
 
@@ -299,7 +294,7 @@ int main(void)
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
-#ifndef NDEBUG
+#if 0
     int i;
     for (i=0; i<n_cells; i++) {
       if (i == expr)
@@ -313,7 +308,10 @@ int main(void)
         fprintf(stderr, "token = %s\n", token(i));
     };
 #endif
-    // print_quoted(expr, stdout);
+#ifndef NDEBUG
+    print_expression(expr, stderr);
+    fputc('\n', stderr);
+#endif
     print_quoted(eval_expression(expr), stdout);
 #ifndef NDEBUG
     fputc('\n', stderr);
