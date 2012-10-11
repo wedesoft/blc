@@ -122,7 +122,7 @@ int lambda(int arg, int body)
   int token = add_cell();
   cells[token].type = TOKEN;
   strcpy(cells[token].token, "lambda");
-  return cons(token, cons(arg, body));
+  return cons(token, cons(arg, cons(body, NIL)));
 }
 
 int define(int id, int body)
@@ -217,14 +217,17 @@ int lookup(int i, int env)
 int eval_expression(int i)
 {
   int retval;
+#ifndef NDEBUG
+  fputs("  ", stderr);
+  print_expression(i, stderr);
+  fputs(" -> ...\n", stderr);
+#endif
   if (nil(i))
     retval = i;
   else if (pair(i)) {
     if (pair(first(i))) {
       int fun = eval_expression(first(i));
       if (strcmp(token(first(fun)), "lambda")) {
-        print_expression(fun, stderr);
-        fputc('\n', stderr);
         fprintf(stderr, "Error: Expecting lambda-expression\n");
         exit(1);
       };
@@ -247,7 +250,7 @@ int eval_expression(int i)
         retval = define(first(rest(i)),
                         eval_expression(first(rest(rest(i)))));
       else if (!strcmp(p, "lambda")) {
-        retval = lambda(first(rest(i)), eval_expression(rest(rest(i))));
+        retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
       } else if (!nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else
@@ -258,9 +261,7 @@ int eval_expression(int i)
   else
     retval = i;
 #ifndef NDEBUG
-  fputs("  ", stderr);
-  print_expression(i, stderr);
-  fputs(" -> ", stderr);
+  fputs("  ... -> ", stderr);
   print_expression(retval, stderr);
   fputs("\n", stderr);
 #endif
