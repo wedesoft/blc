@@ -2,15 +2,15 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = tokenize miniracket
+bin_PROGRAMS = tokenize boot-eval
 
 tokenize_SOURCES = tokenize.c tokenizer.c
 tokenize_LDFLAGS =
 tokenize_LDADD =
 
-miniracket_SOURCES = miniracket.c tokenizer.c
-miniracket_LDFLAGS = 
-miniracket_LDADD =
+boot_eval_SOURCES = boot-eval.c tokenizer.c
+boot_eval_LDFLAGS = 
+boot_eval_LDADD =
 
 noinst_HEADERS = tokenizer.h
 
@@ -18,17 +18,17 @@ BUILT_SOURCES =
 
 EXTRA_DIST = Makefile.dist configure.ac README.md COPYING \
 	test_tokenize_in.txt test_tokenize_out.txt \
-	test_miniracket_in.txt test_miniracket_out.txt
+	test_boot_in.txt test_boot_out.txt
 
-test: test_tokenize.tmp test_miniracket.tmp
+test: test_tokenize.tmp test_boot.tmp
 
 test_tokenize.tmp: tokenize$(EXEEXT) test_tokenize_in.txt test_tokenize_out.txt
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-test_miniracket.tmp: miniracket$(EXEEXT) test_miniracket_in.txt test_miniracket_out.txt
-	$(CAT) test_miniracket_in.txt | ./miniracket$(EXEEXT) > out.tmp
-	$(DIFF) test_miniracket_out.txt out.tmp && $(TOUCH) $@
+test_boot.tmp: boot-eval$(EXEEXT) test_boot_in.txt test_boot_out.txt
+	$(CAT) test_boot_in.txt | ./boot-eval$(EXEEXT) > out.tmp
+	$(DIFF) test_boot_out.txt out.tmp && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
 

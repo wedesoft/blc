@@ -7,6 +7,7 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
+boot-eval
 config.log
 config.guess
 config.status
@@ -17,6 +18,5 @@ install-sh
 libtool
 ltmain.sh
 m4
-miniracket
 missing
 tokenize
