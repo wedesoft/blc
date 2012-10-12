@@ -52,6 +52,21 @@ int add_cell(void)
   return retval;
 }
 
+int to_token(const char *str)
+{
+  int retval = add_cell();
+  cells[retval].type = TOKEN;
+  if (strlen(str) > TOKENSIZE) {
+    fprintf(stderr,
+            "Error: Token %s... longer than %d characters\n",
+            str,
+            TOKENSIZE);
+    exit(1);
+  };
+  strcpy(cells[retval].token, str);
+  return retval;
+}
+
 int read_token(void)
 {
   int retval = add_cell();
@@ -67,7 +82,8 @@ int read_token(void)
       *p = '\0';
       fprintf(stderr,
               "Error: Token %s... longer than %d characters\n",
-              cells[retval].token, TOKENSIZE);
+              cells[retval].token,
+              TOKENSIZE);
       exit(1);
     };
   };
@@ -119,10 +135,13 @@ int cons(int first, int rest)
 
 int lambda(int arg, int body)
 {
-  int token = add_cell();
-  cells[token].type = TOKEN;
-  strcpy(cells[token].token, "lambda");
-  return cons(token, cons(arg, cons(body, NIL)));
+  return cons(to_token("lambda"), cons(arg, cons(body, NIL)));
+}
+
+int eq(int a, int b)
+{
+#warning 'eq' not implemented yet!
+  return NIL;
 }
 
 int define(int id, int body)
@@ -259,6 +278,8 @@ int eval_expression(int i)
         undefine(first(rest(i)));
         retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
         environment = backup;
+      } else if (!strcmp(p, "eq"))
+        retval = eq(first(rest(i)), first(rest(rest(i))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else
@@ -274,6 +295,14 @@ int eval_expression(int i)
   fputs("\n", stderr);
 #endif
   return retval;
+}
+
+void initialize(void)
+{
+  int x = to_token("x");
+  int y = to_token("y");
+  define(to_token("true"), lambda(x, lambda(y, x)));
+  define(to_token("false"), lambda(x, lambda(y, y)));
 }
 
 //   pair (not atom)
@@ -300,6 +329,7 @@ int eval_expression(int i)
 
 int main(void)
 {
+  initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
