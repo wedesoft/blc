@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "tokenizer.h"
 
 #define MAX_CELLS 1024
 #define TOKENSIZE 8
@@ -64,34 +65,6 @@ int to_token(const char *str)
     exit(1);
   };
   strcpy(cells[retval].token, str);
-  return retval;
-}
-
-int read_token(void)
-{
-  int retval = add_cell();
-  int len = 0;
-  char *p = cells[retval].token;
-  cells[retval].type = TOKEN;
-  while (1) {
-    char c = fgetc(stdin);
-    if (c == EOF || c == '\n') break;
-    *p++ = c;
-    len++;
-    if (len > TOKENSIZE) {
-      *p = '\0';
-      fprintf(stderr,
-              "Error: Token %s... longer than %d characters\n",
-              cells[retval].token,
-              TOKENSIZE);
-      exit(1);
-    };
-  };
-  if (len <= 0) {
-    retval = NIL;
-  } else {
-    *p = '\0';
-  }
   return retval;
 }
 
@@ -191,7 +164,9 @@ int read_list(void)
 int read_expression(void)
 {
   int retval;
-  int cell = read_token();
+  char buffer[TOKENSIZE + 2];
+  char *token = read_token(buffer, stdin);
+  int cell = token ? to_token(token) : NIL;
   if (push(cell))
     retval = read_list();
   else

@@ -4,13 +4,15 @@ ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = tokenize miniracket
 
-tokenize_SOURCES = tokenize.c
+tokenize_SOURCES = tokenize.c tokenizer.c
 tokenize_LDFLAGS =
 tokenize_LDADD =
 
-miniracket_SOURCES = miniracket.c
-miniracket_LDFLAGS =
+miniracket_SOURCES = miniracket.c tokenizer.c
+miniracket_LDFLAGS = 
 miniracket_LDADD =
+
+noinst_HEADERS = tokenizer.h
 
 BUILT_SOURCES =
 
@@ -24,8 +26,8 @@ test_tokenize.tmp: tokenize$(EXEEXT) test_tokenize_in.txt test_tokenize_out.txt
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-test_miniracket.tmp: tokenize$(EXEEXT) miniracket$(EXEEXT) test_miniracket_in.txt test_miniracket_out.txt
-	$(CAT) test_miniracket_in.txt | ./tokenize $(EXEEXT) | ./miniracket$(EXEEXT) > out.tmp
+test_miniracket.tmp: miniracket$(EXEEXT) test_miniracket_in.txt test_miniracket_out.txt
+	$(CAT) test_miniracket_in.txt | ./miniracket$(EXEEXT) > out.tmp
 	$(DIFF) test_miniracket_out.txt out.tmp && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp

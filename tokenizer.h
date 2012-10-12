@@ -13,16 +13,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include "tokenizer.h"
 
-int main(void)
-{
-  char buffer[TOKENSIZE + 2];
-  while (1) {
-    char *token = read_token(buffer, stdin);
-    if (!token) break;
-    fputs(token, stdout); fputc('\n', stdout);
-  };
-  return 0;
-}
+#ifndef __TOKENIZER_H
+#define __TOKENIZER_H
+
+#include <stdio.h>
+
+#define TOKENSIZE 8
+
+char *read_token(char *buffer, FILE *stream);
+
+#endif
 
