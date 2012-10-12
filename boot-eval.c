@@ -39,8 +39,6 @@ typedef struct {
   };
 } cell_t;
 
-void print_expression(int i, FILE *stream);
-
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
 int environment = NIL;
@@ -77,6 +75,8 @@ int is_pair(int i)
   return is_nil(i) ? 0 : cells[i].type == PAIR;
 }
 
+void print_expression(int i, FILE *stream);
+
 char *token(int i)
 {
   if (is_nil(i) || is_pair(i)) {
@@ -110,10 +110,18 @@ int lambda(int arg, int body)
   return cons(to_token("lambda"), cons(arg, cons(body, NIL)));
 }
 
+int lookup(int i, int env);
+
 int eq(int a, int b)
 {
-#warning 'eq' not implemented yet!
-  return NIL;
+  int retval;
+  if (is_pair(a) || is_pair(b) || is_nil(a) || is_nil(b))
+    retval = NIL;
+  else if (!strcmp(token(a), token(b)))
+    retval = lookup(to_token("true"), environment);
+  else
+    retval = lookup(to_token("false"), environment);
+  return retval;
 }
 
 int define(int id, int body)
@@ -251,7 +259,7 @@ int eval_expression(int i)
         retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
         environment = backup;
       } else if (!strcmp(p, "eq"))
-        retval = eq(first(rest(i)), first(rest(rest(i))));
+        retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else

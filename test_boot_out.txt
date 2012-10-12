@@ -21,5 +21,7 @@
 (quote (lambda x (lambda y y)))
 (quote 1)
 (quote 2)
+(quote (lambda x (lambda y x)))
+(quote (lambda x (lambda y y)))
 (quote (lambda b (lambda x (lambda y ((b y) x)))))
 (quote (lambda x (lambda y y)))
