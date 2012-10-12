@@ -225,16 +225,13 @@ int eval_expression(int i)
   else if (is_pair(i)) {
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i));
-      if (strcmp(token(first(fun)), "lambda")) {
-        fputs("Error: Expecting lambda-expression but got ", stderr);
-        print_expression(fun, stderr);
-        fputc('\n', stderr);
-        exit(1);
-      };
-      int backup = environment;
-      define(first(rest(fun)), first(rest(i)));
-      retval = eval_expression(first(rest(rest(fun))));
-      environment = backup;
+      if (!strcmp(token(first(fun)), "lambda")) {
+        int backup = environment;
+        define(first(rest(fun)), first(rest(i)));
+        retval = eval_expression(first(rest(rest(fun))));
+        environment = backup;
+      } else
+        retval = cons(fun, rest(i));
     } else {
       char *p = token(first(i));
       if (!strcmp(p, "quote"))
@@ -247,8 +244,7 @@ int eval_expression(int i)
         retval = cons(eval_expression(first(rest(i))),
                       eval_expression(first(rest(rest(i)))));
       else if (!strcmp(p, "define"))
-        retval = define(first(rest(i)),
-                        eval_expression(first(rest(rest(i)))));
+        retval = define(first(rest(i)), eval_expression(first(rest(rest(i)))));
       else if (!strcmp(p, "lambda")) {
         int backup = environment;
         undefine(first(rest(i)));
@@ -268,7 +264,7 @@ int eval_expression(int i)
 #ifndef NDEBUG
   fputs("  ... -> ", stderr);
   print_expression(retval, stderr);
-  fputs("\n", stderr);
+  fputc('\n', stderr);
 #endif
   return retval;
 }
@@ -280,7 +276,8 @@ void initialize(void)
   int y = to_token("y");
   define(to_token("true"), lambda(x, lambda(y, x)));
   define(to_token("false"), lambda(x, lambda(y, y)));
-  define(to_token("not"), lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))));
+  define(to_token("not"),
+         lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))));
 }
 
 //   pair (not atom)

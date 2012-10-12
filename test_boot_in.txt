@@ -22,3 +22,4 @@ false
 ((true 1) 2)
 ((false 1) 2)
 not
+(not true)
