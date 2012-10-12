@@ -79,19 +79,19 @@ int read_token(void)
   return retval;
 }
 
-int nil(int i)
+int is_nil(int i)
 {
   return i == NIL;
 }
 
-int pair(int i)
+int is_pair(int i)
 {
-  return nil(i) ? 0 : cells[i].type == PAIR;
+  return is_nil(i) ? 0 : cells[i].type == PAIR;
 }
 
 char *token(int i)
 {
-  if (nil(i) || pair(i)) {
+  if (is_nil(i) || is_pair(i)) {
     fprintf(stderr, "Not a token\n");
     exit(1);
   };
@@ -100,12 +100,12 @@ char *token(int i)
 
 int first(int i)
 {
-  return pair(i) ? cells[i].pair.first : NIL;
+  return is_pair(i) ? cells[i].pair.first : NIL;
 }
 
 int rest(int i)
 {
-  return pair(i) ? cells[i].pair.rest : NIL;
+  return is_pair(i) ? cells[i].pair.rest : NIL;
 }
 
 int cons(int first, int rest)
@@ -139,7 +139,7 @@ int undefine(int id)
 int push(int i)
 {
   int retval;
-  if (!nil(i) && !pair(i))
+  if (!is_nil(i) && !is_pair(i))
     retval = token(i)[0] == '(';
   else
     retval = 0;
@@ -149,7 +149,7 @@ int push(int i)
 int pop(int i)
 {
   int retval;
-  if (!nil(i) && !pair(i))
+  if (!is_nil(i) && !is_pair(i))
     retval = token(i)[0] == ')';
   else
     retval = 0;
@@ -182,13 +182,13 @@ int read_expression(void)
 
 void print_expression(int i, FILE *stream)
 {
-  if (nil(i))
+  if (is_nil(i))
     fputs("()", stream);
-  else if (pair(i)) {
+  else if (is_pair(i)) {
     fputc('(', stream);
     print_expression(first(i), stream);
     int r = rest(i);
-    while (!nil(r)) {
+    while (!is_nil(r)) {
       fputc(' ', stream);
       print_expression(first(r), stream);
       r = rest(r);
@@ -210,7 +210,7 @@ int eval_expression(int i);
 int lookup(int i, int env)
 {
   int retval;
-  if (nil(env))
+  if (is_nil(env))
     retval = NIL;
   else if (!strcmp(token(i), token(first(first(env)))))
     retval = rest(first(env));
@@ -227,10 +227,10 @@ int eval_expression(int i)
   print_expression(i, stderr);
   fputs(" -> ...\n", stderr);
 #endif
-  if (nil(i))
+  if (is_nil(i))
     retval = i;
-  else if (pair(i)) {
-    if (pair(first(i))) {
+  else if (is_pair(i)) {
+    if (is_pair(first(i))) {
       int fun = eval_expression(first(i));
       if (strcmp(token(first(fun)), "lambda")) {
         fprintf(stderr, "Error: Expecting lambda-expression\n");
@@ -259,12 +259,12 @@ int eval_expression(int i)
         undefine(first(rest(i)));
         retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
         environment = backup;
-      } else if (!nil(lookup(first(i), environment)))
+      else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
       else
         retval = cons(first(i), eval_expression(rest(i)));
     }
-  } else if (!nil(lookup(i, environment)))
+  } else if (!is_nil(lookup(i, environment)))
     retval = lookup(i, environment);
   else
     retval = i;
@@ -311,7 +311,7 @@ int main(void)
       else
         fprintf(stderr, "   ");
       fprintf(stderr, "%2d: ", i);
-      if (pair(i))
+      if (is_pair(i))
         fprintf(stderr, "first = %2d, rest = %2d\n", first(i), rest(i));
       else
         fprintf(stderr, "token = %s\n", token(i));
