@@ -39,6 +39,8 @@ typedef struct {
   };
 } cell_t;
 
+void print_expression(int i, FILE *stream);
+
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
 int environment = NIL;
@@ -58,10 +60,7 @@ int to_token(const char *str)
   int retval = add_cell();
   cells[retval].type = TOKEN;
   if (strlen(str) > TOKENSIZE) {
-    fprintf(stderr,
-            "Error: Token %s... longer than %d characters\n",
-            str,
-            TOKENSIZE);
+    fprintf(stderr, "Error: Token %s... longer than %d characters\n", str, TOKENSIZE);
     exit(1);
   };
   strcpy(cells[retval].token, str);
@@ -81,7 +80,7 @@ int is_pair(int i)
 char *token(int i)
 {
   if (is_nil(i) || is_pair(i)) {
-    fprintf(stderr, "Not a token\n");
+    print_expression(i, stderr); fputs(" is not a token\n", stderr);
     exit(1);
   };
   return cells[i].token;
@@ -227,7 +226,9 @@ int eval_expression(int i)
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i));
       if (strcmp(token(first(fun)), "lambda")) {
-        fprintf(stderr, "Error: Expecting lambda-expression\n");
+        fputs("Error: Expecting lambda-expression but got ", stderr);
+        print_expression(fun, stderr);
+        fputc('\n', stderr);
         exit(1);
       };
       int backup = environment;
