@@ -299,10 +299,12 @@ int eval_expression(int i)
 
 void initialize(void)
 {
+  int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
   define(to_token("true"), lambda(x, lambda(y, x)));
   define(to_token("false"), lambda(x, lambda(y, y)));
+  define(to_token("not"), lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))));
 }
 
 //   pair (not atom)
