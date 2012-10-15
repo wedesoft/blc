@@ -167,6 +167,11 @@ int is_pop(int i)
   return is_eq(i, ")");
 }
 
+int is_lambda(int i)
+{
+  return is_eq(first(i), "lambda");
+}
+
 int read_expression(void);
 
 int read_list(void)
@@ -230,22 +235,20 @@ int eval_expression(int i)
     retval = i;
   else if (is_pair(i)) {
     if (is_pair(first(i))) {
-      int fun = eval_expression(first(i));
-      // int fun = first(i);
-      if (!strcmp(token(first(fun)), "lambda")) {
+      if (is_lambda(first(i))) {
         int backup = environment;
 #ifndef NDEBUG
         fputs("define(", stderr);
-        print_expression(first(rest(fun)), stderr);
+        print_expression(first(rest(first(i))), stderr);
         fputs(", ", stderr);
         print_expression(first(rest(i)), stderr);
         fputs(")\n", stderr);
 #endif
-        define(first(rest(fun)), first(rest(i)));
-        retval = eval_expression(first(rest(rest(fun))));
+        define(first(rest(first(i))), first(rest(i)));
+        retval = eval_expression(first(rest(rest(first(i)))));
         environment = backup;
       } else
-        retval = cons(fun, rest(i));
+        retval = eval_expression(cons(eval_expression(first(i)), rest(i)));
     } else {
       char *p = token(first(i));
       if (!strcmp(p, "quote"))
