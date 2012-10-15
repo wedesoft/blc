@@ -223,13 +223,20 @@ void print_quoted(int i, FILE *stream)
   fputs(")\n", stream);
 }
 
+#ifndef NDEBUG
+int level = 0;
+#endif
+
 int eval_expression(int i)
 {
   int retval;
-#if 0
-  fputs("  ", stderr);
+#ifndef NDEBUG
+  int j;
+  for (j=0; j<level; j++)
+    fputs("  ", stderr);
   print_expression(i, stderr);
   fputs(" -> ...\n", stderr);
+  level++;
 #endif
   if (is_nil(i))
     retval = i;
@@ -237,7 +244,7 @@ int eval_expression(int i)
     if (is_pair(first(i))) {
       if (is_lambda(first(i))) {
         int backup = environment;
-#ifndef NDEBUG
+#if 0
         fputs("define(", stderr);
         print_expression(first(rest(first(i))), stderr);
         fputs(", ", stderr);
@@ -278,7 +285,10 @@ int eval_expression(int i)
   else
     retval = i;
 #ifndef NDEBUG
-  fputs("-> ", stderr);
+  level--;
+  for (j=0; j<level; j++)
+    fputs("  ", stderr);
+  fputs("... -> ", stderr);
   print_expression(retval, stderr);
   fputc('\n', stderr);
 #endif
