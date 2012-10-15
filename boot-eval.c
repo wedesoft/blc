@@ -223,7 +223,7 @@ int lookup(int i, int env)
 int eval_expression(int i)
 {
   int retval;
-#ifndef NDEBUG
+#if 0
   fputs("  ", stderr);
   print_expression(i, stderr);
   fputs(" -> ...\n", stderr);
@@ -235,6 +235,13 @@ int eval_expression(int i)
       int fun = eval_expression(first(i));
       if (!strcmp(token(first(fun)), "lambda")) {
         int backup = environment;
+#ifndef NDEBUG
+        fputs("define(", stderr);
+        print_expression(first(rest(fun)), stderr);
+        fputs(", ", stderr);
+        print_expression(first(rest(i)), stderr);
+        fputs(")\n", stderr);
+#endif
         define(first(rest(fun)), first(rest(i)));
         retval = eval_expression(first(rest(rest(fun))));
         environment = backup;
@@ -270,7 +277,7 @@ int eval_expression(int i)
   else
     retval = i;
 #ifndef NDEBUG
-  fputs("  ... -> ", stderr);
+  fputs("-> ", stderr);
   print_expression(retval, stderr);
   fputc('\n', stderr);
 #endif
@@ -325,9 +332,11 @@ int main(void)
         fprintf(stderr, "   ");
       fprintf(stderr, "%2d: ", i);
       if (is_pair(i))
-        fprintf(stderr, "first = %2d, rest = %2d\n", first(i), rest(i));
+        fprintf(stderr, "first = %3d, rest = %3d - ", first(i), rest(i));
       else
-        fprintf(stderr, "token = %s\n", token(i));
+        fprintf(stderr, "token = %15s - ", token(i));
+      print_expression(i, stderr);
+      fputc('\n', stderr);
     };
 #endif
 #ifndef NDEBUG
