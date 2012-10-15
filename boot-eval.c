@@ -115,6 +115,11 @@ int lambda(int arg, int body)
   return cons(to_token("lambda"), cons(arg, cons(body, NIL)));
 }
 
+int procedure(int arg, int body, int environment)
+{
+  return cons(to_token("#<proc>"), cons(arg, cons(body, cons(environment, NIL))));
+}
+
 int lookup(int i, int env);
 
 int eq(int a, int b)
@@ -167,9 +172,9 @@ int is_pop(int i)
   return is_eq(i, ")");
 }
 
-int is_lambda(int i)
+int is_procedure(int i)
 {
-  return is_eq(first(i), "lambda");
+  return is_eq(first(i), "#<proc>");
 }
 
 int read_expression(void);
@@ -236,23 +241,29 @@ int eval_expression(int i)
     fputs("  ", stderr);
   print_expression(i, stderr);
   fputs(" -> ...\n", stderr);
+  if (level > 15) return i;
   level++;
+
 #endif
   if (is_nil(i))
     retval = i;
   else if (is_pair(i)) {
     if (is_pair(first(i))) {
-      if (is_lambda(first(i))) {
+      int fun = eval_expression(first(i));
+      if (is_procedure(fun)) {
         int backup = environment;
 #if 0
+        for (j=0; j<level; j++)
+          fputs("  ", stderr);
         fputs("define(", stderr);
         print_expression(first(rest(first(i))), stderr);
         fputs(", ", stderr);
         print_expression(first(rest(i)), stderr);
         fputs(")\n", stderr);
 #endif
-        define(first(rest(first(i))), first(rest(i)));
-        retval = eval_expression(first(rest(rest(first(i)))));
+        environment = first(rest(rest(rest(fun))));
+        define(first(rest(fun)), first(rest(i)));
+        retval = eval_expression(first(rest(rest(fun))));
         environment = backup;
       } else
         retval = eval_expression(cons(eval_expression(first(i)), rest(i)));
@@ -269,16 +280,20 @@ int eval_expression(int i)
       else if (is_eq(first(i), "define"))
         retval = define(first(rest(i)), eval_expression(first(rest(rest(i)))));
       else if (is_eq(first(i), "lambda")) {
-        int backup = environment;
-        undefine(first(rest(i)));
-        retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
-        environment = backup;
+        // int backup = environment;
+        // undefine(first(rest(i)));
+        // retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
+        retval = procedure(first(rest(i)), first(rest(rest(i))), environment);
+        // environment = backup;
       } else if (is_eq(first(i), "eq"))
         retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
-      else
+      else {
         retval = cons(first(i), eval_expression(rest(i)));
+        //print_expression(i, stderr); fputs(" cannot be evaluated\n", stderr);
+        //exit(1);
+      }
     }
   } else if (!is_nil(lookup(i, environment)))
     retval = lookup(i, environment);

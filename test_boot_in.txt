@@ -10,15 +10,11 @@ x
 (define y (quote (1 2 3)))
 y
 (cons x y)
-(lambda v v)
 ((lambda z z) 3)
 ((lambda z (quote (1 2 3))) 2)
-((lambda y (lambda x (+ x y))) 2)
 (((lambda y (lambda x (+ x y))) 2) 3)
 (define f (lambda x (+ x x)))
 (f 3)
-true
-false
 ((true 1) 2)
 ((false 1) 2)
 (eq (quote 1) (quote 1))
