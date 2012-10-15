@@ -250,24 +250,23 @@ int eval_expression(int i)
       } else
         retval = eval_expression(cons(eval_expression(first(i)), rest(i)));
     } else {
-      char *p = token(first(i));
-      if (!strcmp(p, "quote"))
+      if (is_eq(first(i), "quote"))
         retval = first(rest(i));
-      else if (!strcmp(p, "first"))
+      else if (is_eq(first(i), "first"))
         retval = first(eval_expression(first(rest(i))));
-      else if (!strcmp(p, "rest"))
+      else if (is_eq(first(i), "rest"))
         retval = rest(eval_expression(first(rest(i))));
-      else if (!strcmp(p, "cons"))
+      else if (is_eq(first(i), "cons"))
         retval = cons(eval_expression(first(rest(i))),
                       eval_expression(first(rest(rest(i)))));
-      else if (!strcmp(p, "define"))
+      else if (is_eq(first(i), "define"))
         retval = define(first(rest(i)), eval_expression(first(rest(rest(i)))));
-      else if (!strcmp(p, "lambda")) {
+      else if (is_eq(first(i), "lambda")) {
         int backup = environment;
         undefine(first(rest(i)));
         retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
         environment = backup;
-      } else if (!strcmp(p, "eq"))
+      } else if (is_eq(first(i), "eq"))
         retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
