@@ -140,24 +140,31 @@ int undefine(int id)
   return define(id, NIL);
 }
 
-int push(int i)
+int is_eq(int i, const char *str)
+{
+  return is_token(i) ? !strcmp(token(i), str) : 0;
+}
+
+int lookup(int i, int env)
 {
   int retval;
-  if (is_token(i))
-    retval = token(i)[0] == '(';
+  if (is_nil(env))
+    retval = NIL;
+  else if (is_eq(first(first(env)), token(i)))
+    retval = rest(first(env));
   else
-    retval = 0;
+    retval = lookup(i, rest(env));
   return retval;
 }
 
-int pop(int i)
+int is_push(int i)
 {
-  int retval;
-  if (is_token(i))
-    retval = token(i)[0] == ')';
-  else
-    retval = 0;
-  return retval;
+  return is_eq(i, "(");
+}
+
+int is_pop(int i)
+{
+  return is_eq(i, ")");
 }
 
 int read_expression(void);
@@ -166,7 +173,7 @@ int read_list(void)
 {
   int retval;
   int cell = read_expression();
-  if (pop(cell))
+  if (is_pop(cell))
     retval = NIL;
   else
     retval = cons(cell, read_list());
@@ -179,7 +186,7 @@ int read_expression(void)
   char buffer[TOKENSIZE + 2];
   char *token = read_token(buffer, stdin);
   int cell = token ? to_token(token) : NIL;
-  if (push(cell))
+  if (is_push(cell))
     retval = read_list();
   else
     retval = cell;
@@ -209,20 +216,6 @@ void print_quoted(int i, FILE *stream)
   fputs("(quote ", stream);
   print_expression(i, stream);
   fputs(")\n", stream);
-}
-
-int eval_expression(int i);
-
-int lookup(int i, int env)
-{
-  int retval;
-  if (is_nil(env))
-    retval = NIL;
-  else if (!strcmp(token(i), token(first(first(env)))))
-    retval = rest(first(env));
-  else
-    retval = lookup(i, rest(env));
-  return retval;
 }
 
 int eval_expression(int i)
