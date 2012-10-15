@@ -75,11 +75,16 @@ int is_pair(int i)
   return is_nil(i) ? 0 : cells[i].type == PAIR;
 }
 
+int is_token(int i)
+{
+  return is_nil(i) ? 0 : cells[i].type == TOKEN;
+}
+
 void print_expression(int i, FILE *stream);
 
 char *token(int i)
 {
-  if (is_nil(i) || is_pair(i)) {
+  if (!is_token(i)) {
     print_expression(i, stderr); fputs(" is not a token\n", stderr);
     exit(1);
   };
@@ -115,7 +120,7 @@ int lookup(int i, int env);
 int eq(int a, int b)
 {
   int retval;
-  if (is_pair(a) || is_pair(b) || is_nil(a) || is_nil(b))
+  if (!is_token(a) || !is_token(b))
     retval = NIL;
   else if (!strcmp(token(a), token(b)))
     retval = lookup(to_token("true"), environment);
@@ -138,7 +143,7 @@ int undefine(int id)
 int push(int i)
 {
   int retval;
-  if (!is_nil(i) && !is_pair(i))
+  if (is_token(i))
     retval = token(i)[0] == '(';
   else
     retval = 0;
@@ -148,7 +153,7 @@ int push(int i)
 int pop(int i)
 {
   int retval;
-  if (!is_nil(i) && !is_pair(i))
+  if (is_token(i))
     retval = token(i)[0] == ')';
   else
     retval = 0;
@@ -233,6 +238,7 @@ int eval_expression(int i)
   else if (is_pair(i)) {
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i));
+      // int fun = first(i);
       if (!strcmp(token(first(fun)), "lambda")) {
         int backup = environment;
 #ifndef NDEBUG
