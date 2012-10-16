@@ -232,14 +232,14 @@ void print_quoted(int i, FILE *stream)
   };
 }
 
-#ifndef NDEBUG
+#if 0
 int level = 0;
 #endif
 
 int eval_expression(int i)
 {
   int retval;
-#ifndef NDEBUG
+#if 0
   int j;
   for (j=0; j<level; j++)
     fputs("  ", stderr);
@@ -255,7 +255,7 @@ int eval_expression(int i)
       int fun = eval_expression(first(i));
       if (is_procedure(fun)) {
         int backup = environment;
-#ifndef NDEBUG
+#if 0
         for (j=0; j<level; j++)
           fputs("  ", stderr);
         fputs("define(", stderr);
@@ -266,6 +266,17 @@ int eval_expression(int i)
 #endif
         environment = first(rest(rest(rest(fun))));
         define(first(rest(fun)), first(rest(i)));
+#ifndef NDEBUG
+        fputs("expr: ", stderr);
+        print_expression(i, stderr);
+        fputs("\n", stderr);
+        fputs("fun: ", stderr);
+        print_expression(first(rest(rest(fun))), stderr);
+        fputs("\n", stderr);
+        fputs("env: ", stderr);
+        print_expression(environment, stderr);
+        fputs("\n", stderr);
+#endif
         retval = eval_expression(first(rest(rest(fun))));
         environment = backup;
       } else
@@ -305,7 +316,7 @@ int eval_expression(int i)
     retval = lookup(i, environment);
   else
     retval = i;
-#ifndef NDEBUG
+#if 0
   level--;
   for (j=0; j<level; j++)
     fputs("  ", stderr);
@@ -351,7 +362,7 @@ void initialize(void)
 
 int main(void)
 {
-  initialize();
+  // initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
@@ -371,12 +382,12 @@ int main(void)
       fputc('\n', stderr);
     };
 #endif
-#ifndef NDEBUG
+#if 0
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
     print_quoted(eval_expression(expr), stdout);
-#ifndef NDEBUG
+#if 0
     fputc('\n', stderr);
 #endif
   };
