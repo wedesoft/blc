@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 
-#define TOKENSIZE 8
+#define TOKENSIZE 16
 
 char *read_token(char *buffer, FILE *stream);
 

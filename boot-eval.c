@@ -19,7 +19,6 @@
 #include "tokenizer.h"
 
 #define MAX_CELLS 1024
-#define TOKENSIZE 8
 #define NIL -1
 
 typedef enum { PAIR, TOKEN } type_t;
@@ -117,7 +116,7 @@ int lambda(int arg, int body)
 
 int procedure(int arg, int body, int environment)
 {
-  return cons(to_token("#<proc>"), cons(arg, cons(body, cons(environment, NIL))));
+  return cons(to_token("#<procedure>"), cons(arg, cons(body, cons(environment, NIL))));
 }
 
 int lookup(int i, int env);
@@ -174,7 +173,7 @@ int is_pop(int i)
 
 int is_procedure(int i)
 {
-  return is_eq(first(i), "#<proc>");
+  return is_eq(first(i), "#<procedure>");
 }
 
 int read_expression(void);
@@ -224,7 +223,7 @@ void print_expression(int i, FILE *stream)
 void print_quoted(int i, FILE *stream)
 {
   if (is_procedure(i))
-    fputs("#<proc>\n", stream);
+    fputs("#<procedure>\n", stream);
   else {
     fputs("(quote ", stream);
     print_expression(i, stream);
