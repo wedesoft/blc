@@ -223,27 +223,30 @@ void print_expression(int i, FILE *stream)
 
 void print_quoted(int i, FILE *stream)
 {
-  fputs("(quote ", stream);
-  print_expression(i, stream);
-  fputs(")\n", stream);
+  if (is_procedure(i))
+    fputs("#<proc>\n", stream);
+  else {
+    fputs("(quote ", stream);
+    print_expression(i, stream);
+    fputs(")\n", stream);
+  };
 }
 
-#ifndef NDEBUG
+#if 0
 int level = 0;
 #endif
 
 int eval_expression(int i)
 {
   int retval;
-#ifndef NDEBUG
+#if 0
   int j;
   for (j=0; j<level; j++)
     fputs("  ", stderr);
   print_expression(i, stderr);
   fputs(" -> ...\n", stderr);
-  if (level > 15) return i;
+  if (level > 10) return i;
   level++;
-
 #endif
   if (is_nil(i))
     retval = i;
@@ -264,6 +267,17 @@ int eval_expression(int i)
         environment = first(rest(rest(rest(fun))));
         // define(first(rest(fun)), eval_expression(first(rest(i))));
         define(first(rest(fun)), first(rest(i)));
+#ifndef NDEBUG
+        fputs("expr: ", stderr);
+        print_expression(i, stderr);
+        fputs("\n", stderr);
+        fputs("fun: ", stderr);
+        print_expression(first(rest(rest(fun))), stderr);
+        fputs("\n", stderr);
+        fputs("env: ", stderr);
+        print_expression(environment, stderr);
+        fputs("\n", stderr);
+#endif
         retval = eval_expression(first(rest(rest(fun))));
         environment = backup;
       } else
@@ -290,17 +304,20 @@ int eval_expression(int i)
         retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
+      else if (is_procedure(i))
+        retval = i;
       else {
-        retval = cons(first(i), eval_expression(rest(i)));
-        //print_expression(i, stderr); fputs(" cannot be evaluated\n", stderr);
-        //exit(1);
+        // retval = i;
+        // retval = cons(first(i), eval_expression(rest(i)));
+        print_expression(i, stderr); fputs(" cannot be evaluated\n", stderr);
+        exit(1);
       }
     }
   } else if (!is_nil(lookup(i, environment)))
     retval = lookup(i, environment);
   else
     retval = i;
-#ifndef NDEBUG
+#if 0
   level--;
   for (j=0; j<level; j++)
     fputs("  ", stderr);
@@ -346,7 +363,7 @@ void initialize(void)
 
 int main(void)
 {
-  initialize();
+  // initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
@@ -366,12 +383,12 @@ int main(void)
       fputc('\n', stderr);
     };
 #endif
-#ifndef NDEBUG
+#if 0
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
     print_quoted(eval_expression(expr), stdout);
-#ifndef NDEBUG
+#if 0
     fputc('\n', stderr);
 #endif
   };
