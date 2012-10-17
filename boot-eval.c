@@ -251,7 +251,6 @@ int eval_expression(int i)
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i));
       if (is_procedure(fun)) {
-        int backup = environment;
 #if 0
         for (j=0; j<level; j++)
           fputs("  ", stderr);
@@ -261,7 +260,9 @@ int eval_expression(int i)
         print_expression(first(rest(i)), stderr);
         fputs(")\n", stderr);
 #endif
+        int backup = environment;
         environment = first(rest(rest(rest(fun))));
+        // define(first(rest(fun)), eval_expression(first(rest(i))));
         define(first(rest(fun)), first(rest(i)));
         retval = eval_expression(first(rest(rest(fun))));
         environment = backup;
