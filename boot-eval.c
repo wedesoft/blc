@@ -228,6 +228,13 @@ void print_quoted(int i, FILE *stream)
 int level = 0;
 #endif
 
+// (((lambda x (lambda f (f x))) 1) (lambda y (cons y (cons y (quote ())))))
+// (((lambda x (lambda f (f x))) 1) (lambda x (cons x (cons x (quote ())))))
+// (((lambda x (lambda f (f x))) 1) (lambda y (cons y (cons x (quote ())))))
+// (((lambda f (lambda x (f x))) (lambda y (cons y (cons y (quote ()))))) 1)
+// (((lambda f (lambda x (f x))) (lambda x (cons x (cons x (quote ()))))) 1)
+// (((lambda f (lambda x (f x))) (lambda x (cons x (cons y (quote ()))))) 1)
+
 int eval_expression(int i, int env)
 {
   int retval;
@@ -257,6 +264,7 @@ int eval_expression(int i, int env)
 #endif
         int env2 = first(rest(rest(rest(fun))));
         int env3 = define(first(rest(fun)), eval_expression(first(rest(i)), env), env2);
+        retval = eval_expression(first(rest(rest(fun))), env3);
 #ifndef NDEBUG
         fputs("expr: ", stderr);
         print_expression(i, stderr);
@@ -267,8 +275,11 @@ int eval_expression(int i, int env)
         fputs("env: ", stderr);
         print_expression(env3, stderr);
         fputs("\n", stderr);
+        fputs("res: ", stderr);
+        print_expression(retval, stderr);
+        fputs("\n", stderr);
+        fputs("\n", stderr);
 #endif
-        retval = eval_expression(first(rest(rest(fun))), env3);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
