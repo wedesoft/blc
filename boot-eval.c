@@ -40,7 +40,6 @@ typedef struct {
 
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
-int environment = NIL;
 
 int add_cell(void)
 {
@@ -114,34 +113,28 @@ int lambda(int arg, int body)
   return cons(to_token("lambda"), cons(arg, cons(body, NIL)));
 }
 
-int procedure(int arg, int body, int environment)
+int procedure(int arg, int body, int env)
 {
-  return cons(to_token("#<procedure>"), cons(arg, cons(body, cons(environment, NIL))));
+  return cons(to_token("#<procedure>"), cons(arg, cons(body, cons(env, NIL))));
 }
 
 int lookup(int i, int env);
 
-int eq(int a, int b)
+int eq(int a, int b, int env)
 {
   int retval;
   if (!is_token(a) || !is_token(b))
     retval = NIL;
   else if (!strcmp(token(a), token(b)))
-    retval = lookup(to_token("true"), environment);
+    retval = lookup(to_token("true"), env);
   else
-    retval = lookup(to_token("false"), environment);
+    retval = lookup(to_token("false"), env);
   return retval;
 }
 
-int define(int id, int body)
+int define(int id, int body, int env)
 {
-  environment = cons(cons(id, cons(body, NIL)), environment);
-  return body;
-}
-
-int undefine(int id)
-{
-  return define(id, NIL);
+  return cons(cons(id, cons(body, NIL)), env);
 }
 
 int is_eq(int i, const char *str)
@@ -235,7 +228,7 @@ void print_quoted(int i, FILE *stream)
 int level = 0;
 #endif
 
-int eval_expression(int i)
+int eval_expression(int i, int env)
 {
   int retval;
 #if 0
@@ -251,7 +244,7 @@ int eval_expression(int i)
     retval = i;
   else if (is_pair(i)) {
     if (is_pair(first(i))) {
-      int fun = eval_expression(first(i));
+      int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
 #if 0
         for (j=0; j<level; j++)
@@ -262,9 +255,8 @@ int eval_expression(int i)
         print_expression(first(rest(i)), stderr);
         fputs(")\n", stderr);
 #endif
-        int backup = environment;
-        environment = first(rest(rest(rest(fun))));
-        define(first(rest(fun)), eval_expression(first(rest(i))));
+        int env2 = first(rest(rest(rest(fun))));
+        int env3 = define(first(rest(fun)), eval_expression(first(rest(i)), env), env2);
 #ifndef NDEBUG
         fputs("expr: ", stderr);
         print_expression(i, stderr);
@@ -273,42 +265,41 @@ int eval_expression(int i)
         print_expression(first(rest(rest(fun))), stderr);
         fputs("\n", stderr);
         fputs("env: ", stderr);
-        print_expression(environment, stderr);
+        print_expression(env3, stderr);
         fputs("\n", stderr);
 #endif
-        retval = eval_expression(first(rest(rest(fun))));
-        environment = backup;
+        retval = eval_expression(first(rest(rest(fun))), env3);
       } else
-        retval = eval_expression(cons(eval_expression(first(i)), rest(i)));
+        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
       if (is_eq(first(i), "quote"))
         retval = first(rest(i));
       else if (is_eq(first(i), "first"))
-        retval = first(eval_expression(first(rest(i))));
+        retval = first(eval_expression(first(rest(i)), env));
       else if (is_eq(first(i), "rest"))
-        retval = rest(eval_expression(first(rest(i))));
+        retval = rest(eval_expression(first(rest(i)), env));
       else if (is_eq(first(i), "cons"))
-        retval = cons(eval_expression(first(rest(i))),
-                      eval_expression(first(rest(rest(i)))));
+        retval = cons(eval_expression(first(rest(i)), env),
+                      eval_expression(first(rest(rest(i))), env));
       else if (is_eq(first(i), "define"))
-        retval = define(first(rest(i)), eval_expression(first(rest(rest(i)))));
+        retval = define(first(rest(i)), eval_expression(first(rest(rest(i))), env), env);
       else if (is_eq(first(i), "lambda"))
-        retval = procedure(first(rest(i)), first(rest(rest(i))), environment);
+        retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eq"))
-        retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
-      else if (!is_nil(lookup(first(i), environment)))
-        retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
+        retval = eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env), env);
+      else if (!is_nil(lookup(first(i), env)))
+        retval = eval_expression(cons(lookup(first(i), env), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
       else {
         // retval = i;
-        // retval = cons(first(i), eval_expression(rest(i)));
+        // retval = cons(first(i), eval_expression(rest(i), env));
         print_expression(i, stderr); fputs(" cannot be evaluated\n", stderr);
         exit(1);
       }
     }
-  } else if (!is_nil(lookup(i, environment)))
-    retval = lookup(i, environment);
+  } else if (!is_nil(lookup(i, env)))
+    retval = lookup(i, env);
   else
     retval = i;
 #if 0
@@ -322,15 +313,18 @@ int eval_expression(int i)
   return retval;
 }
 
-void initialize(void)
+int initialize(void)
 {
+  int retval = NIL;
   int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
-  define(to_token("true"), lambda(x, lambda(y, x)));
-  define(to_token("false"), lambda(x, lambda(y, y)));
-  define(to_token("not"),
-         lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))));
+  retval = define(to_token("true"), lambda(x, lambda(y, x)), retval);
+  retval = define(to_token("false"), lambda(x, lambda(y, y)), retval);
+  retval = define(to_token("not"),
+                  lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
+                  retval);
+  return retval;
 }
 
 //   pair (not atom)
@@ -357,7 +351,7 @@ void initialize(void)
 
 int main(void)
 {
-  initialize();
+  int env = initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
@@ -381,7 +375,7 @@ int main(void)
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
-    print_quoted(eval_expression(expr), stdout);
+    print_quoted(eval_expression(expr, env), stdout);
 #if 0
     fputc('\n', stderr);
 #endif
