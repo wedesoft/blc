@@ -305,7 +305,9 @@ int eval_expression(int i, int env)
       else {
         // retval = i;
         // retval = cons(first(i), eval_expression(rest(i), env));
-        print_expression(i, stderr); fputs(" cannot be evaluated\n", stderr);
+        fputs("Reference to undefined identifier: ", stderr);
+        print_expression(first(i), stderr);
+        fputc('\n', stderr);
         exit(1);
       }
     }
