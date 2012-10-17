@@ -265,7 +265,6 @@ int eval_expression(int i)
         int backup = environment;
         environment = first(rest(rest(rest(fun))));
         define(first(rest(fun)), eval_expression(first(rest(i))));
-        // define(first(rest(fun)), first(rest(i)));
 #ifndef NDEBUG
         fputs("expr: ", stderr);
         print_expression(i, stderr);
