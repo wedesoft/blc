@@ -19,4 +19,5 @@ y
 ((false 1) 2)
 (eq (quote 1) (quote 1))
 (eq (quote 1) (quote 2))
-not
+(((not true) 1) 2)
+(((not false) 1) 2)

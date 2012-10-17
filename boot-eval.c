@@ -265,8 +265,8 @@ int eval_expression(int i)
 #endif
         int backup = environment;
         environment = first(rest(rest(rest(fun))));
-        // define(first(rest(fun)), eval_expression(first(rest(i))));
-        define(first(rest(fun)), first(rest(i)));
+        define(first(rest(fun)), eval_expression(first(rest(i))));
+        // define(first(rest(fun)), first(rest(i)));
 #ifndef NDEBUG
         fputs("expr: ", stderr);
         print_expression(i, stderr);
@@ -363,7 +363,7 @@ void initialize(void)
 
 int main(void)
 {
-  // initialize();
+  initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
