@@ -135,7 +135,7 @@ int eq(int a, int b)
 
 int define(int id, int body)
 {
-  environment = cons(cons(id, body), environment);
+  environment = cons(cons(id, cons(body, NIL)), environment);
   return body;
 }
 
@@ -155,7 +155,7 @@ int lookup(int i, int env)
   if (is_nil(env))
     retval = NIL;
   else if (is_eq(first(first(env)), token(i)))
-    retval = rest(first(env));
+    retval = first(rest(first(env)));
   else
     retval = lookup(i, rest(env));
   return retval;
@@ -292,13 +292,9 @@ int eval_expression(int i)
                       eval_expression(first(rest(rest(i)))));
       else if (is_eq(first(i), "define"))
         retval = define(first(rest(i)), eval_expression(first(rest(rest(i)))));
-      else if (is_eq(first(i), "lambda")) {
-        // int backup = environment;
-        // undefine(first(rest(i)));
-        // retval = lambda(first(rest(i)), eval_expression(first(rest(rest(i)))));
+      else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), environment);
-        // environment = backup;
-      } else if (is_eq(first(i), "eq"))
+      else if (is_eq(first(i), "eq"))
         retval = eq(eval_expression(first(rest(i))), eval_expression(first(rest(rest(i)))));
       else if (!is_nil(lookup(first(i), environment)))
         retval = eval_expression(cons(lookup(first(i), environment), rest(i)));
