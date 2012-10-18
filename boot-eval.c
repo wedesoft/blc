@@ -40,6 +40,7 @@ typedef struct {
 
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
+int environment = NIL;
 
 int add_cell(void)
 {
@@ -268,9 +269,14 @@ int eval_expression(int i, int env)
       else if (is_eq(first(i), "cons"))
         retval = cons(eval_expression(first(rest(i)), env),
                       eval_expression(first(rest(rest(i))), env));
-      else if (is_eq(first(i), "define"))
-        retval = define(first(rest(i)), eval_expression(first(rest(rest(i))), env), env);
-      else if (is_eq(first(i), "lambda"))
+      else if (is_eq(first(i), "define")) {
+        if (environment != env) {
+          fputs("define: not allowed in an expression context\n", stderr);
+          exit(1);
+        };
+        retval = eval_expression(first(rest(rest(i))), environment);
+        environment = define(first(rest(i)), retval, environment);
+      } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eq"))
         retval = eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env), env);
@@ -302,18 +308,16 @@ int eval_expression(int i, int env)
   return retval;
 }
 
-int initialize(void)
+void initialize(void)
 {
-  int retval = NIL;
   int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
-  retval = define(to_token("true"), lambda(x, lambda(y, x)), retval);
-  retval = define(to_token("false"), lambda(x, lambda(y, y)), retval);
-  retval = define(to_token("not"),
-                  lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
-                  retval);
-  return retval;
+  environment = define(to_token("true"), lambda(x, lambda(y, x)), environment);
+  environment = define(to_token("false"), lambda(x, lambda(y, y)), environment);
+  environment = define(to_token("not"),
+                       lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
+                       environment);
 }
 
 //   pair (not atom)
@@ -340,7 +344,7 @@ int initialize(void)
 
 int main(void)
 {
-  int env = initialize();
+  initialize();
   while (1) {
     int expr = read_expression();
     if (feof(stdin)) break;
@@ -364,7 +368,7 @@ int main(void)
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
-    print_quoted(eval_expression(expr, env), stdout);
+    print_quoted(eval_expression(expr, environment), stdout);
 #if 0
     fputc('\n', stderr);
 #endif
