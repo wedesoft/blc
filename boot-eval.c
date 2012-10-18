@@ -121,15 +121,23 @@ int procedure(int arg, int body, int env)
 
 int lookup(int i, int env);
 
+int to_bool(int value, int env)
+{
+  int retval;
+  if (value)
+    retval = lookup(to_token("true"), env);
+  else
+    retval = lookup(to_token("false"), env);
+  return retval;
+}
+
 int eq(int a, int b, int env)
 {
   int retval;
   if (!is_token(a) || !is_token(b))
     retval = NIL;
-  else if (!strcmp(token(a), token(b)))
-    retval = lookup(to_token("true"), env);
   else
-    retval = lookup(to_token("false"), env);
+    retval = to_bool(!strcmp(token(a), token(b)), env);
   return retval;
 }
 
@@ -262,6 +270,8 @@ int eval_expression(int i, int env)
     } else {
       if (is_eq(first(i), "quote"))
         retval = first(rest(i));
+      else if (is_eq(first(i), "null?"))
+        retval = to_bool(eval_expression(first(rest(i)), env) == NIL, env);
       else if (is_eq(first(i), "first"))
         retval = first(eval_expression(first(rest(i)), env));
       else if (is_eq(first(i), "rest"))
