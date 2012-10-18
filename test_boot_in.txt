@@ -26,3 +26,6 @@ y
 (((null? (quote ())) 1) 0)
 (((null? 2) 1) 0)
 (((null? (quote (1 2 3))) 1) 0)
+(((pair? (quote (1 2 3))) 1) 0)
+(((pair? (quote 1)) 1) 0)
+(((pair? null) 1) 0)

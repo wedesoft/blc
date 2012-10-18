@@ -267,6 +267,8 @@ int eval_expression(int i, int env)
         retval = first(rest(i));
       else if (is_eq(first(i), "null?"))
         retval = to_bool(eval_expression(first(rest(i)), env) == NIL, env);
+      else if (is_eq(first(i), "pair?"))
+        retval = to_bool(is_pair(eval_expression(first(rest(i)), env)), env);
       else if (is_eq(first(i), "first"))
         retval = first(eval_expression(first(rest(i)), env));
       else if (is_eq(first(i), "rest"))
