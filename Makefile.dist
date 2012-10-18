@@ -2,7 +2,7 @@ all:
 	# cat ... > acinclude.m4
 	aclocal
 	# autoheader
-	libtoolize --force
+	libtoolize --force || glibtoolize --force
 	automake -a --foreign
 	autoconf
 
