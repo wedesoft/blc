@@ -253,33 +253,9 @@ int eval_expression(int i, int env)
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
-#if 0
-        for (j=0; j<level; j++)
-          fputs("  ", stderr);
-        fputs("define(", stderr);
-        print_expression(first(rest(first(i))), stderr);
-        fputs(", ", stderr);
-        print_expression(first(rest(i)), stderr);
-        fputs(")\n", stderr);
-#endif
-        int env2 = first(rest(rest(rest(fun))));
-        int env3 = define(first(rest(fun)), eval_expression(first(rest(i)), env), env2);
-        retval = eval_expression(first(rest(rest(fun))), env3);
-#ifndef NDEBUG
-        fputs("expr: ", stderr);
-        print_expression(i, stderr);
-        fputs("\n", stderr);
-        fputs("fun: ", stderr);
-        print_expression(first(rest(rest(fun))), stderr);
-        fputs("\n", stderr);
-        fputs("env: ", stderr);
-        print_expression(env3, stderr);
-        fputs("\n", stderr);
-        fputs("res: ", stderr);
-        print_expression(retval, stderr);
-        fputs("\n", stderr);
-        fputs("\n", stderr);
-#endif
+        int context = first(rest(rest(rest(fun))));
+        int local_env = define(first(rest(fun)), eval_expression(first(rest(i)), env), context);
+        retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
