@@ -48,3 +48,4 @@ External Links
 * [Kivy cross platform UI](http://kivy.org)
 * [openFrameworks toolkit for creative coding](http://www.openframeworks.cc)
 * [Qemu open source processor emulator](http://qemu.org/Manual)
+* [Lisp as the Maxwell’s equations of software](http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/)
