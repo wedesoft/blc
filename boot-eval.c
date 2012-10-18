@@ -131,24 +131,19 @@ int to_bool(int value, int env)
   return retval;
 }
 
-int eq(int a, int b, int env)
+int is_eq(int i, const char *str)
 {
-  int retval;
-  if (!is_token(a) || !is_token(b))
-    retval = NIL;
-  else
-    retval = to_bool(!strcmp(token(a), token(b)), env);
-  return retval;
+  return is_token(i) ? !strcmp(token(i), str) : 0;
+}
+
+int eq(int a, int b)
+{
+  return is_token(b) ? is_eq(a, token(b)) : 0;
 }
 
 int define(int id, int body, int env)
 {
   return cons(cons(id, cons(body, NIL)), env);
-}
-
-int is_eq(int i, const char *str)
-{
-  return is_token(i) ? !strcmp(token(i), str) : 0;
 }
 
 int lookup(int i, int env)
@@ -289,18 +284,17 @@ int eval_expression(int i, int env)
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eq"))
-        retval = eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env), env);
+        retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
         retval = eval_expression(cons(lookup(first(i), env), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
       else {
-        //retval = i;
-        retval = cons(first(i), eval_expression(rest(i), env));
-        //fputs("Reference to undefined identifier: ", stderr);
-        //print_expression(first(i), stderr);
-        //fputc('\n', stderr);
-        //exit(1);
+        // retval = cons(first(i), eval_expression(rest(i), env));
+        fputs("Reference to undefined identifier: ", stderr);
+        print_expression(first(i), stderr);
+        fputc('\n', stderr);
+        exit(1);
       }
     }
   } else if (is_eq(i, "null"))
