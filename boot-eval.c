@@ -285,12 +285,12 @@ int eval_expression(int i, int env)
       else if (is_procedure(i))
         retval = i;
       else {
-        // retval = i;
-        // retval = cons(first(i), eval_expression(rest(i), env));
-        fputs("Reference to undefined identifier: ", stderr);
-        print_expression(first(i), stderr);
-        fputc('\n', stderr);
-        exit(1);
+        //retval = i;
+        retval = cons(first(i), eval_expression(rest(i), env));
+        //fputs("Reference to undefined identifier: ", stderr);
+        //print_expression(first(i), stderr);
+        //fputc('\n', stderr);
+        //exit(1);
       }
     }
   } else if (!is_nil(lookup(i, env)))
