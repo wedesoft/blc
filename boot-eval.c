@@ -293,7 +293,9 @@ int eval_expression(int i, int env)
         //exit(1);
       }
     }
-  } else if (!is_nil(lookup(i, env)))
+  } else if (is_eq(i, "null"))
+    retval = NIL;
+  else if (!is_nil(lookup(i, env)))
     retval = lookup(i, env);
   else
     retval = i;
@@ -325,7 +327,7 @@ void initialize(void)
 // x car
 // x cdr
 // x cons
-//   null
+// x null
 //
 // x define (local environment?)
 // x lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)

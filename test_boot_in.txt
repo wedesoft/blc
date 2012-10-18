@@ -1,10 +1,11 @@
 (quote ())
+null
 (quote (+ (* 2 x) 3))
 (first (quote (1 2 3)))
 (rest (quote (1 2 3)))
 (cons 1 (quote (2 3)))
 (cons 1 (quote ()))
-(cons 1 (cons 2 (cons 3 (quote ()))))
+(cons 1 (cons 2 (cons 3 null)))
 (define x 0)
 x
 (define y (quote (1 2 3)))
