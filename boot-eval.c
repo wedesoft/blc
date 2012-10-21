@@ -320,12 +320,11 @@ void initialize(void)
   int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
-  environment = define(to_token("true"), lambda(cons(x, NIL), lambda(cons(y, NIL), x)), environment);
-  environment = define(to_token("false"), lambda(cons(x, NIL), lambda(cons(y, NIL), y)), environment);
+  environment = define(to_token("true"), lambda(cons(x, cons(y, NIL)), x), environment);
+  environment = define(to_token("false"), lambda(cons(x, cons(y, NIL)), y), environment);
   environment = define(to_token("not"),
-                       lambda(cons(b, NIL), lambda(cons(x, NIL), lambda(cons(y, NIL),
-                              cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
-                              environment);
+                       lambda(cons(b, NIL), lambda(cons(x, cons(y, NIL)),
+                              cons(b, cons(y, cons(x, NIL))))), environment);
 }
 
 //   pair (not atom)
