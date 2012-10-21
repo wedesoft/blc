@@ -16,6 +16,7 @@ y
 (((lambda (y) (lambda (x) (cons x (cons y (quote()))))) 2) 3)
 (define f (lambda (x) x))
 (f 3)
+((lambda (x y) (cons x (cons y null))) 1 2)
 ((true 1) 0)
 ((false 1) 0)
 (((eq (quote 2) (quote 2)) 1) 0)

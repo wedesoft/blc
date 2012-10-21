@@ -250,8 +250,14 @@ int eval_expression(int i, int env)
     if (is_pair(first(i))) {
       int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
-        int context = first(rest(rest(rest(fun))));
-        int local_env = define(first(first(rest(fun))), eval_expression(first(rest(i)), env), context);
+        int local_env = first(rest(rest(rest(fun))));
+        int vars = first(rest(fun));
+        int args = rest(i);
+        while (!is_nil(vars)) {
+          local_env = define(first(vars), eval_expression(first(args), env), local_env);
+          vars = rest(vars);
+          args = rest(args);
+        };
         retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
@@ -259,7 +265,7 @@ int eval_expression(int i, int env)
       if (is_eq(first(i), "quote"))
         retval = first(rest(i));
       else if (is_eq(first(i), "null?"))
-        retval = to_bool(eval_expression(first(rest(i)), env) == NIL, env);
+        retval = to_bool(is_nil(eval_expression(first(rest(i)), env)), env);
       else if (is_eq(first(i), "pair?"))
         retval = to_bool(is_pair(eval_expression(first(rest(i)), env)), env);
       else if (is_eq(first(i), "first"))
