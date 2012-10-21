@@ -232,13 +232,6 @@ void print_quoted(int i, FILE *stream)
 int level = 0;
 #endif
 
-// (((lambda x (lambda f (f x))) 1) (lambda y (cons y (cons y (quote ())))))
-// (((lambda x (lambda f (f x))) 1) (lambda x (cons x (cons x (quote ())))))
-// (((lambda x (lambda f (f x))) 1) (lambda y (cons y (cons x (quote ())))))
-// (((lambda f (lambda x (f x))) (lambda y (cons y (cons y (quote ()))))) 1)
-// (((lambda f (lambda x (f x))) (lambda x (cons x (cons x (quote ()))))) 1)
-// (((lambda f (lambda x (f x))) (lambda x (cons x (cons y (quote ()))))) 1)
-
 int eval_expression(int i, int env)
 {
   int retval;
@@ -258,7 +251,7 @@ int eval_expression(int i, int env)
       int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
         int context = first(rest(rest(rest(fun))));
-        int local_env = define(first(rest(fun)), eval_expression(first(rest(i)), env), context);
+        int local_env = define(first(first(rest(fun))), eval_expression(first(rest(i)), env), context);
         retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
@@ -321,11 +314,12 @@ void initialize(void)
   int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
-  environment = define(to_token("true"), lambda(x, lambda(y, x)), environment);
-  environment = define(to_token("false"), lambda(x, lambda(y, y)), environment);
+  environment = define(to_token("true"), lambda(cons(x, NIL), lambda(cons(y, NIL), x)), environment);
+  environment = define(to_token("false"), lambda(cons(x, NIL), lambda(cons(y, NIL), y)), environment);
   environment = define(to_token("not"),
-                       lambda(b, lambda(x, lambda(y, cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
-                       environment);
+                       lambda(cons(b, NIL), lambda(cons(x, NIL), lambda(cons(y, NIL),
+                              cons(cons(b, cons(y, NIL)), cons(x, NIL))))),
+                              environment);
 }
 
 //   pair (not atom)
