@@ -253,11 +253,14 @@ int eval_expression(int i, int env)
         int local_env = first(rest(rest(rest(fun))));
         int vars = first(rest(fun));
         int args = rest(i);
-        while (!is_nil(vars)) {
-          local_env = define(first(vars), eval_expression(first(args), env), local_env);
-          vars = rest(vars);
-          args = rest(args);
-        };
+        if (is_token(vars))
+          local_env = define(vars, eval_expression(args, env), local_env);
+        else
+          while (!is_nil(vars)) {
+            local_env = define(first(vars), eval_expression(first(args), env), local_env);
+            vars = rest(vars);
+            args = rest(args);
+          };
         retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
@@ -291,11 +294,11 @@ int eval_expression(int i, int env)
       else if (is_procedure(i))
         retval = i;
       else {
-        // retval = cons(first(i), eval_expression(rest(i), env));
-        fputs("Reference to undefined identifier: ", stderr);
-        print_expression(first(i), stderr);
-        fputc('\n', stderr);
-        exit(1);
+        retval = cons(first(i), eval_expression(rest(i), env));
+        // fputs("Reference to undefined identifier: ", stderr);
+        // print_expression(first(i), stderr);
+        // fputc('\n', stderr);
+        // exit(1);
       }
     }
   } else if (is_eq(i, "null"))
