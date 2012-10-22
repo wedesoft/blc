@@ -125,9 +125,9 @@ int to_bool(int value, int env)
 {
   int retval;
   if (value)
-    retval = lookup(to_token("true"), env);
+    retval = first(lookup(to_token("true"), env));
   else
-    retval = lookup(to_token("false"), env);
+    retval = first(lookup(to_token("false"), env));
   return retval;
 }
 
@@ -152,7 +152,7 @@ int lookup(int i, int env)
   if (is_nil(env))
     retval = NIL;
   else if (is_eq(first(first(env)), token(i)))
-    retval = first(rest(first(env)));
+    retval = rest(first(env));
   else
     retval = lookup(i, rest(env));
   return retval;
@@ -301,7 +301,7 @@ int eval_expression(int i, int env)
       else if (is_eq(first(i), "eq"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
-        retval = eval_expression(cons(lookup(first(i), env), rest(i)), env);
+        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
       else {
@@ -315,7 +315,7 @@ int eval_expression(int i, int env)
   } else if (is_eq(i, "null"))
     retval = NIL;
   else if (!is_nil(lookup(i, env)))
-    retval = lookup(i, env);
+    retval = first(lookup(i, env));
   else
     retval = i;
 #if 0

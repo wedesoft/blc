@@ -11,9 +11,11 @@ x
 (define y (quote (1 2 3)))
 y
 (cons x y)
+((lambda x x))
+((lambda x x) 7)
 ((lambda (z) z) 3)
 ((lambda (z) (quote (1 2 3))) 2)
-((lambda z z) 1)
+((lambda z z) 5)
 (((lambda (y) (lambda (x) (cons x (cons y (quote()))))) 2) 3)
 (define f (lambda (x) x))
 (f 3)
@@ -32,4 +34,3 @@ y
 ((pair? (quote (1 2 3))) 1 0)
 ((pair? (quote 1)) 1 0)
 ((pair? null) 1 0)
-((lambda l l))

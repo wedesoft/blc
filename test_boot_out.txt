@@ -11,9 +11,11 @@
 (quote (1 2 3))
 (quote (1 2 3))
 (quote (0 1 2 3))
+(quote ())
+(quote (7))
 (quote 3)
 (quote (1 2 3))
-(quote (1))
+(quote (5))
 (quote (3 2))
 #<procedure>
 (quote 3)
@@ -32,4 +34,3 @@
 (quote 1)
 (quote 0)
 (quote 0)
-(quote ())
