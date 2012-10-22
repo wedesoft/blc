@@ -32,3 +32,4 @@ y
 ((pair? (quote (1 2 3))) 1 0)
 ((pair? (quote 1)) 1 0)
 ((pair? null) 1 0)
+((lambda l l))
