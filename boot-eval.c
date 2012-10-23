@@ -179,7 +179,10 @@ int read_list(FILE *stream)
 {
   int retval;
   int cell = read_expression(stream);
-  if (is_pop(cell))
+  if (is_nil(cell)) {
+    fputs("Expected a `)' to close `('", stderr);
+    exit(1);
+  } else if (is_pop(cell))
     retval = NIL;
   else
     retval = cons(cell, read_list(stream));
