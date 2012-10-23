@@ -173,27 +173,27 @@ int is_procedure(int i)
   return is_eq(first(i), "#<procedure>");
 }
 
-int read_expression(void);
+int read_expression(FILE *stream);
 
-int read_list(void)
+int read_list(FILE *stream)
 {
   int retval;
-  int cell = read_expression();
+  int cell = read_expression(stream);
   if (is_pop(cell))
     retval = NIL;
   else
-    retval = cons(cell, read_list());
+    retval = cons(cell, read_list(stream));
   return retval;
 }
 
-int read_expression(void)
+int read_expression(FILE *stream)
 {
   int retval;
   char buffer[TOKENSIZE + 2];
-  char *token = read_token(buffer, stdin);
+  char *token = read_token(buffer, stream);
   int cell = token ? to_token(token) : NIL;
   if (is_push(cell))
-    retval = read_list();
+    retval = read_list(stream);
   else
     retval = cell;
   return retval;
@@ -347,7 +347,7 @@ int main(void)
 {
   initialize();
   while (1) {
-    int expr = read_expression();
+    int expr = read_expression(stdin);
     if (feof(stdin)) break;
 #if 0
     int i;
