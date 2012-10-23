@@ -1,0 +1,25 @@
+* evaluation of strings to simplify code and for implementing test suite
+* library and interpreters with different debug output
+* basic methods:
+  * x pair (not atom)
+  * x eq (also compares with nil)
+  * x car
+  * x cdr
+  * x cons
+  * x null
+
+  * x define (local environment?)
+  * x lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
+  *   cond
+
+  *   equal
+  *   cadr
+  *   caddr
+  *   append
+  *   pair
+  *   assoc
+  *   sublis (hash)
+
+  *   eval
+  * x quote
+

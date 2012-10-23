@@ -16,7 +16,7 @@ noinst_HEADERS = tokenizer.h
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING \
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
 	test_tokenize_in.txt test_tokenize_out.txt \
 	test_boot_in.txt test_boot_out.txt
 

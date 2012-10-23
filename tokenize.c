@@ -1,4 +1,4 @@
-/* Bracket - ...
+/* Bracket - Attempt at writing a small Racket (Scheme) interpreter
  * Copyright (C) 2012  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify

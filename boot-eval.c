@@ -125,9 +125,9 @@ int to_bool(int value, int env)
 {
   int retval;
   if (value)
-    retval = first(lookup(to_token("true"), env));
+    retval = first(lookup(to_token("#t"), env));
   else
-    retval = first(lookup(to_token("false"), env));
+    retval = first(lookup(to_token("#f"), env));
   return retval;
 }
 
@@ -336,14 +336,14 @@ void initialize(void)
   int b = to_token("b");
   int x = to_token("x");
   int y = to_token("y");
-  environment = define(to_token("true"), lambda(cons(x, cons(y, NIL)), x), environment);
-  environment = define(to_token("false"), lambda(cons(x, cons(y, NIL)), y), environment);
+  environment = define(to_token("#t"), lambda(cons(x, cons(y, NIL)), x), environment);
+  environment = define(to_token("#f"), lambda(cons(x, cons(y, NIL)), y), environment);
   environment = define(to_token("not"),
                        lambda(cons(b, NIL), lambda(cons(x, cons(y, NIL)),
                               cons(b, cons(y, cons(x, NIL))))), environment);
 }
 
-
+// (define cond (lambda l (first (first l)) (first (rest (first l))) (cond (rest l))))
 
 int main(void)
 {
