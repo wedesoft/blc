@@ -141,11 +141,6 @@ int eq(int a, int b)
   return is_token(b) ? is_eq(a, token(b)) : 0;
 }
 
-int define(int id, int body, int env)
-{
-  return cons(cons(id, cons(body, NIL)), env);
-}
-
 int lookup(int i, int env)
 {
   int retval;
@@ -179,10 +174,7 @@ int read_list(FILE *stream)
 {
   int retval;
   int cell = read_expression(stream);
-  if (is_nil(cell)) {
-    fputs("Expected a `)' to close `('", stderr);
-    exit(1);
-  } else if (is_pop(cell))
+  if (is_pop(cell))
     retval = NIL;
   else
     retval = cons(cell, read_list(stream));
@@ -235,6 +227,28 @@ void print_quoted(int i, FILE *stream)
 int level = 0;
 #endif
 
+int define(int id, int body, int env)
+{
+  return cons(cons(id, cons(body, NIL)), env);
+}
+
+int define_list(int ids, int bodies, int env)
+{
+  int retval;
+  if (is_nil(ids))
+    retval = env;
+  else
+    retval = define_list(rest(ids), rest(bodies), define(first(ids), first(bodies), env));
+  return retval;
+}
+
+int eval_expression(int i, int env);
+
+int eval_list(int i, int env)
+{
+  return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_list(rest(i), env));
+}
+
 int eval_expression(int i, int env)
 {
   int retval;
@@ -256,25 +270,10 @@ int eval_expression(int i, int env)
         int local_env = first(rest(rest(rest(fun))));
         int vars = first(rest(fun));
         int args = rest(i);
-        if (is_token(vars)) {
-          int reverse = NIL;
-          while (!is_nil(args)) {
-            reverse = cons(eval_expression(first(args), env), reverse);
-            args = rest(args);
-          };
-          int eval_args = NIL;
-          while (!is_nil(reverse)) {
-            eval_args = cons(first(reverse), eval_args);
-            reverse = rest(reverse);
-          };
-          local_env = define(vars, eval_args, local_env);
-        } else {
-          while (!is_nil(vars)) {
-            local_env = define(first(vars), eval_expression(first(args), env), local_env);
-            vars = rest(vars);
-            args = rest(args);
-          };
-        };
+        if (is_token(vars))
+          local_env = define(vars, eval_list(args, env), local_env);
+        else
+          local_env = define_list(vars, eval_list(args, env), local_env);
         retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
