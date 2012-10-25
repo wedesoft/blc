@@ -114,11 +114,6 @@ int lambda(int arg, int body)
   return cons(to_token("lambda"), cons(arg, cons(body, NIL)));
 }
 
-int eval(int body, int env)
-{
-  return cons(to_token("#eval"), cons(body, cons(env, NIL)));
-}
-
 int quote(int i)
 {
   return cons(to_token("quote"), cons(i, NIL));
@@ -250,9 +245,7 @@ int define_list(int ids, int bodies, int env)
 
 int eval_list(int i, int env)
 {
-  // return is_nil(i) ? NIL : cons(cons(to_token("#eval"), cons(first(i), NIL)), eval_list(rest(i), env));
-  return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
-  // return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_list(rest(i), env));
+  return is_nil(i) ? NIL : cons(cons(procedure(NIL, first(i), env), NIL), eval_list(rest(i), env));
 }
 
 #if 0
@@ -310,8 +303,6 @@ int eval_expression(int i, int env)
         environment = define(first(rest(i)), quote(retval), environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
-      else if (is_eq(first(i), "#eval"))
-        retval = eval_expression(first(rest(i)), first(rest(rest(i))));
       else if (is_eq(first(i), "eq"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
