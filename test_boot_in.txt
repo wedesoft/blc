@@ -24,6 +24,7 @@ y
 (#t 1 0)
 (#f 1 0)
 (#t 5 (unknown))
+(#f (unknown) 4)
 ((eq 2 2) 1 0)
 ((eq 2 3) 1 0)
 ((not #t) 1 0)
