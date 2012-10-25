@@ -310,8 +310,6 @@ int eval_expression(int i, int env)
         environment = define(first(rest(i)), quote(retval), environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
-      else if (is_eq(first(i), "#env"))
-        retval = env;
       else if (is_eq(first(i), "#eval"))
         retval = eval_expression(first(rest(i)), first(rest(rest(i))));
       else if (is_eq(first(i), "eq"))
