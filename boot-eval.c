@@ -18,7 +18,7 @@
 #include <string.h>
 #include "tokenizer.h"
 
-#define MAX_CELLS 1024
+#define MAX_CELLS 4096
 #define NIL -1
 
 typedef enum { PAIR, TOKEN } type_t;
@@ -117,6 +117,11 @@ int lambda(int arg, int body)
 int eval(int body, int env)
 {
   return cons(to_token("#eval"), cons(body, cons(env, NIL)));
+}
+
+int quote(int i)
+{
+  return cons(to_token("quote"), cons(i, NIL));
 }
 
 int procedure(int arg, int body, int env)
@@ -228,10 +233,6 @@ void print_quoted(int i, FILE *stream)
   };
 }
 
-#if 0
-int level = 0;
-#endif
-
 int define(int id, int body, int env)
 {
   return cons(cons(id, cons(body, NIL)), env);
@@ -249,9 +250,14 @@ int define_list(int ids, int bodies, int env)
 
 int eval_list(int i, int env)
 {
-  // return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
-  return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_list(rest(i), env));
+  // return is_nil(i) ? NIL : cons(cons(to_token("#eval"), cons(first(i), NIL)), eval_list(rest(i), env));
+  return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
+  // return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_list(rest(i), env));
 }
+
+#if 0
+int level = 0;
+#endif
 
 int eval_expression(int i, int env)
 {
@@ -273,12 +279,11 @@ int eval_expression(int i, int env)
       if (is_procedure(fun)) {
         int local_env = first(rest(rest(rest(fun))));
         int vars = first(rest(fun));
-        int args = rest(i);
-        // print_expression(eval_list(args, env), stderr); fputs("\n", stderr);
+        int args = eval_list(rest(i), env);
         if (is_token(vars))
-          local_env = define(vars, eval_list(args, env), local_env);
+          local_env = define(vars, args, local_env);
         else
-          local_env = define_list(vars, eval_list(args, env), local_env);
+          local_env = define_list(vars, args, local_env);
         retval = eval_expression(first(rest(rest(fun))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
@@ -302,7 +307,7 @@ int eval_expression(int i, int env)
           exit(1);
         };
         retval = eval_expression(first(rest(rest(i))), environment);
-        environment = define(first(rest(i)), retval, environment);
+        environment = define(first(rest(i)), quote(retval), environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "#env"))
@@ -316,17 +321,17 @@ int eval_expression(int i, int env)
       else if (is_procedure(i))
         retval = i;
       else {
-        // retval = cons(first(i), eval_expression(rest(i), env));
-        fputs("Reference to undefined identifier: ", stderr);
-        print_expression(first(i), stderr);
-        fputc('\n', stderr);
-        exit(1);
+        retval = cons(first(i), eval_expression(rest(i), env));
+        // fputs("Reference to undefined identifier: ", stderr);
+        // print_expression(first(i), stderr);
+        // fputc('\n', stderr);
+        // exit(1);
       }
     }
   } else if (is_eq(i, "null"))
     retval = NIL;
   else if (!is_nil(lookup(i, env)))
-    retval = first(lookup(i, env));
+    retval = eval_expression(first(lookup(i, env)), env);
   else
     retval = i;
 #if 0

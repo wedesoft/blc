@@ -23,6 +23,7 @@
 (quote (1 2))
 (quote 1)
 (quote 0)
+(quote 5)
 (quote 1)
 (quote 0)
 (quote 0)
