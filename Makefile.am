@@ -26,7 +26,7 @@ test_tokenize.tmp: tokenize$(EXEEXT) test_tokenize_in.txt test_tokenize_out.txt
 	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
 	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
 
-test_boot.tmp: boot-eval$(EXEEXT) test_boot_in.txt test_boot_out.txt
+test_boot.tmp: boot-eval$(EXEEXT) boot.rkt test_boot_in.txt test_boot_out.txt
 	$(CAT) test_boot_in.txt | ./boot-eval$(EXEEXT) > out.tmp
 	$(DIFF) test_boot_out.txt out.tmp && $(TOUCH) $@
 
