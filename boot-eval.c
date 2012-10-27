@@ -260,7 +260,7 @@ int eval_expression(int i, int env)
   for (j=0; j<level; j++)
     fputs("  ", stderr);
   print_expression(i, stderr);
-  fputs(" -> ...\n", stderr);
+  fputs("\n", stderr);
   if (level > 10) return i;
   level++;
 #endif
@@ -325,11 +325,6 @@ int eval_expression(int i, int env)
     retval = i;
 #if 0
   level--;
-  for (j=0; j<level; j++)
-    fputs("  ", stderr);
-  fputs("... -> ", stderr);
-  print_expression(retval, stderr);
-  fputc('\n', stderr);
 #endif
   return retval;
 }

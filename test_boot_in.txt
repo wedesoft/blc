@@ -21,6 +21,7 @@ y
 (f 3)
 ((lambda (x y) (cons x (cons y null))) 1 2)
 ((lambda x x) 1 2)
+(list 2 3 5 7)
 (#t 1 0)
 (#f 1 0)
 (#t 5 (unknown))
