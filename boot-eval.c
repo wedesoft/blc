@@ -252,6 +252,9 @@ int eval_list(int i, int env)
 int level = 0;
 #endif
 
+// (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
+// (member? 1 (quote (2 1 3)))
+
 int eval_expression(int i, int env)
 {
   int retval;
