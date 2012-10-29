@@ -264,11 +264,7 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  if (maxdepth <= 0) {
-    // print_expression(i, stderr);
-    // fputc('\n', stderr);
-    return to_token("#<recursion>");
-  };
+  if (maxdepth <= 0) return to_token("#<recursion>");
   maxdepth -= 1;
 #endif
   if (is_nil(i))
@@ -320,7 +316,8 @@ int eval_expression(int i, int env)
       else if (is_procedure(i))
         retval = i;
       else {
-        retval = cons(first(i), eval_expression(rest(i), env));
+        retval = i;
+        // retval = cons(first(i), eval_expression(rest(i), env));
         //fputs("Reference to undefined identifier: ", stderr);
         //print_expression(first(i), stderr);
         //fputc('\n', stderr);
