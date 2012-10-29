@@ -278,14 +278,13 @@ int eval_expression(int i, int env)
         int local_env = first(rest(rest(rest(fun))));
         int vars = first(rest(fun));
         if (is_token(vars)) {
-          int args = rest(i);
+          int args = rest(i);// !!!
           local_env = define(vars, args, local_env);
         } else {
           int args = eval_list(rest(i), env);
           local_env = define_list(vars, args, local_env);
         };
         retval = eval_expression(first(rest(rest(fun))), local_env);
-        // retval = first(rest(rest(fun)));
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
