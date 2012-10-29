@@ -264,10 +264,7 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  if (maxdepth <= 0) {
-    fputs("Recursion\n", stderr);
-    return i;
-  };
+  if (maxdepth <= 0) return to_token("#<recursion>");
   maxdepth -= 1;
 #endif
   if (is_nil(i))
@@ -371,7 +368,7 @@ int main(void)
       fputc('\n', stderr);
     };
 #endif
-#ifndef NDEBUG
+#if 0
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
