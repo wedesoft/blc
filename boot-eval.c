@@ -264,14 +264,18 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  if (maxdepth <= 0) return to_token("#<recursion>");
+  if (maxdepth <= 0) {
+    print_expression(i, stderr);
+    fputc('\n', stderr);
+    return to_token("#<recursion>");
+  };
   maxdepth -= 1;
 #endif
   if (is_nil(i))
     retval = i;
   else if (is_pair(i)) {
     if (is_nil(first(i)))
-      return i;
+      retval = i;
     else if (is_pair(first(i))) {
       int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
