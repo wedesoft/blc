@@ -265,8 +265,8 @@ int eval_expression(int i, int env)
   int retval;
 #ifndef NDEBUG
   if (maxdepth <= 0) {
-    print_expression(i, stderr);
-    fputc('\n', stderr);
+    // print_expression(i, stderr);
+    // fputc('\n', stderr);
     return to_token("#<recursion>");
   };
   maxdepth -= 1;
@@ -277,18 +277,17 @@ int eval_expression(int i, int env)
     if (is_nil(first(i)))
       retval = i;
     else if (is_pair(first(i))) {
-      int fun = eval_expression(first(i), env);
-      if (is_procedure(fun)) {
-        int local_env = first(rest(rest(rest(fun))));
-        int vars = first(rest(fun));
+      if (is_procedure(first(i))) {
+        int local_env = first(rest(rest(rest(first(i)))));
+        int vars = first(rest(first(i)));
         if (is_token(vars)) {
-          int args = rest(i);// !!!
+          int args = rest(i);// delayed 'eval' for each argument in list!!!
           local_env = define(vars, args, local_env);
         } else {
           int args = eval_list(rest(i), env);
           local_env = define_list(vars, args, local_env);
         };
-        retval = eval_expression(first(rest(rest(fun))), local_env);
+        retval = eval_expression(first(rest(rest(first(i)))), local_env);
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
@@ -311,7 +310,7 @@ int eval_expression(int i, int env)
           exit(1);
         };
         retval = eval_expression(first(rest(rest(i))), environment);
-        environment = define(first(rest(i)), quote(retval), environment);
+        environment = define(first(rest(i)), retval, environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eq"))
