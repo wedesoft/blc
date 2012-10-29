@@ -47,3 +47,5 @@
 (quote 8)
 (quote 6)
 (quote 3)
+#<procedure>
+(quote 1)

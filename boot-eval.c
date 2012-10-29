@@ -18,7 +18,7 @@
 #include <string.h>
 #include "tokenizer.h"
 
-#define MAX_CELLS 4096
+#define MAX_CELLS 65536
 #define NIL -1
 
 typedef enum { PAIR, TOKEN } type_t;
@@ -248,39 +248,47 @@ int eval_list(int i, int env)
   return is_nil(i) ? NIL : cons(cons(procedure(NIL, first(i), env), NIL), eval_list(rest(i), env));
 }
 
-#if 0
-int level = 0;
+#ifndef NDEBUG
+int maxdepth = 20;
 #endif
 
 // (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
 // (member? 1 (quote (2 1 3)))
+//
+// ((lambda x x) 7)
+// ((lambda z z) 5)
+// ((lambda x x) 1 2)
+// (list 2 3 5 7)
 
 int eval_expression(int i, int env)
 {
   int retval;
-#if 0
-  int j;
-  for (j=0; j<level; j++)
-    fputs("  ", stderr);
-  print_expression(i, stderr);
-  fputs("\n", stderr);
-  if (level > 10) return i;
-  level++;
+#ifndef NDEBUG
+  if (maxdepth <= 0) {
+    fputs("Recursion\n", stderr);
+    return i;
+  };
+  maxdepth -= 1;
 #endif
   if (is_nil(i))
     retval = i;
   else if (is_pair(i)) {
-    if (is_pair(first(i))) {
+    if (is_nil(first(i)))
+      return i;
+    else if (is_pair(first(i))) {
       int fun = eval_expression(first(i), env);
       if (is_procedure(fun)) {
         int local_env = first(rest(rest(rest(fun))));
         int vars = first(rest(fun));
-        int args = eval_list(rest(i), env);
-        if (is_token(vars))
+        if (is_token(vars)) {
+          int args = rest(i);
           local_env = define(vars, args, local_env);
-        else
+        } else {
+          int args = eval_list(rest(i), env);
           local_env = define_list(vars, args, local_env);
+        };
         retval = eval_expression(first(rest(rest(fun))), local_env);
+        // retval = first(rest(rest(fun)));
       } else
         retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
@@ -314,10 +322,10 @@ int eval_expression(int i, int env)
         retval = i;
       else {
         retval = cons(first(i), eval_expression(rest(i), env));
-        // fputs("Reference to undefined identifier: ", stderr);
-        // print_expression(first(i), stderr);
-        // fputc('\n', stderr);
-        // exit(1);
+        //fputs("Reference to undefined identifier: ", stderr);
+        //print_expression(first(i), stderr);
+        //fputc('\n', stderr);
+        //exit(1);
       }
     }
   } else if (is_eq(i, "null"))
@@ -326,8 +334,8 @@ int eval_expression(int i, int env)
     retval = eval_expression(first(lookup(i, env)), env);
   else
     retval = i;
-#if 0
-  level--;
+#ifndef NDEBUG
+  maxdepth += 1;
 #endif
   return retval;
 }
@@ -363,7 +371,7 @@ int main(void)
       fputc('\n', stderr);
     };
 #endif
-#if 0
+#ifndef NDEBUG
     print_expression(expr, stderr);
     fputc('\n', stderr);
 #endif
