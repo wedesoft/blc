@@ -243,9 +243,15 @@ int define_list(int ids, int bodies, int env)
   return retval;
 }
 
+int eval(int i, int env)
+{
+  return cons(to_token("eval"), cons(i, cons(env, NIL)));
+}
+
 int eval_list(int i, int env)
 {
-  return is_nil(i) ? NIL : cons(cons(procedure(NIL, first(i), env), NIL), eval_list(rest(i), env));
+  // return is_nil(i) ? NIL : cons(cons(procedure(NIL, first(i), env), NIL), eval_list(rest(i), env));
+  return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
 }
 
 #ifndef NDEBUG
@@ -307,13 +313,12 @@ int eval_expression(int i, int env)
           fputs("define: not allowed in an expression context\n", stderr);
           exit(1);
         };
-        // retval = eval_expression(first(rest(rest(i))), environment);
-        // retval = eval_expression(first(rest(rest(i))), environment);
-        // environment = define(first(rest(i)), retval, environment);
         environment = define(first(rest(i)), first(rest(rest(i))), environment);
         retval = eval_expression(first(rest(i)), environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
+      else if (is_eq(first(i), "eval"))
+        retval = eval_expression(first(rest(i)), first(rest(rest(i))));
       else if (is_eq(first(i), "eq"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
