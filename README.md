@@ -44,6 +44,8 @@ External Links
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [Peter Norvig's Lisp implemented in Python](http://norvig.com/lispy.html)
+* [BiwaScheme: Scheme interpreter written in Javascript](https://github.com/biwascheme/biwascheme)
+* [Repl.It: Online REPL for several programming languages](http://repl.it/)
 * [Lisp as the Maxwell’s equations of software](http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/) (also see [here](http://gliese1337.blogspot.co.uk/2012/04/schrodingers-equation-of-software.html))
 * [STEPS Toward Espressive Programming Systems, 2011 Progress Report](http://www.vpri.org/pdf/tr2011004\_steps11.pdf)
 * [Kivy cross platform UI](http://kivy.org)
