@@ -249,7 +249,7 @@ int eval_list(int i, int env)
 }
 
 #ifndef NDEBUG
-int maxdepth = 20;
+int maxdepth = 15;
 #endif
 
 // (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
@@ -264,7 +264,9 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  if (maxdepth <= 0) return to_token("#<recursion>");
+  if (maxdepth <= 0) {
+    return to_token("#<recursion>"); // 1
+  };
   maxdepth -= 1;
 #endif
   if (is_nil(i))
@@ -285,7 +287,7 @@ int eval_expression(int i, int env)
         };
         retval = eval_expression(first(rest(rest(first(i)))), local_env);
       } else
-        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
+        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env); // 2 .. 7, 16
     } else {
       if (is_eq(first(i), "quote"))
         retval = first(rest(i));
@@ -312,7 +314,7 @@ int eval_expression(int i, int env)
       else if (is_eq(first(i), "eq"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
-        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env);
+        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env); // 8 .. 11, 13, 15
       else if (is_procedure(i))
         retval = i;
       else {
@@ -327,7 +329,7 @@ int eval_expression(int i, int env)
   } else if (is_eq(i, "null"))
     retval = NIL;
   else if (!is_nil(lookup(i, env)))
-    retval = eval_expression(first(lookup(i, env)), env);
+    retval = eval_expression(first(lookup(i, env)), env); // 12, 14
   else
     retval = i;
 #ifndef NDEBUG
@@ -345,6 +347,8 @@ void initialize(void)
 
 // (define cond (lambda l (first (first l)) (first (rest (first l))) (cond (rest l))))
 
+// define without local environment!!!
+//
 int main(void)
 {
   initialize();
