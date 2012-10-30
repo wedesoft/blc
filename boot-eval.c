@@ -173,6 +173,11 @@ int is_procedure(int i)
   return is_eq(first(i), "#<procedure>");
 }
 
+int is_eval(int i)
+{
+  return is_eq(first(i), "eval");
+}
+
 int read_expression(FILE *stream);
 
 int read_list(FILE *stream)
@@ -206,11 +211,16 @@ void print_expression(int i, FILE *stream)
   else if (is_pair(i)) {
     fputc('(', stream);
     print_expression(first(i), stream);
+    int c = 1;
     int r = rest(i);
     while (!is_nil(r)) {
       fputc(' ', stream);
-      print_expression(first(r), stream);
+      if ((is_procedure(i) && c == 3) || (is_eval(i) && c == 2))
+        fputs("#<env>", stderr);
+      else
+        print_expression(first(r), stream);
       r = rest(r);
+      c++;
     }
     fputc(')', stream);
   } else
@@ -270,6 +280,8 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
+  print_expression(i, stderr);
+  fputs(" ...\n", stderr);
   if (maxdepth <= 0) {
     return to_token("#<recursion>"); // 1
   };
@@ -342,6 +354,10 @@ int eval_expression(int i, int env)
     retval = i;
 #ifndef NDEBUG
   maxdepth += 1;
+  print_expression(i, stderr);
+  fputs("\n  -> ", stderr);
+  print_expression(retval, stderr);
+  fputc('\n', stderr);
 #endif
   return retval;
 }
