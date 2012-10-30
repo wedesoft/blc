@@ -19,6 +19,9 @@
 (quote (3 2))
 #<procedure>
 (quote 3)
+#<procedure>
+(quote 8)
+(quote 8)
 (quote (1 2))
 (quote (1 2))
 (quote (2 3 5 7))

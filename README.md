@@ -42,7 +42,6 @@ External Links
 * [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
-* [Scheme implemented in Ruby](https://github.com/jcoglan/heist)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [Peter Norvig's Lisp implemented in Python](http://norvig.com/lispy.html)
 * [Lisp as the Maxwell’s equations of software](http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/) (also see [here](http://gliese1337.blogspot.co.uk/2012/04/schrodingers-equation-of-software.html))

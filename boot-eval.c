@@ -307,8 +307,11 @@ int eval_expression(int i, int env)
           fputs("define: not allowed in an expression context\n", stderr);
           exit(1);
         };
-        retval = eval_expression(first(rest(rest(i))), environment);
-        environment = define(first(rest(i)), retval, environment);
+        // retval = eval_expression(first(rest(rest(i))), environment);
+        // retval = eval_expression(first(rest(rest(i))), environment);
+        // environment = define(first(rest(i)), retval, environment);
+        environment = define(first(rest(i)), first(rest(rest(i))), environment);
+        retval = eval_expression(first(rest(i)), environment);
       } else if (is_eq(first(i), "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eq"))
