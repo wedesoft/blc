@@ -52,3 +52,6 @@
 (quote 3)
 #<procedure>
 (quote 0)
+#<procedure>
+(quote 1)
+(quote 0)

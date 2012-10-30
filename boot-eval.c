@@ -265,10 +265,11 @@ int eval_list(int i, int env)
 }
 
 #ifndef NDEBUG
-int maxdepth = 15;
+int maxdepth = 100;
 #endif
 
 // (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
+// (define member? (lambda (x l) (if (null? l) #f (if (eq x (first l)) #t (member? x (rest l))))))
 // (member? 1 (quote (2 1 3)))
 //
 // ((lambda x x) 7)
@@ -331,7 +332,7 @@ int eval_expression(int i, int env)
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
       else if (is_eq(first(i), "eval"))
         retval = eval_expression(first(rest(i)), first(rest(rest(i))));
-      else if (is_eq(first(i), "eq"))
+      else if (is_eq(first(i), "eq?"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
         retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env); // 8 .. 11, 13, 15
@@ -377,6 +378,9 @@ int main(void)
 {
   initialize();
   while (1) {
+#ifndef NDEBUG
+    fputs("----------------------------------------\n", stderr);
+#endif
     int expr = read_expression(stdin);
     if (feof(stdin)) break;
 #if 0
