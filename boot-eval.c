@@ -216,7 +216,7 @@ void print_expression(int i, FILE *stream)
     while (!is_nil(r)) {
       fputc(' ', stream);
       if ((is_procedure(i) && c == 3) || (is_eval(i) && c == 2))
-        fputs("#<env>", stderr);
+        fputs("#<env>", stream);
       else
         print_expression(first(r), stream);
       r = rest(r);
@@ -268,24 +268,14 @@ int eval_list(int i, int env)
 int maxdepth = 100;
 #endif
 
-// (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
-// (define member? (lambda (x l) (if (null? l) #f (if (eq x (first l)) #t (member? x (rest l))))))
-// (member? 1 (quote (2 1 3)))
-//
-// ((lambda x x) 7)
-// ((lambda z z) 5)
-// ((lambda x x) 1 2)
-// (list 2 3 5 7)
+// (if (eq 1 1) 1 0)
 
 int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  print_expression(i, stderr);
-  fputs(" ...\n", stderr);
-  if (maxdepth <= 0) {
-    return to_token("#<recursion>"); // 1
-  };
+  // print_expression(i, stderr); fputs(" ...\n", stderr);
+  if (maxdepth <= 0) return to_token("#<recursion>");
   maxdepth -= 1;
 #endif
   if (is_nil(i))
@@ -298,7 +288,8 @@ int eval_expression(int i, int env)
         int local_env = first(rest(rest(rest(first(i)))));
         int vars = first(rest(first(i)));
         if (is_token(vars)) {
-          int args = rest(i);// delayed 'eval' for each argument in list!!!
+          // int args = eval_list(rest(i), env);
+          int args = rest(i);
           local_env = define(vars, args, local_env);
         } else {
           int args = eval_list(rest(i), env);
@@ -306,7 +297,7 @@ int eval_expression(int i, int env)
         };
         retval = eval_expression(first(rest(rest(first(i)))), local_env);
       } else
-        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env); // 2 .. 7, 16
+        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
     } else {
       if (is_eq(first(i), "quote"))
         retval = first(rest(i));
@@ -335,7 +326,7 @@ int eval_expression(int i, int env)
       else if (is_eq(first(i), "eq?"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
       else if (!is_nil(lookup(first(i), env)))
-        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env); // 8 .. 11, 13, 15
+        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
       else {
@@ -350,15 +341,13 @@ int eval_expression(int i, int env)
   } else if (is_eq(i, "null"))
     retval = NIL;
   else if (!is_nil(lookup(i, env)))
-    retval = eval_expression(first(lookup(i, env)), env); // 12, 14
+    retval = eval_expression(first(lookup(i, env)), env);
   else
     retval = i;
 #ifndef NDEBUG
   maxdepth += 1;
-  print_expression(i, stderr);
-  fputs("\n  -> ", stderr);
-  print_expression(retval, stderr);
-  fputc('\n', stderr);
+  // print_expression(i, stderr); fputs("\n  -> ", stderr);
+  // print_expression(retval, stderr); fputc('\n', stderr);
 #endif
   return retval;
 }
@@ -379,7 +368,7 @@ int main(void)
   initialize();
   while (1) {
 #ifndef NDEBUG
-    fputs("----------------------------------------\n", stderr);
+    // fputs("----------------------------------------\n", stderr);
 #endif
     int expr = read_expression(stdin);
     if (feof(stdin)) break;
