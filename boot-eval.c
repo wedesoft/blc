@@ -286,12 +286,11 @@ int eval_expression(int i, int env)
   if (is_nil(i))
     retval = i;
   else if (is_pair(i)) {
-    if (is_nil(first(i)))
-      retval = i;
-    else if (is_pair(first(i))) {
-      if (is_procedure(first(i))) {
-        int local_env = first(rest(rest(rest(first(i)))));
-        int vars = first(rest(first(i)));
+    int head = eval_expression(first(i), env);
+    if (is_pair(head)) {
+      if (is_procedure(head)) {
+        int local_env = first(rest(rest(rest(head))));
+        int vars = first(rest(head));
         if (is_token(vars)) {
           // int args = eval_list(rest(i), env);
           int args = rest(i);
@@ -300,42 +299,42 @@ int eval_expression(int i, int env)
           int args = eval_list(rest(i), env);
           local_env = define_list(vars, args, local_env);
         };
-        retval = eval_expression(first(rest(rest(first(i)))), local_env);
+        retval = eval_expression(first(rest(rest(head))), local_env);
       } else
-        retval = eval_expression(cons(eval_expression(first(i), env), rest(i)), env);
+        retval = eval_expression(cons(head, rest(i)), env);
     } else {
-      if (is_eq(first(i), "quote"))
+      if (is_eq(head, "quote"))
         retval = first(rest(i));
-      else if (is_eq(first(i), "null?"))
+      else if (is_eq(head, "null?"))
         retval = to_bool(is_nil(eval_expression(first(rest(i)), env)), env);
-      else if (is_eq(first(i), "pair?"))
+      else if (is_eq(head, "pair?"))
         retval = to_bool(is_pair(eval_expression(first(rest(i)), env)), env);
-      else if (is_eq(first(i), "first"))
+      else if (is_eq(head, "first"))
         retval = first(eval_expression(first(rest(i)), env));
-      else if (is_eq(first(i), "rest"))
+      else if (is_eq(head, "rest"))
         retval = rest(eval_expression(first(rest(i)), env));
-      else if (is_eq(first(i), "cons"))
+      else if (is_eq(head, "cons"))
         retval = cons(eval_expression(first(rest(i)), env),
                       eval_expression(first(rest(rest(i))), env));
-      else if (is_eq(first(i), "define")) {
+      else if (is_eq(head, "define")) {
         if (environment != env) {
           fputs("define: not allowed in an expression context\n", stderr);
           exit(1);
         };
         environment = define(first(rest(i)), first(rest(rest(i))), environment);
         retval = eval_expression(first(rest(i)), environment);
-      } else if (is_eq(first(i), "lambda"))
+      } else if (is_eq(head, "lambda"))
         retval = procedure(first(rest(i)), first(rest(rest(i))), env);
-      else if (is_eq(first(i), "eval"))
+      else if (is_eq(head, "eval"))
         retval = eval_expression(first(rest(i)), first(rest(rest(i))));
-      else if (is_eq(first(i), "eq?"))
+      else if (is_eq(head, "eq?"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
-      else if (!is_nil(lookup(first(i), env)))
-        retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env);
+      else if (!is_nil(lookup(head, env)))
+        retval = eval_expression(cons(first(lookup(head, env)), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
       else
-        retval = cons(first(i), eval_each(rest(i), env));
+        retval = cons(head, eval_each(rest(i), env));
     }
   } else if (is_eq(i, "null"))
     retval = NIL;

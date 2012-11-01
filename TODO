@@ -1,4 +1,5 @@
 * infinite recursion ((x 1 1) 1 0)
+* (list null null)
 * evaluation of strings to simplify code and for implementing test suite
 * library and interpreters with different debug output
 * basic methods:
