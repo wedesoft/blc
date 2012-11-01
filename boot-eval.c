@@ -272,14 +272,14 @@ int eval_each(int i, int env)
 }
 
 #ifndef NDEBUG
-int maxdepth = 100;
+int maxdepth = 20;
 #endif
 
 int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  // print_expression(i, stderr); fputs(" ...\n", stderr);
+  print_expression(i, stderr); fputs(" ...\n", stderr);
   if (maxdepth <= 0) return to_token("#<recursion>");
   maxdepth -= 1;
 #endif
@@ -334,15 +334,8 @@ int eval_expression(int i, int env)
         retval = eval_expression(cons(first(lookup(first(i), env)), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
-      else {
-        // retval = i;
+      else
         retval = cons(first(i), eval_each(rest(i), env));
-        // retval = cons(first(i), eval_expression(rest(i), env));
-        //fputs("Reference to undefined identifier: ", stderr);
-        //print_expression(first(i), stderr);
-        //fputc('\n', stderr);
-        //exit(1);
-      }
     }
   } else if (is_eq(i, "null"))
     retval = NIL;
@@ -352,8 +345,8 @@ int eval_expression(int i, int env)
     retval = i;
 #ifndef NDEBUG
   maxdepth += 1;
-  // print_expression(i, stderr); fputs("\n  -> ", stderr);
-  // print_expression(retval, stderr); fputc('\n', stderr);
+  print_expression(i, stderr); fputs("\n  -> ", stderr);
+  print_expression(retval, stderr); fputc('\n', stderr);
 #endif
   return retval;
 }
