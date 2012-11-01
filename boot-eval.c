@@ -359,10 +359,6 @@ void initialize(void)
   fclose(boot);
 }
 
-// (define cond (lambda l (first (first l)) (first (rest (first l))) (cond (rest l))))
-
-// define without local environment!!!
-//
 int main(void)
 {
   initialize();
