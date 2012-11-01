@@ -8,6 +8,7 @@ null
 (cons 1 (cons 2 (cons 3 null)))
 (define x 0)
 x
+(+ x x)
 (define y (quote (1 2 3)))
 y
 (cons x y)

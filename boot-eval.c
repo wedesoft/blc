@@ -264,11 +264,16 @@ int eval_list(int i, int env)
   return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
 }
 
+int eval_expression(int i, int env);
+
+int eval_each(int i, int env)
+{
+  return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_each(rest(i), env));
+}
+
 #ifndef NDEBUG
 int maxdepth = 100;
 #endif
-
-// (if (eq 1 1) 1 0)
 
 int eval_expression(int i, int env)
 {
@@ -330,7 +335,8 @@ int eval_expression(int i, int env)
       else if (is_procedure(i))
         retval = i;
       else {
-        retval = i;
+        // retval = i;
+        retval = cons(first(i), eval_each(rest(i), env));
         // retval = cons(first(i), eval_expression(rest(i), env));
         //fputs("Reference to undefined identifier: ", stderr);
         //print_expression(first(i), stderr);
