@@ -287,7 +287,9 @@ int eval_expression(int i, int env)
     retval = i;
   else if (is_pair(i)) {
     int head = eval_expression(first(i), env);
-    if (is_pair(head)) {
+    if (is_nil(head))
+      retval = cons(head, eval_each(rest(i), env));
+    else if (is_pair(head)) {
       if (is_procedure(head)) {
         int local_env = first(rest(rest(rest(head))));
         int vars = first(rest(head));
