@@ -279,7 +279,7 @@ int eval_expression(int i, int env)
 {
   int retval;
 #ifndef NDEBUG
-  print_expression(i, stderr); fputs(" ...\n", stderr);
+  // print_expression(i, stderr); fputs(" ...\n", stderr);
   if (maxdepth <= 0) return to_token("#<recursion>");
   maxdepth -= 1;
 #endif
@@ -294,8 +294,7 @@ int eval_expression(int i, int env)
         int local_env = first(rest(rest(rest(head))));
         int vars = first(rest(head));
         if (is_token(vars)) {
-          // int args = eval_list(rest(i), env);
-          int args = rest(i);
+          int args = eval_list(rest(i), env);
           local_env = define(vars, args, local_env);
         } else {
           int args = eval_list(rest(i), env);
@@ -331,7 +330,12 @@ int eval_expression(int i, int env)
         retval = eval_expression(first(rest(i)), first(rest(rest(i))));
       else if (is_eq(head, "eq?"))
         retval = to_bool(eq(eval_expression(first(rest(i)), env), eval_expression(first(rest(rest(i))), env)), env);
-      else if (!is_nil(lookup(head, env)))
+      else if (is_eq(head, "if")) {
+        int condition = first(rest(i));
+        int a = quote(first(rest(rest(i))));
+        int b = quote(first(rest(rest(rest(i)))));
+        retval = eval_expression(eval_expression(cons(condition, cons(a, cons(b, NIL))), env), env);
+      } else if (!is_nil(lookup(head, env)))
         retval = eval_expression(cons(first(lookup(head, env)), rest(i)), env);
       else if (is_procedure(i))
         retval = i;
@@ -346,8 +350,8 @@ int eval_expression(int i, int env)
     retval = i;
 #ifndef NDEBUG
   maxdepth += 1;
-  print_expression(i, stderr); fputs("\n  -> ", stderr);
-  print_expression(retval, stderr); fputc('\n', stderr);
+  // print_expression(i, stderr); fputs("\n  -> ", stderr);
+  // print_expression(retval, stderr); fputc('\n', stderr);
 #endif
   return retval;
 }

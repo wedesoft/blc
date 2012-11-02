@@ -4,4 +4,3 @@
 (define not (lambda (b) (lambda (x y) (b y x))))
 (define and (lambda (x y) (x y x)))
 (define or (lambda (x y) (x x y)))
-(define if (lambda (b x y) (b x y)))
