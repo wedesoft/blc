@@ -293,13 +293,11 @@ int eval_expression(int i, int env)
       if (is_procedure(head)) {
         int local_env = first(rest(rest(rest(head))));
         int vars = first(rest(head));
-        if (is_token(vars)) {
-          int args = eval_list(rest(i), env);
+        int args = eval_list(rest(i), env);
+        if (is_token(vars))
           local_env = define(vars, args, local_env);
-        } else {
-          int args = eval_list(rest(i), env);
+        else
           local_env = define_list(vars, args, local_env);
-        };
         retval = eval_expression(first(rest(rest(head))), local_env);
       } else
         retval = eval_expression(cons(head, rest(i)), env);
