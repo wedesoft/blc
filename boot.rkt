@@ -6,3 +6,4 @@
 (define not (lambda (b) (lambda (x y) (b y x))))
 (define and (lambda (x y) (x y x)))
 (define or (lambda (x y) (x x y)))
+(define append (lambda (l1 l2) (if (null? l1) l2 (cons (first l1) (append (rest l1) l2)))))

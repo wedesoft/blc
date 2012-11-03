@@ -60,3 +60,4 @@ y
 (define member? (lambda (x l) (if (null? l) #f (if (eq? x (first l)) #t (member? x (rest l))))))
 ((member? 1 (quote (3 1 2))) 1 0)
 ((member? 1 (quote (3 4 2))) 1 0)
+(append (quote (1 2 3)) (quote (4 5)))

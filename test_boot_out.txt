@@ -60,3 +60,4 @@
 #<procedure>
 (quote 1)
 (quote 0)
+(quote (1 2 3 4 5))

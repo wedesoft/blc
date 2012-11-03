@@ -272,7 +272,7 @@ int eval_each(int i, int env)
 }
 
 #ifndef NDEBUG
-int maxdepth = 20;
+int maxdepth = 30;
 #endif
 
 int eval_expression(int i, int env)
