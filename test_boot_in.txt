@@ -22,6 +22,8 @@ y
 (define f (lambda (x) x))
 (f 3)
 (define u (lambda () v))
+(second (quote (1 2 3 4)))
+(third (quote (1 2 3 4)))
 (define v 8)
 (u)
 ((lambda (x y) (cons x (cons y null))) 1 2)

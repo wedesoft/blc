@@ -22,6 +22,8 @@
 #<procedure>
 (quote 3)
 #<procedure>
+(quote 2)
+(quote 3)
 (quote 8)
 (quote 8)
 (quote (1 2))
