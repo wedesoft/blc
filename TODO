@@ -1,5 +1,5 @@
-* if -> cond
-* (null?) should be procedure
+* translate 'cond' to 'if'
+* 'null?' should be procedure
 * evaluation of strings to simplify code and for implementing test suite
 * macros
 * library and interpreters with different debug output
@@ -14,14 +14,14 @@
 
   * x define (local environment?)
   * x lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
-  *   cond
+  * x cond
 
   *   equal
   * x cadr
   * x caddr
   * x append
   *   pair
-  *   assoc
+  * x assoc
   *   sublis (hash)
 
   *   eval

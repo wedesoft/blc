@@ -63,3 +63,6 @@ y
 (append (quote (1 2 3)) (quote (4 5)))
 (assoc 3 (quote ((1 a) (2 b) (3 c) (4 d))))
 (assoc 5 (quote ((1 a) (2 b) (3 c) (4 d))))
+(cond (#t 2) (#t 3))
+(cond (#f 2) (#t 3))
+(cond (#f 2) (#f 3))

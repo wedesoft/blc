@@ -124,6 +124,16 @@ int quote(int i)
   return cons(to_token("quote"), cons(i, NIL));
 }
 
+int if_(int cond, int a, int b)
+{
+  return cons(to_token("if"), cons(cond, cons(a, cons(b, NIL))));
+}
+
+int cond(int i)
+{
+  return cons(to_token("cond"), i);
+}
+
 int procedure(int arg, int body, int env)
 {
   return cons(to_token("#<procedure>"), cons(arg, cons(body, cons(env, NIL))));
@@ -265,7 +275,6 @@ int eval(int i, int env)
 
 int eval_list(int i, int env)
 {
-  // return is_nil(i) ? NIL : cons(cons(procedure(NIL, first(i), env), NIL), eval_list(rest(i), env));
   return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
 }
 
@@ -338,6 +347,13 @@ int eval_expression(int i, int env)
         int a = quote(arg(i, 2));
         int b = quote(arg(i, 3));
         retval = eval_expression(eval_expression(cons(condition, cons(a, cons(b, NIL))), env), env);
+      } else if (is_eq(head, "cond")) {
+        if (is_nil(arg(i, 1)))
+          retval = NIL;
+        else {
+          int rule = arg(i, 1);
+          retval = eval_expression(if_(arg(rule, 0), arg(rule, 1), cond(rest(rest(i)))), env);
+        };
       } else if (!is_nil(lookup(head, env)))
         retval = eval_expression(cons(first(lookup(head, env)), rest(i)), env);
       else if (is_procedure(i))
