@@ -305,13 +305,10 @@ int eval_expression(int i, int env)
       retval = cons(head, eval_each(rest(i), env));
     else if (is_pair(head)) {
       if (is_procedure(head)) {
-        int local_env = arg(head, 3);
+        int context = arg(head, 3);
         int vars = arg(head, 1);
         int args = eval_list(rest(i), env);
-        if (is_token(vars))
-          local_env = define(vars, args, local_env);
-        else
-          local_env = define_list(vars, args, local_env);
+        int local_env = is_token(vars) ? define(vars, args, context) :define_list(vars, args, context);
         retval = eval_expression(arg(head, 2), local_env);
       } else
         retval = eval_expression(cons(head, rest(i)), env);

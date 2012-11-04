@@ -1,4 +1,3 @@
-* translate 'cond' to 'if'
 * 'null?' should be procedure
 * evaluation of strings to simplify code and for implementing test suite
 * macros
