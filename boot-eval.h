@@ -13,13 +13,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#ifndef __BOOT_EVAL_H
+#define __BOOT_EVAL_H
 #include <stdio.h>
 
 extern int environment;
 
 int read_expression(FILE *stream);
 int eval_expression(int i, int env);
+void print_expression(int i, FILE *stream);
 void print_quoted(int i, FILE *stream);
 void initialize(void);
 
+#endif
 

@@ -8,7 +8,7 @@ tokenizer_spec_SOURCES = tokenizer_spec.c tokenizer.c
 tokenizer_spec_LDFLAGS =
 tokenizer_spec_LDADD =
 
-bracket_spec_SOURCES = bracket_spec.c tokenizer.c
+bracket_spec_SOURCES = bracket_spec.c boot-eval.c tokenizer.c
 bracket_spec_LDFLAGS =
 bracket_spec_LDADD =
 

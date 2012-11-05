@@ -79,8 +79,6 @@ int is_token(int i)
   return is_nil(i) ? 0 : cells[i].type == TOKEN;
 }
 
-void print_expression(int i, FILE *stream);
-
 char *token(int i)
 {
   if (!is_token(i)) {

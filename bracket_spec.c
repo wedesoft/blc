@@ -16,15 +16,42 @@
 #include <assert.h>
 #include <string.h>
 #include "tokenizer.h"
+#include "boot-eval.h"
 
-int test(const char *cmd, const char *out)
+#define BUFSIZE 1024
+
+int from_string(char *str)
+{
+  FILE *f = fmemopen(str, strlen(str), "r");
+  int retval = read_expression(f);
+  fclose(f);
+  return retval;
+}
+
+char *to_string(char *buffer, int i)
+{
+  FILE *f = fmemopen(buffer, BUFSIZE, "w");
+  print_expression(i, f);
+  fclose(f);
+  return buffer;
+}
+
+int test(char *cmd)
 {
   int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, from_string(cmd));
+  if (strcmp(cmd, result)) {
+    fprintf(stderr, "\"%s\" becomes \"%s\"\n", cmd, result);
+    retval = 1;
+  };
   return retval;
 }
 
 int main(void)
 {
   int retval = 0;
+  test("null");
+  test("(quote ())");
   return retval;
 }
