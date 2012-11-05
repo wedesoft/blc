@@ -7,4 +7,5 @@
 (define and (lambda (x y) (x y x)))
 (define or (lambda (x y) (x x y)))
 (define append (lambda (l1 l2) (if (null? l1) l2 (cons (first l1) (append (rest l1) l2)))))
-(define assoc (lambda (v lst) (if (null? lst) #f (if (eq? (first (first lst)) v) (first lst) (assoc v (rest lst))))))
+(define else #t)
+(define assoc (lambda (v lst) (cond ((null? lst) #f) ((eq? (first (first lst)) v) (first lst)) (else (assoc v (rest lst))))))
