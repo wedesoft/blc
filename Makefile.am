@@ -2,11 +2,11 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = tokenize boot-eval
+bin_PROGRAMS = tokenizer_spec boot-eval
 
-tokenize_SOURCES = tokenize.c tokenizer.c
-tokenize_LDFLAGS =
-tokenize_LDADD =
+tokenizer_spec_SOURCES = tokenizer_spec.c tokenizer.c
+tokenizer_spec_LDFLAGS =
+tokenizer_spec_LDADD =
 
 boot_eval_SOURCES = boot-eval.c tokenizer.c
 boot_eval_LDFLAGS = 
@@ -20,11 +20,10 @@ EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
 	test_tokenize_in.txt test_tokenize_out.txt \
 	test_boot_in.txt test_boot_out.txt
 
-test: test_tokenize.tmp test_boot.tmp
+test: tokenizer_spec.tmp test_boot.tmp
 
-test_tokenize.tmp: tokenize$(EXEEXT) test_tokenize_in.txt test_tokenize_out.txt
-	$(CAT) test_tokenize_in.txt | ./tokenize$(EXEEXT) > out.tmp
-	$(DIFF) test_tokenize_out.txt out.tmp && $(TOUCH) $@
+tokenizer_spec.tmp: tokenizer_spec$(EXEEXT)
+	./tokenizer_spec$(EXEEXT) && $(TOUCH) $@
 
 test_boot.tmp: boot-eval$(EXEEXT) boot.rkt test_boot_in.txt test_boot_out.txt
 	$(CAT) test_boot_in.txt | ./boot-eval$(EXEEXT) > out.tmp

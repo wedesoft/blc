@@ -19,4 +19,4 @@ libtool
 ltmain.sh
 m4
 missing
-tokenize
+tokenizer_spec
