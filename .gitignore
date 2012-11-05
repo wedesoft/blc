@@ -20,3 +20,4 @@ ltmain.sh
 m4
 missing
 tokenizer_spec
+bracket_spec
