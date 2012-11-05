@@ -13,18 +13,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include <assert.h>
-#include <string.h>
-#include "tokenizer.h"
-
-int test(const char *cmd, const char *out)
-{
-  int retval = 0;
-  return retval;
-}
+#include "boot-eval.h"
 
 int main(void)
 {
-  int retval = 0;
-  return retval;
+  initialize();
+  while (1) {
+#ifndef NDEBUG
+    // fputs("----------------------------------------\n", stderr);
+#endif
+    int expr = read_expression(stdin);
+    if (feof(stdin)) break;
+#if 0
+    print_expression(expr, stderr);
+    fputc('\n', stderr);
+#endif
+    print_quoted(eval_expression(expr, environment), stdout);
+#if 0
+    fputc('\n', stderr);
+#endif
+  };
+  return 0;
 }

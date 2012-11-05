@@ -13,10 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tokenizer.h"
+#include "boot-eval.h"
 
 #define MAX_CELLS 65536
 #define NIL -1
@@ -193,8 +193,6 @@ int is_eval(int i)
   return is_eq(first(i), "eval");
 }
 
-int read_expression(FILE *stream);
-
 int read_list(FILE *stream)
 {
   int retval;
@@ -277,8 +275,6 @@ int eval_list(int i, int env)
 {
   return is_nil(i) ? NIL : cons(eval(first(i), env), eval_list(rest(i), env));
 }
-
-int eval_expression(int i, int env);
 
 int eval_each(int i, int env)
 {
@@ -377,42 +373,5 @@ void initialize(void)
   FILE *boot = fopen("boot.rkt", "r");
   while (!feof(boot)) eval_expression(read_expression(boot), environment);
   fclose(boot);
-}
-
-int main(void)
-{
-  initialize();
-  while (1) {
-#ifndef NDEBUG
-    // fputs("----------------------------------------\n", stderr);
-#endif
-    int expr = read_expression(stdin);
-    if (feof(stdin)) break;
-#if 0
-    int i;
-    for (i=0; i<n_cells; i++) {
-      if (i == expr)
-        fprintf(stderr, "-> ");
-      else
-        fprintf(stderr, "   ");
-      fprintf(stderr, "%2d: ", i);
-      if (is_pair(i))
-        fprintf(stderr, "first = %3d, rest = %3d - ", first(i), rest(i));
-      else
-        fprintf(stderr, "token = %15s - ", token(i));
-      print_expression(i, stderr);
-      fputc('\n', stderr);
-    };
-#endif
-#if 0
-    print_expression(expr, stderr);
-    fputc('\n', stderr);
-#endif
-    print_quoted(eval_expression(expr, environment), stdout);
-#if 0
-    fputc('\n', stderr);
-#endif
-  };
-  return 0;
 }
 

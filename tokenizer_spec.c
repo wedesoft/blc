@@ -47,4 +47,3 @@ int main(void)
   fclose(f);
   return retval;
 }
-

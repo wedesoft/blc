@@ -12,11 +12,11 @@ bracket_spec_SOURCES = bracket_spec.c tokenizer.c
 bracket_spec_LDFLAGS =
 bracket_spec_LDADD =
 
-boot_eval_SOURCES = boot-eval.c tokenizer.c
+boot_eval_SOURCES = repl.c boot-eval.c tokenizer.c
 boot_eval_LDFLAGS = 
 boot_eval_LDADD =
 
-noinst_HEADERS = tokenizer.h
+noinst_HEADERS = tokenizer.h boot-eval.h
 
 BUILT_SOURCES =
 
