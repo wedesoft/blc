@@ -29,6 +29,7 @@ int main(void)
     fputc('\n', stderr);
 #endif
     print_quoted(eval_expression(expr, environment), stdout);
+    fputc('\n', stdout);
 #if 0
     fputc('\n', stderr);
 #endif

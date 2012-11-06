@@ -16,18 +16,12 @@ noinst_HEADERS = boot-eval.h
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
-	boot.rkt run.sh \
-	test_boot_in.txt test_boot_out.txt
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO boot.rkt run.sh
 
-test: spec_bracket.tmp test_boot.tmp
+test: spec_bracket.tmp
 
 spec_bracket.tmp: spec_bracket$(EXEEXT)
 	./spec_bracket$(EXEEXT) && $(TOUCH) $@
-
-test_boot.tmp: boot-eval$(EXEEXT) boot.rkt test_boot_in.txt test_boot_out.txt
-	$(CAT) test_boot_in.txt | ./boot-eval$(EXEEXT) > out.tmp
-	$(DIFF) test_boot_out.txt out.tmp && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
 

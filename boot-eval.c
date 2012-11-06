@@ -283,11 +283,11 @@ void print_expression(int i, FILE *stream)
 void print_quoted(int i, FILE *stream)
 {
   if (is_procedure(i))
-    fputs("#<procedure>\n", stream);
+    fputs("#<procedure>", stream);
   else {
     fputs("(quote ", stream);
     print_expression(i, stream);
-    fputs(")\n", stream);
+    fputs(")", stream);
   };
 }
 
