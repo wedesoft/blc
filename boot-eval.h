@@ -21,13 +21,15 @@
 #endif
 #include <stdio.h>
 
-extern int environment;
+#define TOKENSIZE 16
 
+char *read_token(char *buffer, FILE *stream);
 int read_expression(FILE *stream);
 int eval_expression(int i, int env);
 void print_expression(int i, FILE *stream);
 void print_quoted(int i, FILE *stream);
 void initialize(void);
+extern int environment;
 
 #endif
 

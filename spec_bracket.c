@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <assert.h>
 #include <string.h>
-#include "tokenizer.h"
 #include "boot-eval.h"
 
 #define BUFSIZE 1024

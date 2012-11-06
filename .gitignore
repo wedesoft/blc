@@ -3,6 +3,7 @@
 *.swp
 *.o
 *.tmp
+bracket-*.tar.*
 Makefile
 Makefile.in
 aclocal.m4

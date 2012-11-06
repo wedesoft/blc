@@ -4,20 +4,20 @@ ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = spec_bracket boot-eval
 
-spec_bracket_SOURCES = spec_bracket.c boot-eval.c tokenizer.c
+spec_bracket_SOURCES = spec_bracket.c boot-eval.c
 spec_bracket_LDFLAGS =
 spec_bracket_LDADD =
 
-boot_eval_SOURCES = repl.c boot-eval.c tokenizer.c
+boot_eval_SOURCES = repl.c boot-eval.c
 boot_eval_LDFLAGS = 
 boot_eval_LDADD =
 
-noinst_HEADERS = tokenizer.h boot-eval.h
+noinst_HEADERS = boot-eval.h
 
 BUILT_SOURCES =
 
 EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
-	test_tokenize_in.txt test_tokenize_out.txt \
+	boot.rkt run.sh \
 	test_boot_in.txt test_boot_out.txt
 
 test: spec_bracket.tmp test_boot.tmp

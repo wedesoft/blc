@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdlib.h>
 #include <string.h>
-#include "tokenizer.h"
 #include "boot-eval.h"
 
 #define MAX_CELLS 65536
@@ -41,6 +40,49 @@ typedef struct {
 int n_cells = 0;
 cell_t cells[MAX_CELLS];
 int environment = NIL;
+
+char *read_token(char *buffer, FILE *stream)
+{
+  int length = 0;
+  char *p = buffer;
+  int quit = 0;
+  while (!quit) {
+    int c = fgetc(stream);
+    if (c == EOF) break;
+    switch(c) {
+    case ' ':
+    case '\n':
+    case '\r':
+    case '\t':
+      if (length > 0) quit = 1;
+      break;
+    case '(':
+    case ')':
+      if (length > 0)
+        ungetc(c, stream);
+      else {
+        length = 1;
+        *p++ = c;
+      };
+      quit = 1;
+      break;
+      break;
+    default:
+      *p++ = c;
+      length += 1;
+    };
+    if (length > TOKENSIZE) {
+      *p = '\0';
+      fprintf(stderr,
+              "Error: Token %s... longer than %d characters\n",
+              buffer,
+              TOKENSIZE);
+      exit(1);
+    };
+  }
+  *p = '\0';
+  return length > 0 ? buffer : NULL;
+}
 
 int add_cell(void)
 {
