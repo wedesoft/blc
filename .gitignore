@@ -8,6 +8,8 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 boot-eval
+config.h
+config.h.in
 config.log
 config.guess
 config.status
@@ -20,3 +22,4 @@ ltmain.sh
 m4
 missing
 spec_bracket
+stamp-h1

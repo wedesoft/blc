@@ -16,6 +16,9 @@
 #ifndef __TOKENIZER_H
 #define __TOKENIZER_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdio.h>
 
 #define TOKENSIZE 16
