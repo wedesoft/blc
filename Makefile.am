@@ -2,15 +2,15 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = tokenizer_spec bracket_spec boot-eval
+bin_PROGRAMS = spec_tokenizer spec_bracket boot-eval
 
-tokenizer_spec_SOURCES = tokenizer_spec.c tokenizer.c
-tokenizer_spec_LDFLAGS =
-tokenizer_spec_LDADD =
+spec_tokenizer_SOURCES = spec_tokenizer.c tokenizer.c
+spec_tokenizer_LDFLAGS =
+spec_tokenizer_LDADD =
 
-bracket_spec_SOURCES = bracket_spec.c boot-eval.c tokenizer.c
-bracket_spec_LDFLAGS =
-bracket_spec_LDADD =
+spec_bracket_SOURCES = spec_bracket.c boot-eval.c tokenizer.c
+spec_bracket_LDFLAGS =
+spec_bracket_LDADD =
 
 boot_eval_SOURCES = repl.c boot-eval.c tokenizer.c
 boot_eval_LDFLAGS = 
@@ -24,13 +24,13 @@ EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
 	test_tokenize_in.txt test_tokenize_out.txt \
 	test_boot_in.txt test_boot_out.txt
 
-test: tokenizer_spec.tmp bracket_spec.tmp test_boot.tmp
+test: spec_tokenizer.tmp spec_bracket.tmp test_boot.tmp
 
-tokenizer_spec.tmp: tokenizer_spec$(EXEEXT)
-	./tokenizer_spec$(EXEEXT) && $(TOUCH) $@
+spec_tokenizer.tmp: spec_tokenizer$(EXEEXT)
+	./spec_tokenizer$(EXEEXT) && $(TOUCH) $@
 
-bracket_spec.tmp: bracket_spec$(EXEEXT)
-	./bracket_spec$(EXEEXT) && $(TOUCH) $@
+spec_bracket.tmp: spec_bracket$(EXEEXT)
+	./spec_bracket$(EXEEXT) && $(TOUCH) $@
 
 test_boot.tmp: boot-eval$(EXEEXT) boot.rkt test_boot_in.txt test_boot_out.txt
 	$(CAT) test_boot_in.txt | ./boot-eval$(EXEEXT) > out.tmp

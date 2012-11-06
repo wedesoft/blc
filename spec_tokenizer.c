@@ -16,33 +16,14 @@
 #include <assert.h>
 #include <string.h>
 #include "tokenizer.h"
-#include "boot-eval.h"
 
-#define BUFSIZE 1024
-
-int from_string(char *str)
-{
-  FILE *f = fmemopen(str, strlen(str), "r");
-  int retval = read_expression(f);
-  fclose(f);
-  return retval;
-}
-
-char *to_string(char *buffer, int i)
-{
-  FILE *f = fmemopen(buffer, BUFSIZE, "w");
-  print_expression(i, f);
-  fclose(f);
-  return buffer;
-}
-
-int test(char *cmd)
+int test(const char *result, const char *spec)
 {
   int retval = 0;
-  char buffer[BUFSIZE];
-  char *result = to_string(buffer, from_string(cmd));
-  if (strcmp(cmd, result)) {
-    fprintf(stderr, "\"%s\" becomes \"%s\"\n", cmd, result);
+  if (!result) result = "NULL";
+  if (!spec) spec = "NULL";
+  if (strcmp(result, spec)) {
+    fprintf(stderr, "Token was \"%s\" but should be \"%s\"\n", result, spec);
     retval = 1;
   };
   return retval;
@@ -51,7 +32,18 @@ int test(char *cmd)
 int main(void)
 {
   int retval = 0;
-  test("null");
-  test("(quote ())");
+  char *buf = "(quote (+ a b))";
+  FILE *f = fmemopen(buf, strlen(buf), "r");
+  char buffer[TOKENSIZE + 2];
+  retval = retval | test(read_token(buffer, f), "(");
+  retval = retval | test(read_token(buffer, f), "quote");
+  retval = retval | test(read_token(buffer, f), "(");
+  retval = retval | test(read_token(buffer, f), "+");
+  retval = retval | test(read_token(buffer, f), "a");
+  retval = retval | test(read_token(buffer, f), "b");
+  retval = retval | test(read_token(buffer, f), ")");
+  retval = retval | test(read_token(buffer, f), ")");
+  retval = retval | test(read_token(buffer, f), NULL);
+  fclose(f);
   return retval;
 }
