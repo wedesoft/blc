@@ -51,9 +51,9 @@ int test(char *cmd, char *spec)
 int main(void)
 {
   int retval = 0;
-  test("null", "null");
-  test(" (  cons \n x  y  )\n", "(cons x y)");
-  test("((lambda x y)7 )", "((lambda x y) 7)");
-  test("(quote ())", "(quote ())");
+  retval = retval | test("null", "null");
+  retval = retval | test(" (  cons \n x  y  )\n", "(cons x y)");
+  retval = retval | test("((lambda x y)7 )", "((lambda x y) 7)");
+  retval = retval | test("(quote ())", "(quote ())");
   return retval;
 }
