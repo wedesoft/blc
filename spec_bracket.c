@@ -36,7 +36,21 @@ char *to_string(char *buffer, int bufsize, int i)
   return buffer;
 }
 
-int test(char *cmd, char *spec)
+int test_token(FILE *f, const char *spec)
+{
+  int retval = 0;
+  char buffer[TOKENSIZE + 3];
+  char *result = read_token(buffer, f);
+  if (!result) result = "NULL";
+  if (!spec) spec = "NULL";
+  if (strcmp(result, spec)) {
+    fprintf(stderr, "Token was \"%s\" but should be \"%s\"\n", result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_read_print(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
@@ -51,9 +65,25 @@ int test(char *cmd, char *spec)
 int main(void)
 {
   int retval = 0;
-  retval = retval | test("null", "null");
-  retval = retval | test(" (  cons \n x  y  )\n", "(cons x y)");
-  retval = retval | test("((lambda x y)7 )", "((lambda x y) 7)");
-  retval = retval | test("(quote ())", "(quote ())");
+  {
+    char *buf = "(quote \n  (+ a b))";
+    FILE *f = fmemopen(buf, strlen(buf), "r");
+    retval = retval | test_token(f, "(");
+    retval = retval | test_token(f, "quote");
+    retval = retval | test_token(f, "(");
+    retval = retval | test_token(f, "+");
+    retval = retval | test_token(f, "a");
+    retval = retval | test_token(f, "b");
+    retval = retval | test_token(f, ")");
+    retval = retval | test_token(f, ")");
+    retval = retval | test_token(f, NULL);
+    fclose(f);
+  };
+  {
+    retval = retval | test_read_print("null", "null");
+    retval = retval | test_read_print(" (  cons \n x  y  )\n", "(cons x y)");
+    retval = retval | test_read_print("((lambda\tx\ty)7 )", "((lambda x y) 7)");
+    retval = retval | test_read_print("(quote ())", "(quote ())");
+  };
   return retval;
 }

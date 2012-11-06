@@ -2,11 +2,7 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_tokenizer spec_bracket boot-eval
-
-spec_tokenizer_SOURCES = spec_tokenizer.c tokenizer.c
-spec_tokenizer_LDFLAGS =
-spec_tokenizer_LDADD =
+bin_PROGRAMS = spec_bracket boot-eval
 
 spec_bracket_SOURCES = spec_bracket.c boot-eval.c tokenizer.c
 spec_bracket_LDFLAGS =
@@ -24,10 +20,7 @@ EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO \
 	test_tokenize_in.txt test_tokenize_out.txt \
 	test_boot_in.txt test_boot_out.txt
 
-test: spec_tokenizer.tmp spec_bracket.tmp test_boot.tmp
-
-spec_tokenizer.tmp: spec_tokenizer$(EXEEXT)
-	./spec_tokenizer$(EXEEXT) && $(TOUCH) $@
+test: spec_bracket.tmp test_boot.tmp
 
 spec_bracket.tmp: spec_bracket$(EXEEXT)
 	./spec_bracket$(EXEEXT) && $(TOUCH) $@
