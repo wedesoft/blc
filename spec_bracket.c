@@ -20,6 +20,7 @@
 
 #define BUFSIZE 1024
 
+#ifdef HAVE_FMEMOPEN
 int from_string(char *str)
 {
   FILE *f = fmemopen(str, strlen(str), "r");
@@ -61,10 +62,12 @@ int test_read_print(char *cmd, char *spec)
   };
   return retval;
 }
+#endif
 
 int main(void)
 {
   int retval = 0;
+#ifdef HAVE_MEMOPEN
   {
     char *buf = "(quote \n  (+ a b))";
     FILE *f = fmemopen(buf, strlen(buf), "r");
@@ -85,5 +88,9 @@ int main(void)
     retval = retval | test_read_print("((lambda\tx\ty)7 )", "((lambda x y) 7)");
     retval = retval | test_read_print("(quote ())", "(quote ())");
   };
+#else
+  fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
+#endif
   return retval;
 }
+

@@ -15,7 +15,7 @@
   * x lambda (lambda (arg) (body)), (((lambda (y) (lambda (x) (* x y))) 2) 3)
   * x cond
 
-  *   equal
+  * x equal
   * x cadr
   * x caddr
   * x append
