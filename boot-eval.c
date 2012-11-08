@@ -246,6 +246,10 @@ int read_list(FILE *stream)
     retval = NIL;
   else if (is_dot(cell)) {
     retval = read_expression(stream);
+    if (is_pop(retval)) {
+      fprintf(stderr, "Error: Unexpected ')' in expression");
+      exit(1);
+    };
     int pop = read_expression(stream);
     if (!is_pop(pop)) {
       fprintf(stderr, "Error: Expected ')' in expression");
