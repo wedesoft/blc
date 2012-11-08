@@ -223,6 +223,11 @@ int is_pop(int i)
   return is_eq(i, ")");
 }
 
+int is_dot(int i)
+{
+  return is_eq(i, ".");
+}
+
 int is_procedure(int i)
 {
   return is_eq(first(i), "#<procedure>");
@@ -239,7 +244,14 @@ int read_list(FILE *stream)
   int cell = read_expression(stream);
   if (is_pop(cell))
     retval = NIL;
-  else
+  else if (is_dot(cell)) {
+    retval = read_expression(stream);
+    int pop = read_expression(stream);
+    if (!is_pop(pop)) {
+      fprintf(stderr, "Error: Expected ')' in expression");
+      exit(1);
+    };
+  } else
     retval = cons(cell, read_list(stream));
   return retval;
 }
@@ -268,11 +280,18 @@ void print_expression(int i, FILE *stream)
     int r = rest(i);
     while (!is_nil(r)) {
       fputc(' ', stream);
-      if ((is_procedure(i) && c == 3) || (is_eval(i) && c == 2))
-        fputs("#<env>", stream);
-      else
-        print_expression(first(r), stream);
-      r = rest(r);
+      if (is_pair(r)) {
+        if ((is_procedure(i) && c == 3) || (is_eval(i) && c == 2))
+          fputs("#<env>", stream);
+        else {
+          print_expression(first(r), stream);
+          r = rest(r);
+        };
+      } else {
+        fputs(". ", stream);
+        print_expression(r, stream);
+        r = NIL;
+      };
       c++;
     }
     fputc(')', stream);
@@ -318,7 +337,14 @@ int eval_list(int i, int env)
 
 int eval_each(int i, int env)
 {
-  return is_nil(i) ? NIL : cons(eval_expression(first(i), env), eval_each(rest(i), env));
+  int retval;
+  if (is_nil(i))
+    retval = NIL;
+  else  if (is_pair(i))
+    retval = cons(eval_expression(first(i), env), eval_each(rest(i), env));
+  else
+    retval = eval_expression(i, env);
+  return retval;
 }
 
 #ifndef NDEBUG

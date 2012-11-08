@@ -98,6 +98,8 @@ int main(void)
     retval = retval | test_io(" (  cons \n x  y  )\n", "(quote (cons x y))");
     retval = retval | test_io("((lambda\tx\ty)7 )", "(quote ((lambda x y) 7))");
     retval = retval | test_io("(quote ())", "(quote (quote ()))");
+    retval = retval | test_io("(1 . ())", "(quote (1))");
+    retval = retval | test_io("(1 . 2)", "(quote (1 . 2))");
   };
   {
     initialize();
@@ -110,6 +112,7 @@ int main(void)
     retval = retval | test_eval("(cons 1 (quote (2 3)))", "(quote (1 2 3))");
     retval = retval | test_eval("(cons 1 (quote ()))", "(quote (1))");
     retval = retval | test_eval("(cons 1 (cons 2 (cons 3 null)))", "(quote (1 2 3))");
+    retval = retval | test_eval("(cons (1 2) 3)", "(quote ((1 2) . 3))");
     retval = retval | test_eval("(define x 0)", "(quote 0)");
     retval = retval | test_eval("x", "(quote 0)");
     retval = retval | test_eval("(+ x x)", "(quote (+ 0 0))");
