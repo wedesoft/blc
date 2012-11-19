@@ -41,7 +41,7 @@ External Links
 * [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
 * [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
-* [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
+* [Binary lambda calculus interpreter by John Tromp](http://homepages.cwi.nl/~tromp/cl/cl.html)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [Peter Norvig's Lisp implemented in Python](http://norvig.com/lispy.html)
 * [BiwaScheme: Scheme interpreter written in Javascript](https://github.com/biwascheme/biwascheme)
