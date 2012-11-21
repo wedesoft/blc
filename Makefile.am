@@ -2,9 +2,9 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_bracket boot-eval blc
+bin_PROGRAMS = spec_bracket boot-eval
 
-spec_bracket_SOURCES = spec_bracket.c boot-eval.c
+spec_bracket_SOURCES = spec_bracket.c blc.c
 spec_bracket_LDFLAGS =
 spec_bracket_LDADD =
 
@@ -12,11 +12,7 @@ boot_eval_SOURCES = repl.c boot-eval.c
 boot_eval_LDFLAGS = 
 boot_eval_LDADD =
 
-blc_SOURCES = blc.c
-blc_LDFLAGS = 
-blc_LDADD =
-
-noinst_HEADERS = boot-eval.h
+noinst_HEADERS = boot-eval.h blc.h
 
 BUILT_SOURCES =
 
