@@ -59,6 +59,8 @@ int main(void)
   retval = retval | test_io("00 10", "0010");
   retval = retval | test_io("0100100010", "0100100010");
   retval = retval | test_io(" 01 0010 0010", "0100100010");
+#else
+  fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
   return retval;
 }

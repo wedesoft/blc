@@ -8,7 +8,7 @@ spec_bracket_SOURCES = spec_bracket.c blc.c
 spec_bracket_LDFLAGS =
 spec_bracket_LDADD =
 
-boot_eval_SOURCES = repl.c boot-eval.c
+boot_eval_SOURCES = repl.c blc.c
 boot_eval_LDFLAGS = 
 boot_eval_LDADD =
 

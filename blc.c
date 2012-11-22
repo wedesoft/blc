@@ -81,6 +81,7 @@ int read_var(FILE *stream)
     if (retval >= 0) cells[retval].var++;
   } else
     retval = -1;
+  return retval;
 }
 
 void print_var(int var, FILE *stream)
@@ -158,17 +159,18 @@ int read_expr(FILE *stream)
 
 void print_expr(int expr, FILE *stream)
 {
-  switch (cells[expr].type) {
-  case VAR:
-    print_var(cells[expr].var, stream);
-    break;
-  case LAMBDA:
-    print_lambda(cells[expr].lambda, stream);
-    break;
-  case PAIR:
-    print_pair(cells[expr].pair.fun, cells[expr].pair.arg, stream);
-    break;
-  default:
+  if (expr >= 0) {
+    switch (cells[expr].type) {
+    case VAR:
+      print_var(cells[expr].var, stream);
+      break;
+    case LAMBDA:
+      print_lambda(cells[expr].lambda, stream);
+      break;
+    case PAIR:
+      print_pair(cells[expr].pair.fun, cells[expr].pair.arg, stream);
+      break;
+    }
+  } else
     fputs("#<err>", stream);
-  };
 }
