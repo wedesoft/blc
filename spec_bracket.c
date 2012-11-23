@@ -54,10 +54,21 @@ int test_io(char *cmd, char *spec)
 int test_offset(char *cmd, int spec)
 {
   int retval = 0;
-  char buffer[BUFSIZE];
   int result = offset(from_string(cmd));
   if (result != spec) {
     fprintf(stderr, "Result for offset of \"%s\" is %d but should be %d\n", cmd, result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_lift(char *cmd, int d, char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), d));
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n", cmd, d, result, spec);
     retval = 1;
   };
   return retval;
@@ -96,6 +107,7 @@ int main(void)
   retval = retval | test_offset("0010", 1);
   retval = retval | test_offset("01001000110", 2);
   retval = retval | test_offset("0000110", 2);
+  retval = retval | test_lift("10", 1, "110");
   retval = retval | test_eval("10", "10");
   retval = retval | test_eval("110", "110");
   retval = retval | test_eval("0010", "0010");

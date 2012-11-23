@@ -209,6 +209,13 @@ int subst(int expr, int var, int replacement)
   return retval;
 }
 
+int lift(int expr, int n)
+{
+  int retval;
+  retval = expr;
+  return retval;
+}
+
 int eval_expr(int expr)
 {
   int retval;
