@@ -20,6 +20,7 @@
 #define BUFSIZE 102
 
 int offset(int expr);
+int lift(int expr, int amount);
 
 #ifdef HAVE_FMEMOPEN
 int from_string(char *str)
@@ -62,13 +63,13 @@ int test_offset(char *cmd, int spec)
   return retval;
 }
 
-int test_lift(char *cmd, int d, char *spec)
+int test_lift(char *cmd, int amount, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), d));
+  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), amount));
   if (strcmp(spec, result)) {
-    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n", cmd, d, result, spec);
+    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n", cmd, amount, result, spec);
     retval = 1;
   };
   return retval;
@@ -108,6 +109,13 @@ int main(void)
   retval = retval | test_offset("01001000110", 2);
   retval = retval | test_offset("0000110", 2);
   retval = retval | test_lift("10", 1, "110");
+  retval = retval | test_lift("110", -1, "10");
+  retval = retval | test_lift("10", -1, "#<err>");
+  retval = retval | test_lift("0010", 1, "00110");
+  retval = retval | test_lift("00110", -1, "0010");
+  retval = retval | test_lift("0010", -1, "#<err>");
+  retval = retval | test_lift("01001000110", 1, "0100110001110");
+  retval = retval | test_lift("01001000110", -1, "#<err>");
   retval = retval | test_eval("10", "10");
   retval = retval | test_eval("110", "110");
   retval = retval | test_eval("0010", "0010");

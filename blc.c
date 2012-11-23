@@ -66,17 +66,27 @@ int read_bit(FILE *stream)
   return retval;
 }
 
+int make_var(int var)
+{
+  int retval;
+  if (var >= 0) {
+    retval = cell();
+    if (retval >= 0) {
+      cells[retval].type = VAR;
+      cells[retval].var = var;
+    };
+  } else
+    retval = -1;
+  return retval;
+}
+
 int read_var(FILE *stream)
 {
   int retval;
   int b = read_bit(stream);
-  if (b == 0) {
-    retval = cell();
-    if (retval >= 0) {
-      cells[retval].type = VAR;
-      cells[retval].var = 0;
-    };
-  } else if (b == 1) {
+  if (b == 0)
+    retval = make_var(0);
+  else if (b == 1) {
     retval = read_var(stream);
     if (retval >= 0) cells[retval].var++;
   } else
@@ -93,29 +103,41 @@ void print_var(int var, FILE *stream)
     fputc('0', stream);
 }
 
+int make_lambda(int lambda)
+{
+  int retval;
+  if (lambda >= 0) {
+    retval = cell();
+    if (retval >= 0) {
+      cells[retval].type = LAMBDA;
+      cells[retval].lambda = lambda;
+    };
+  } else
+    retval = -1;
+  return retval;
+}
+
+int read_lambda(FILE *stream)
+{
+  return make_lambda(read_expr(stream));
+}
+
 void print_lambda(int lambda, FILE *stream)
 {
   fputs("00", stream);
   print_expr(lambda, stream);
 }
 
-void print_pair(int fun, int arg, FILE *stream)
-{
-  fputs("01", stream);
-  print_expr(fun, stream);
-  print_expr(arg, stream);
-}
-
-int read_lambda(FILE *stream)
+int make_pair(int fun, int arg)
 {
   int retval;
-  int lambda = read_expr(stream);
-  if (lambda >= 0) {
+  if (fun >= 0 && arg >= 0) {
     retval = cell();
     if (retval >= 0) {
-      cells[retval].type = LAMBDA;
-      cells[retval].lambda = lambda;
-    }
+      cells[retval].type = PAIR;
+      cells[retval].pair.fun = fun;
+      cells[retval].pair.arg = arg;
+    };
   } else
     retval = -1;
   return retval;
@@ -123,19 +145,16 @@ int read_lambda(FILE *stream)
 
 int read_pair(FILE *stream)
 {
-  int retval;
   int fun = read_expr(stream);
   int arg = read_expr(stream);
-  if (fun >= 0 && arg >= 0) {
-    retval = cell();
-    if (retval >= 0) {
-      cells[retval].type = PAIR;
-      cells[retval].pair.fun = fun;
-      cells[retval].pair.arg = arg;
-    }
-  } else
-    retval = -1;
-  return retval;
+  return make_pair(fun, arg);
+}
+
+void print_pair(int fun, int arg, FILE *stream)
+{
+  fputs("01", stream);
+  print_expr(fun, stream);
+  print_expr(arg, stream);
 }
 
 int read_expr(FILE *stream)
@@ -199,6 +218,29 @@ int offset(int expr)
   return retval;
 }
 
+int lift(int expr, int amount)
+{
+  int retval;
+  if (expr >= 0) {
+    switch (cells[expr].type) {
+    case VAR:
+      retval = make_var(cells[expr].var + amount);
+      break;
+    case LAMBDA:
+      retval = make_lambda(lift(cells[expr].lambda, amount));
+      break;
+    case PAIR:
+      retval = make_pair(lift(cells[expr].pair.fun, amount),
+                         lift(cells[expr].pair.arg, amount));
+      break;
+    default:
+      retval = 0;
+    }
+  } else
+    retval = -1;
+  return retval;
+}
+
 int subst(int expr, int var, int replacement)
 {
   int retval;
@@ -206,13 +248,6 @@ int subst(int expr, int var, int replacement)
     retval = expr;
   else
     retval = -1;
-  return retval;
-}
-
-int lift(int expr, int n)
-{
-  int retval;
-  retval = expr;
   return retval;
 }
 
