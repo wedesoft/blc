@@ -17,7 +17,9 @@
 #include <string.h>
 #include "blc.h"
 
-#define BUFSIZE 1024
+#define BUFSIZE 102
+
+int offset(int expr);
 
 #ifdef HAVE_FMEMOPEN
 int from_string(char *str)
@@ -35,6 +37,7 @@ char *to_string(char *buffer, int bufsize, int i)
   fclose(f);
   return buffer;
 }
+#endif
 
 int test_io(char *cmd, char *spec)
 {
@@ -42,12 +45,35 @@ int test_io(char *cmd, char *spec)
   char buffer[BUFSIZE];
   char *result = to_string(buffer, BUFSIZE, from_string(cmd));
   if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of parsing is \"%s\" but should be \"%s\"\n", result, spec);
+    fprintf(stderr, "Result of parsing \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
   };
   return retval;
 }
-#endif
+
+int test_offset(char *cmd, int spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  int result = offset(from_string(cmd));
+  if (result != spec) {
+    fprintf(stderr, "Result for offset of \"%s\" is %d but should be %d\n", cmd, result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_eval(char *cmd, char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd)));
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
+    retval = 1;
+  };
+  return retval;
+}
 
 int main(void)
 {
@@ -55,10 +81,25 @@ int main(void)
 #ifdef HAVE_FMEMOPEN
   retval = retval | test_io("10", "10");
   retval = retval | test_io("  10 ", "10");
+  retval = retval | test_io("110", "110");
+  retval = retval | test_io("1110", "1110");
+  retval = retval | test_io("  1110 ", "1110");
   retval = retval | test_io("0010", "0010");
   retval = retval | test_io("00 10", "0010");
-  retval = retval | test_io("0100100010", "0100100010");
-  retval = retval | test_io(" 01 0010 0010", "0100100010");
+  retval = retval | test_io("01001000110", "01001000110");
+  retval = retval | test_io(" 01 0010 00110", "01001000110");
+  retval = retval | test_io("0", "#<err>");
+  retval = retval | test_io("00", "#<err>");
+  retval = retval | test_io("01", "#<err>");
+  retval = retval | test_io("1", "#<err>");
+  retval = retval | test_offset("10", 0);
+  retval = retval | test_offset("0010", 1);
+  retval = retval | test_offset("01001000110", 2);
+  retval = retval | test_offset("0000110", 2);
+  retval = retval | test_eval("10", "10");
+  retval = retval | test_eval("110", "110");
+  retval = retval | test_eval("0010", "0010");
+  retval = retval | test_eval("01001000110", "0010");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif

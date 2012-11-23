@@ -23,6 +23,8 @@
 
 int read_expr(FILE *stream);
 
+int eval_expr(int expr);
+
 void print_expr(int expr, FILE *stream);
 
 #endif

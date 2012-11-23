@@ -170,7 +170,66 @@ void print_expr(int expr, FILE *stream)
     case PAIR:
       print_pair(cells[expr].pair.fun, cells[expr].pair.arg, stream);
       break;
+    default:
+      fputs("#<err>", stream);
     }
   } else
     fputs("#<err>", stream);
 }
+
+int offset(int expr)
+{
+  int retval;
+  if (expr >= 0) {
+    switch (cells[expr].type) {
+    case VAR:
+      retval = 0;
+      break;
+    case LAMBDA:
+      retval = 1 + offset(cells[expr].lambda);
+      break;
+    case PAIR:
+      retval = offset(cells[expr].pair.fun) + offset(cells[expr].pair.arg);
+      break;
+    default:
+      retval = 0;
+    }
+  } else
+    retval = 0;
+  return retval;
+}
+
+int subst(int expr, int var, int replacement)
+{
+  int retval;
+  if (expr >= 0)
+    retval = expr;
+  else
+    retval = -1;
+  return retval;
+}
+
+int eval_expr(int expr)
+{
+  int retval;
+  int fun;
+  int arg;
+  if (expr >= 0) {
+    switch (cells[expr].type) {
+    case VAR:
+    case LAMBDA:
+      retval = expr;
+      break;
+    case PAIR:
+      fun = eval_expr(cells[expr].pair.fun);
+      arg = cells[expr].pair.arg;
+      retval = subst(fun, 0, arg);
+      break;
+    default:
+      retval = -1;
+    }
+  } else
+    retval = -1;
+  return retval;
+}
+

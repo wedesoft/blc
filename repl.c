@@ -20,7 +20,7 @@ int main(void)
   while (1) {
     int expr = read_expr(stdin);
     if (feof(stdin)) break;
-    print_expr(expr, stdout);
+    print_expr(eval_expr(expr), stdout);
     fputc('\n', stdout);
   };
   return 0;
