@@ -19,8 +19,8 @@
 
 #define BUFSIZE 102
 
-int offset(int expr);
 int lift(int expr, int amount);
+int subst(int lambda, int replacement, int depth);
 
 #ifdef HAVE_FMEMOPEN
 int from_string(char *str)
@@ -52,24 +52,27 @@ int test_io(char *cmd, char *spec)
   return retval;
 }
 
-int test_offset(char *cmd, int spec)
-{
-  int retval = 0;
-  int result = offset(from_string(cmd));
-  if (result != spec) {
-    fprintf(stderr, "Result for offset of \"%s\" is %d but should be %d\n", cmd, result, spec);
-    retval = 1;
-  };
-  return retval;
-}
-
 int test_lift(char *cmd, int amount, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
   char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), amount));
   if (strcmp(spec, result)) {
-    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n", cmd, amount, result, spec);
+    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n",
+            cmd, amount, result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_subst(char *lambda, char *arg, char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, BUFSIZE, subst(from_string(lambda), from_string(arg), 0));
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result of substituting \"01\" in \"%s\" with \"%s\" is \"%s\" but should be \"%s\"\n",
+            lambda, arg, result, spec);
     retval = 1;
   };
   return retval;
@@ -98,28 +101,34 @@ int main(void)
   retval = retval | test_io("  1110 ", "1110");
   retval = retval | test_io("0010", "0010");
   retval = retval | test_io("00 10", "0010");
-  retval = retval | test_io("01001000110", "01001000110");
-  retval = retval | test_io(" 01 0010 00110", "01001000110");
+  retval = retval | test_io("0100100010", "0100100010");
+  retval = retval | test_io(" 01 0010 0010", "0100100010");
   retval = retval | test_io("0", "#<err>");
   retval = retval | test_io("00", "#<err>");
   retval = retval | test_io("01", "#<err>");
   retval = retval | test_io("1", "#<err>");
-  retval = retval | test_offset("10", 0);
-  retval = retval | test_offset("0010", 1);
-  retval = retval | test_offset("01001000110", 2);
-  retval = retval | test_offset("0000110", 2);
   retval = retval | test_lift("10", 1, "110");
   retval = retval | test_lift("110", -1, "10");
   retval = retval | test_lift("10", -1, "#<err>");
   retval = retval | test_lift("0010", 1, "00110");
   retval = retval | test_lift("00110", -1, "0010");
   retval = retval | test_lift("0010", -1, "#<err>");
-  retval = retval | test_lift("01001000110", 1, "0100110001110");
-  retval = retval | test_lift("01001000110", -1, "#<err>");
+  retval = retval | test_lift("0100100010", 1, "010011000110");
+  retval = retval | test_lift("0100100010", -1, "#<err>");
+  retval = retval | test_subst("10", "0010", "0010");
+  retval = retval | test_subst("110", "0010", "110");
+  retval = retval | test_subst("00110", "0010", "0000110");
+  retval = retval | test_subst("0010", "0010", "0010");
+  retval = retval | test_subst("011010", "0010", "0100100010");
   retval = retval | test_eval("10", "10");
   retval = retval | test_eval("110", "110");
   retval = retval | test_eval("0010", "0010");
-  retval = retval | test_eval("01001000110", "0010");
+  retval = retval | test_eval("000010", "000010");
+  retval = retval | test_eval("0000110", "0000110");
+  retval = retval | test_eval("0100101110", "1110");
+  retval = retval | test_eval("01 00 00 110 0010", "0000110");
+  retval = retval | test_eval("01 01 00 00 110 0010 0010", "0010");
+  retval = retval | test_eval("0100100010", "0010");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
