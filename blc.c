@@ -196,6 +196,7 @@ void print_expr(int expr, FILE *stream)
     fputs("#<err>", stream);
 }
 
+/*
 int lift(int expr, int amount)
 {
   int retval;
@@ -217,7 +218,7 @@ int lift(int expr, int amount)
   } else
     retval = -1;
   return retval;
-}
+}*/
 
 int subst(int expr, int replacement, int depth)
 {

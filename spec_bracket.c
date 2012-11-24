@@ -52,6 +52,7 @@ int test_io(char *cmd, char *spec)
   return retval;
 }
 
+/*
 int test_lift(char *cmd, int amount, char *spec)
 {
   int retval = 0;
@@ -63,7 +64,7 @@ int test_lift(char *cmd, int amount, char *spec)
     retval = 1;
   };
   return retval;
-}
+}*/
 
 int test_subst(char *lambda, char *arg, char *spec)
 {
