@@ -228,7 +228,7 @@ int subst(int expr, int replacement, int depth)
     switch (cells[expr].type) {
     case VAR:
       if (cells[expr].var == depth)
-        retval = lift(replacement, depth);
+        retval = replacement;
       else
         retval = expr;
       break;

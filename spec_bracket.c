@@ -19,7 +19,7 @@
 
 #define BUFSIZE 102
 
-int lift(int expr, int amount);
+// int lift(int expr, int amount);
 int subst(int lambda, int replacement, int depth);
 
 #ifdef HAVE_FMEMOPEN
@@ -107,27 +107,29 @@ int main(void)
   retval = retval | test_io("00", "#<err>");
   retval = retval | test_io("01", "#<err>");
   retval = retval | test_io("1", "#<err>");
-  retval = retval | test_lift("10", 1, "110");
+  /* retval = retval | test_lift("10", 1, "110");
   retval = retval | test_lift("110", -1, "10");
   retval = retval | test_lift("10", -1, "#<err>");
   retval = retval | test_lift("0010", 1, "00110");
   retval = retval | test_lift("00110", -1, "0010");
   retval = retval | test_lift("0010", -1, "#<err>");
   retval = retval | test_lift("0100100010", 1, "010011000110");
-  retval = retval | test_lift("0100100010", -1, "#<err>");
+  retval = retval | test_lift("0100100010", -1, "#<err>"); */
   retval = retval | test_subst("10", "0010", "0010");
   retval = retval | test_subst("110", "0010", "110");
-  retval = retval | test_subst("00110", "0010", "0000110");
+  retval = retval | test_subst("00110", "0010", "000010");
   retval = retval | test_subst("0010", "0010", "0010");
   retval = retval | test_subst("011010", "0010", "0100100010");
+  retval = retval | test_subst("01001010", "0010", "0100100010");
   retval = retval | test_eval("10", "10");
   retval = retval | test_eval("110", "110");
   retval = retval | test_eval("0010", "0010");
-  retval = retval | test_eval("000010", "000010");
-  retval = retval | test_eval("0000110", "0000110");
-  retval = retval | test_eval("0100101110", "1110");
-  retval = retval | test_eval("01 00 00 110 0010", "0000110");
-  retval = retval | test_eval("01 01 00 00 110 0010 0010", "0010");
+  retval = retval | test_eval("00 00 10", "000010");
+  retval = retval | test_eval("00 00 110", "0000110");
+  retval = retval | test_eval("01 0010 1110", "1110");
+  retval = retval | test_eval("01 0000110 0010", "000010");
+  retval = retval | test_eval("01 01 000010 0000110 000010", "000010");
+  retval = retval | test_eval("01 01 0000110 0000110 000010", "0000110");
   retval = retval | test_eval("0100100010", "0010");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
