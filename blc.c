@@ -196,7 +196,7 @@ void print_expr(int expr, FILE *stream)
     fputs("#<err>", stream);
 }
 
-int lift(int expr, int amount, int depth)
+int lift_free_vars(int expr, int amount, int depth)
 {
   int retval;
   int var;
@@ -213,11 +213,11 @@ int lift(int expr, int amount, int depth)
         retval = expr;
       break;
     case LAMBDA:
-      retval = make_lambda(lift(cells[expr].lambda, amount, depth + 1));
+      retval = make_lambda(lift_free_vars(cells[expr].lambda, amount, depth + 1));
       break;
     case PAIR:
-      retval = make_pair(lift(cells[expr].pair.fun, amount, depth),
-                         lift(cells[expr].pair.arg, amount, depth));
+      retval = make_pair(lift_free_vars(cells[expr].pair.fun, amount, depth),
+                         lift_free_vars(cells[expr].pair.arg, amount, depth));
       break;
     default:
       retval = 0;
@@ -236,7 +236,7 @@ int subst(int expr, int replacement, int depth)
     switch (cells[expr].type) {
     case VAR:
       if (cells[expr].var == depth)
-        retval = replacement;
+        retval = lift_free_vars(replacement, depth + 1, 0);
       else
         retval = expr;
       break;
@@ -271,7 +271,7 @@ int eval_expr(int expr)
       fun = eval_expr(cells[expr].pair.fun);
       arg = cells[expr].pair.arg;
       if (cells[fun].type == LAMBDA)
-        retval = eval_expr(subst(cells[fun].lambda, arg, 0));
+        retval = eval_expr(lift_free_vars(subst(cells[fun].lambda, arg, 0), -1, 0));
       else
         retval = -1;
       break;

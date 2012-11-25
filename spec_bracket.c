@@ -19,7 +19,7 @@
 
 #define BUFSIZE 102
 
-int lift(int expr, int amount, int depth);
+int lift_free_vars(int expr, int amount, int depth);
 int subst(int lambda, int replacement, int depth);
 
 #ifdef HAVE_FMEMOPEN
@@ -56,7 +56,7 @@ int test_lift(char *cmd, int amount, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), amount, 0));
+  char *result = to_string(buffer, BUFSIZE, lift_free_vars(from_string(cmd), amount, 0));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n",
             cmd, amount, result, spec);
@@ -131,6 +131,8 @@ int main(void)
   retval = retval | test_eval("01 0000110 0010", "000010");
   retval = retval | test_eval("01 01 000010 0000110 000010", "000010");
   retval = retval | test_eval("01 01 0000110 0000110 000010", "0000110");
+  retval = retval | test_eval("01 01 000010 110 10", "10");
+  retval = retval | test_eval("01 01 0000110 110 10", "110");
   retval = retval | test_eval("0100100010", "0010");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
