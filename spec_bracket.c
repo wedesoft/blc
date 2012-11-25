@@ -113,6 +113,7 @@ int main(void)
   retval = retval | test_lift("0010", 1, "0010");
   retval = retval | test_lift("0010", -1, "0010");
   retval = retval | test_lift("001110", -1, "00110");
+  retval = retval | test_lift("00110", -1, "#<err>");
   retval = retval | test_lift("01001000110", 1, "010010001110");
   retval = retval | test_lift("010010001110", -1, "01001000110");
   retval = retval | test_subst("10", "0010", "0010");

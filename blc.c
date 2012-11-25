@@ -199,12 +199,17 @@ void print_expr(int expr, FILE *stream)
 int lift(int expr, int amount, int depth)
 {
   int retval;
+  int var;
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
-      if (cells[expr].var >= depth)
-        retval = make_var(cells[expr].var + amount);
-      else
+      var = cells[expr].var;
+      if (var >= depth) {
+        if (var + amount >= depth)
+          retval = make_var(var + amount);
+        else
+          retval = -1;
+      } else
         retval = expr;
       break;
     case LAMBDA:
