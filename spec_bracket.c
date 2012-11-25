@@ -19,7 +19,7 @@
 
 #define BUFSIZE 102
 
-// int lift(int expr, int amount);
+int lift(int expr, int amount, int depth);
 int subst(int lambda, int replacement, int depth);
 
 #ifdef HAVE_FMEMOPEN
@@ -52,19 +52,18 @@ int test_io(char *cmd, char *spec)
   return retval;
 }
 
-/*
 int test_lift(char *cmd, int amount, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), amount));
+  char *result = to_string(buffer, BUFSIZE, lift(from_string(cmd), amount, 0));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n",
             cmd, amount, result, spec);
     retval = 1;
   };
   return retval;
-}*/
+}
 
 int test_subst(char *lambda, char *arg, char *spec)
 {
@@ -108,14 +107,14 @@ int main(void)
   retval = retval | test_io("00", "#<err>");
   retval = retval | test_io("01", "#<err>");
   retval = retval | test_io("1", "#<err>");
-  /* retval = retval | test_lift("10", 1, "110");
+  retval = retval | test_lift("10", 1, "110");
   retval = retval | test_lift("110", -1, "10");
   retval = retval | test_lift("10", -1, "#<err>");
-  retval = retval | test_lift("0010", 1, "00110");
-  retval = retval | test_lift("00110", -1, "0010");
-  retval = retval | test_lift("0010", -1, "#<err>");
-  retval = retval | test_lift("0100100010", 1, "010011000110");
-  retval = retval | test_lift("0100100010", -1, "#<err>"); */
+  retval = retval | test_lift("0010", 1, "0010");
+  retval = retval | test_lift("0010", -1, "0010");
+  retval = retval | test_lift("001110", -1, "00110");
+  retval = retval | test_lift("01001000110", 1, "010010001110");
+  retval = retval | test_lift("010010001110", -1, "01001000110");
   retval = retval | test_subst("10", "0010", "0010");
   retval = retval | test_subst("110", "0010", "110");
   retval = retval | test_subst("00110", "0010", "000010");

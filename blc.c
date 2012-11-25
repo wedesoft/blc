@@ -196,21 +196,23 @@ void print_expr(int expr, FILE *stream)
     fputs("#<err>", stream);
 }
 
-/*
-int lift(int expr, int amount)
+int lift(int expr, int amount, int depth)
 {
   int retval;
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
-      retval = make_var(cells[expr].var + amount);
+      if (cells[expr].var >= depth)
+        retval = make_var(cells[expr].var + amount);
+      else
+        retval = expr;
       break;
     case LAMBDA:
-      retval = make_lambda(lift(cells[expr].lambda, amount));
+      retval = make_lambda(lift(cells[expr].lambda, amount, depth + 1));
       break;
     case PAIR:
-      retval = make_pair(lift(cells[expr].pair.fun, amount),
-                         lift(cells[expr].pair.arg, amount));
+      retval = make_pair(lift(cells[expr].pair.fun, amount, depth),
+                         lift(cells[expr].pair.arg, amount, depth));
       break;
     default:
       retval = 0;
@@ -218,7 +220,7 @@ int lift(int expr, int amount)
   } else
     retval = -1;
   return retval;
-}*/
+}
 
 int subst(int expr, int replacement, int depth)
 {
