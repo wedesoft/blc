@@ -38,7 +38,6 @@ char *to_string(char *buffer, int bufsize, int i)
   fclose(f);
   return buffer;
 }
-#endif
 
 int test_io(char *cmd, char *spec)
 {
@@ -89,6 +88,7 @@ int test_eval(char *cmd, char *spec)
   };
   return retval;
 }
+#endif
 
 int main(void)
 {
