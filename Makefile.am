@@ -2,26 +2,26 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_bracket boot-eval
+bin_PROGRAMS = spec_blc blc
 
-spec_bracket_SOURCES = spec_bracket.c blc.c
-spec_bracket_LDFLAGS =
-spec_bracket_LDADD =
+spec_blc_SOURCES = spec_blc.c blc.c
+spec_blc_LDFLAGS =
+spec_blc_LDADD =
 
-boot_eval_SOURCES = repl.c blc.c
-boot_eval_LDFLAGS = 
-boot_eval_LDADD =
+blc_SOURCES = repl.c blc.c
+blc_LDFLAGS = 
+blc_LDADD =
 
-noinst_HEADERS = boot-eval.h blc.h
+noinst_HEADERS = blc.h
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO boot.rkt run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO run.sh
 
-test: spec_bracket.tmp
+test: spec_blc.tmp
 
-spec_bracket.tmp: spec_bracket$(EXEEXT)
-	./spec_bracket$(EXEEXT) && $(TOUCH) $@
+spec_blc.tmp: spec_blc$(EXEEXT)
+	./spec_blc$(EXEEXT) && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
 

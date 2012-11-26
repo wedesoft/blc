@@ -7,3 +7,8 @@
 * macros
 * library and interpreters with different debug output
 * infinite recursion ((x 1 1) 1 0)
+* primitives
+  - list, second, third, append, cons, car, cdr, first, rest
+  - true, false, and or, not, xor?, else
+  - assoc, equal?
+
