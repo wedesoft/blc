@@ -9,7 +9,6 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 blc
-boot-eval
 config.h
 config.h.in
 config.log
@@ -23,5 +22,5 @@ libtool
 ltmain.sh
 m4
 missing
-spec_bracket
+spec_blc
 stamp-h1
