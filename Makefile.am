@@ -12,11 +12,11 @@ blc_SOURCES = repl.c blc.c
 blc_LDFLAGS = 
 blc_LDADD =
 
-noinst_HEADERS = boot-eval.h blc.h
+noinst_HEADERS = blc.h
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO boot.rkt run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO run.sh
 
 test: spec_blc.tmp
 

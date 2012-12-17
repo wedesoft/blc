@@ -41,7 +41,7 @@ External Links
 * [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
 * [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
-* [Binary Lambda Calculus](http://homepages.cwi.nl/~tromp/cl/cl.html)
+* [Binary lambda calculus interpreter by John Tromp](http://homepages.cwi.nl/~tromp/cl/cl.html)
 * [De Bruijn index](http://en.wikipedia.org/wiki/De\_Bruijn\_index)
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
