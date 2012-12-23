@@ -68,7 +68,13 @@ int test_subst(char *lambda, char *arg, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, subst(from_string(lambda), from_string(arg), 0));
+  int expr;
+  int replacement;
+  expr = from_string(lambda);
+  gc_push(expr);
+  replacement = from_string(arg);
+  gc_pop(1);
+  char *result = to_string(buffer, BUFSIZE, subst(expr, replacement, 0));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of substituting \"01\" in \"%s\" with \"%s\" is \"%s\" but should be \"%s\"\n",
             lambda, arg, result, spec);

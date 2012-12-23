@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "blc.h"
 #define MAX_CELLS 1024
+#define MAX_REGISTERS 1024
 
 typedef enum { VAR, LAMBDA, PAIR } type_t;
 
@@ -31,18 +32,69 @@ typedef struct {
     int lambda;
     pair_t pair;
   };
+  char mark;
 } cell_t;
 
-int n_cells = 0;
 cell_t cells[MAX_CELLS];
+
+int n_registers = 0;
+int registers[MAX_REGISTERS];
+
+void clear_marks(void)
+{
+  int i;
+  for (i=0; i<MAX_CELLS; i++)
+    cells[i].mark = 0;
+}
+
+void mark(int expr)
+{
+  if (!cells[expr].mark) {
+    cells[expr].mark = 1;
+    switch (cells[expr].type) {
+    case VAR:
+      break;
+    case LAMBDA:
+      mark(cells[expr].lambda);
+      break;
+    case PAIR:
+      mark(cells[expr].pair.fun);
+      mark(cells[expr].pair.arg);
+      break;
+    }
+  };
+}
+
+void mark_registers(void)
+{
+  int i;
+  for (i=0; i<n_registers; i++)
+    mark(registers[i]);
+}
+
+void gc_push(int expr)
+{
+  registers[n_registers++] = expr;
+}
+
+void gc_pop(int n)
+{
+  n_registers -= n;
+}
 
 int cell(void)
 {
-  int retval;
-  if (n_cells < MAX_CELLS) {
-    retval = n_cells++;
-  } else
+  int retval = 0;
+  clear_marks();
+  mark_registers();
+  while (cells[retval].mark) {
+    retval++;
+    if (retval == MAX_CELLS) break;
+  };
+  if (retval == MAX_CELLS)
     retval = -1;
+  else
+    cells[retval].mark = 1;
   return retval;
 }
 
@@ -106,6 +158,7 @@ void print_var(int var, FILE *stream)
 int make_lambda(int lambda)
 {
   int retval;
+  gc_push(lambda);
   if (lambda >= 0) {
     retval = cell();
     if (retval >= 0) {
@@ -114,6 +167,7 @@ int make_lambda(int lambda)
     };
   } else
     retval = -1;
+  gc_pop(1);
   return retval;
 }
 
@@ -131,6 +185,8 @@ void print_lambda(int lambda, FILE *stream)
 int make_pair(int fun, int arg)
 {
   int retval;
+  gc_push(fun);
+  gc_push(arg);
   if (fun >= 0 && arg >= 0) {
     retval = cell();
     if (retval >= 0) {
@@ -140,14 +196,21 @@ int make_pair(int fun, int arg)
     };
   } else
     retval = -1;
+  gc_pop(2);
   return retval;
 }
 
 int read_pair(FILE *stream)
 {
-  int fun = read_expr(stream);
-  int arg = read_expr(stream);
-  return make_pair(fun, arg);
+  int fun;
+  int arg;
+  int retval;
+  fun = read_expr(stream);
+  gc_push(fun);
+  arg = read_expr(stream);
+  gc_pop(1);
+  retval = make_pair(fun, arg);
+  return retval;
 }
 
 void print_pair(int fun, int arg, FILE *stream)
@@ -200,6 +263,9 @@ int lift_free_vars(int expr, int amount, int depth)
 {
   int retval;
   int var;
+  int fun;
+  int arg;
+  gc_push(expr);
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
@@ -216,14 +282,18 @@ int lift_free_vars(int expr, int amount, int depth)
       retval = make_lambda(lift_free_vars(cells[expr].lambda, amount, depth + 1));
       break;
     case PAIR:
-      retval = make_pair(lift_free_vars(cells[expr].pair.fun, amount, depth),
-                         lift_free_vars(cells[expr].pair.arg, amount, depth));
+      fun = lift_free_vars(cells[expr].pair.fun, amount, depth);
+      gc_push(fun);
+      arg = lift_free_vars(cells[expr].pair.arg, amount, depth);
+      gc_pop(1);
+      retval = make_pair(fun, arg);
       break;
     default:
       retval = 0;
     }
   } else
     retval = -1;
+  gc_pop(1);
   return retval;
 }
 
@@ -232,6 +302,8 @@ int subst(int expr, int replacement, int depth)
   int retval;
   int fun;
   int arg;
+  gc_push(expr);
+  gc_push(replacement);
   if (expr >= 0)
     switch (cells[expr].type) {
     case VAR:
@@ -245,7 +317,9 @@ int subst(int expr, int replacement, int depth)
       break;
     case PAIR:
       fun = subst(cells[expr].pair.fun, replacement, depth);
+      gc_push(fun);
       arg = subst(cells[expr].pair.arg, replacement, depth);
+      gc_pop(1);
       retval = make_pair(fun, arg);
       break;
     default:
@@ -253,6 +327,7 @@ int subst(int expr, int replacement, int depth)
     }
   else
     retval = -1;
+  gc_pop(2);
   return retval;
 }
 
@@ -261,6 +336,7 @@ int eval_expr(int expr)
   int retval;
   int fun;
   int arg;
+  gc_push(expr);
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
@@ -269,17 +345,21 @@ int eval_expr(int expr)
       break;
     case PAIR:
       fun = eval_expr(cells[expr].pair.fun);
+      gc_push(fun);
       arg = cells[expr].pair.arg;
+      gc_push(arg);
       if (cells[fun].type == LAMBDA)
         retval = eval_expr(lift_free_vars(subst(cells[fun].lambda, arg, 0), -1, 0));
       else
         retval = -1;
+      gc_pop(2);
       break;
     default:
       retval = -1;
     }
   } else
     retval = -1;
+  gc_pop(1);
   return retval;
 }
 
