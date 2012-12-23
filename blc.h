@@ -21,7 +21,7 @@
 #endif
 #include <stdio.h>
 
-void gc_push(int expr);
+int gc_push(int expr);
 
 void gc_pop(int n);
 

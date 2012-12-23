@@ -72,9 +72,10 @@ void mark_registers(void)
     mark(registers[i]);
 }
 
-void gc_push(int expr)
+int gc_push(int expr)
 {
   registers[n_registers++] = expr;
+  return expr;
 }
 
 void gc_pop(int n)
@@ -202,15 +203,10 @@ int make_pair(int fun, int arg)
 
 int read_pair(FILE *stream)
 {
-  int fun;
-  int arg;
-  int retval;
-  fun = read_expr(stream);
-  gc_push(fun);
-  arg = read_expr(stream);
-  gc_pop(1);
-  retval = make_pair(fun, arg);
-  return retval;
+  int fun = gc_push(read_expr(stream));
+  int arg = gc_push(read_expr(stream));
+  gc_pop(2);
+  return make_pair(fun, arg);
 }
 
 void print_pair(int fun, int arg, FILE *stream)
@@ -282,11 +278,10 @@ int lift_free_vars(int expr, int amount, int depth)
       retval = make_lambda(lift_free_vars(cells[expr].lambda, amount, depth + 1));
       break;
     case PAIR:
-      fun = lift_free_vars(cells[expr].pair.fun, amount, depth);
-      gc_push(fun);
-      arg = lift_free_vars(cells[expr].pair.arg, amount, depth);
-      gc_pop(1);
+      fun = gc_push(lift_free_vars(cells[expr].pair.fun, amount, depth));
+      arg = gc_push(lift_free_vars(cells[expr].pair.arg, amount, depth));
       retval = make_pair(fun, arg);
+      gc_pop(2);
       break;
     default:
       retval = 0;
@@ -316,11 +311,10 @@ int subst(int expr, int replacement, int depth)
       retval = make_lambda(subst(cells[expr].lambda, replacement, depth + 1));
       break;
     case PAIR:
-      fun = subst(cells[expr].pair.fun, replacement, depth);
-      gc_push(fun);
-      arg = subst(cells[expr].pair.arg, replacement, depth);
-      gc_pop(1);
+      fun = gc_push(subst(cells[expr].pair.fun, replacement, depth));
+      arg = gc_push(subst(cells[expr].pair.arg, replacement, depth));
       retval = make_pair(fun, arg);
+      gc_pop(2);
       break;
     default:
       retval = -1;
@@ -344,10 +338,8 @@ int eval_expr(int expr)
       retval = expr;
       break;
     case PAIR:
-      fun = eval_expr(cells[expr].pair.fun);
-      gc_push(fun);
-      arg = cells[expr].pair.arg;
-      gc_push(arg);
+      fun = gc_push(eval_expr(cells[expr].pair.fun));
+      arg = gc_push(cells[expr].pair.arg);
       if (cells[fun].type == LAMBDA)
         retval = eval_expr(lift_free_vars(subst(cells[fun].lambda, arg, 0), -1, 0));
       else
