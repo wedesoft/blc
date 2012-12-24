@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdio.h>
 #include "blc.h"
-#define MAX_CELLS 1024
-#define MAX_REGISTERS 1024
+#define MAX_CELLS 256
+#define MAX_REGISTERS 256
 
 typedef enum { VAR, LAMBDA, PAIR } type_t;
 
@@ -45,6 +45,18 @@ void clear_marks(void)
   int i;
   for (i=0; i<MAX_CELLS; i++)
     cells[i].mark = 0;
+}
+
+int find_cell(void)
+{
+  int retval = 0;
+  while (cells[retval].mark) {
+    retval++;
+    if (retval == MAX_CELLS) break;
+  };
+  if (retval == MAX_CELLS)
+    retval = -1;
+  return retval;
 }
 
 void mark(int expr)
@@ -85,16 +97,13 @@ void gc_pop(int n)
 
 int cell(void)
 {
-  int retval = 0;
-  clear_marks();
-  mark_registers();
-  while (cells[retval].mark) {
-    retval++;
-    if (retval == MAX_CELLS) break;
+  int retval = find_cell();
+  if (retval == -1) {
+    clear_marks();
+    mark_registers();
+    retval = find_cell();
   };
-  if (retval == MAX_CELLS)
-    retval = -1;
-  else
+  if (retval != -1)
     cells[retval].mark = 1;
   return retval;
 }
