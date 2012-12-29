@@ -1,4 +1,8 @@
-* environment: C, make, automake, autoconf, git, bash, unicode, editor, keyboard, network, display, asm-i386.h
+* IO objects, ffi
+* Earley parser for bits?
+* λx.x → 0010
+* λxy.x → λx.λy.y → 0000110
+* binary tree tokenizer, compose grammars
 * overload representation of pairs?
 * macros
 * primitives
