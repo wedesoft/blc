@@ -1,3 +1,3 @@
 #!/bin/sh
-rlwrap ./tokens.rb
+rlwrap ./lambda | ./blc
 

@@ -18,9 +18,11 @@ config.sub
 configure
 depcomp
 install-sh
+lambda
 libtool
 ltmain.sh
 m4
 missing
 spec_blc
+spec_lambda
 stamp-h1
