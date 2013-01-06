@@ -13,9 +13,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#include <ctype.h>
 #include "lambda.h"
 
-typedef enum {QUIT = 0, INIT, MINUS} state_t;
+#define NAMEBUFSIZE 65536
+
+char names[NAMEBUFSIZE];
+char *name_p = names;
+
+typedef enum {QUIT = 0, INIT, MINUS, LAMBDA} state_t;
 
 int compile_lambda(FILE *f_in, FILE *f_out)
 {
@@ -39,11 +45,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
     case MINUS:
       switch (c) {
       case '-':
-        fputc(c, f_out);
+        fputc('-', f_out);
         break;
       case '>':
         fputs("00", f_out);
-        state = INIT;
+        state = LAMBDA;
         break;
       case EOF:
         fputc('-', f_out);
@@ -54,6 +60,25 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         fputc(c, f_out);
         state = INIT;
       };
+      break;
+    case LAMBDA:
+      if (isalpha(c))
+        *name_p++ = c;
+      else {
+        *name_p++ = '\0';
+        switch (c) {
+        case EOF:
+          state = QUIT;
+          break;
+        case '.':
+          state = INIT;
+          break;
+        default:
+          fputc(c, f_out);
+          state = INIT;
+        };
+      };
+      break;
     default:
       break;
     };

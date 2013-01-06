@@ -44,7 +44,12 @@ int main(void)
   int retval = 0;
 #ifdef HAVE_FMEMOPEN
   retval = retval | test_compile("0010", "0010");
+  retval = retval | test_compile("00.10", "00.10");
+  retval = retval | test_compile("-10", "-10");
   retval = retval | test_compile("->10", "0010");
+  retval = retval | test_compile("->.10", "0010");
+  retval = retval | test_compile("-->10", "-0010");
+  retval = retval | test_compile("->x.x", "0010");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
