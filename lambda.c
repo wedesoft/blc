@@ -14,33 +14,60 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <ctype.h>
+#include "blc.h"
 #include "lambda.h"
 
 #define NAMEBUFSIZE 65536
+#define TOKENSIZE 16
+
+typedef enum {QUIT = 0, INIT, MINUS, LAMBDA, TOKEN} state_t;
 
 char names[NAMEBUFSIZE];
-char *name_p = names;
+char *name_p;
+char token[TOKENSIZE];
+char *token_p;
 
-typedef enum {QUIT = 0, INIT, MINUS, LAMBDA} state_t;
+int find_var(const char *token)
+{
+  int retval = -1;
+  int n = 0;
+  char *p = names;
+  while (p < name_p) {
+    if (strcmp(p, token)) {
+      p += strlen(p) + 1;
+      n++;
+    } else {
+      retval = n;
+      break;
+    }
+  }
+  return retval;
+}
 
 int compile_lambda(FILE *f_in, FILE *f_out)
 {
   int retval = 0;
   state_t state = INIT;
+  name_p = names;
   while (state) {
     int c = fgetc(f_in);
     switch (state) {
     case INIT:
-      switch (c) {
-      case '-':
-        state = MINUS;
-        break;
-      case EOF:
-        state = QUIT;
-        break;
-      default:
-        fputc(c, f_out);
-      };
+      if (isalpha(c)) {
+        token_p = token;
+        *token_p++ = c;
+        state = TOKEN;
+      } else
+        switch (c) {
+        case '-':
+          state = MINUS;
+          break;
+        case EOF:
+          state = QUIT;
+          break;
+        default:
+          fputc(c, f_out);
+        };
       break;
     case MINUS:
       switch (c) {
@@ -79,6 +106,25 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         };
       };
       break;
+    case TOKEN:
+      if (isalpha(c))
+        *token_p++ = c;
+      else {
+        int var;
+        *token_p = '\0';
+        var = find_var(token);
+        if (var == -1)
+          fputs(token, f_out);
+        else
+          print_var(var, f_out);
+        switch (c) {
+        case EOF:
+          state = QUIT;
+          break;
+        default:
+          state = INIT;
+        };
+      };
     default:
       break;
     };

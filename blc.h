@@ -29,6 +29,12 @@ int read_expr(FILE *stream);
 
 int eval_expr(int expr);
 
+void print_var(int var, FILE *stream);
+
+void print_lambda(int lambda, FILE *stream);
+
+void print_pair(int fun, int arg, FILE *stream);
+
 void print_expr(int expr, FILE *stream);
 
 #endif
