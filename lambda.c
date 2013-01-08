@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <ctype.h>
+#include <string.h>
 #include "blc.h"
 #include "lambda.h"
 
 #define NAMEBUFSIZE 65536
 #define TOKENSIZE 16
 
-typedef enum {QUIT = 0, INIT, MINUS, LAMBDA, TOKEN} state_t;
+typedef enum {QUIT = 0, INIT, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
 
 char names[NAMEBUFSIZE];
 char *name_p;
@@ -56,7 +57,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       if (isalpha(c)) {
         token_p = token;
         *token_p++ = c;
-        state = TOKEN;
+        state = GETVAR;
       } else
         switch (c) {
         case '-':
@@ -89,6 +90,44 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       };
       break;
     case LAMBDA:
+      if (isalpha(c)) {
+        *name_p++ = c;
+        state = SETVAR;
+      } else if (isblank(c))
+        fputc(c, f_out);
+      else
+        switch (c) {
+        case EOF:
+          state = QUIT;
+          break;
+        case '.':
+          state = INIT;
+          break;
+        default:
+          fputc(c, f_out);
+          state = INIT;
+        };
+      break;
+    case DOT:
+      if (isalpha(c)) {
+        *token_p++ = c;
+        state = GETVAR;
+      } else if (isblank(c))
+        fputc(c, f_out);
+      else
+        switch (c) {
+        case EOF:
+          state = QUIT;
+          break;
+        case '.':
+          state = INIT;
+          break;
+        default:
+          fputc(c, f_out);
+          state = INIT;
+        };
+      break;
+    case SETVAR:
       if (isalpha(c))
         *name_p++ = c;
       else {
@@ -102,11 +141,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         default:
           fputc(c, f_out);
-          state = INIT;
+          state = DOT;
         };
       };
       break;
-    case TOKEN:
+    case GETVAR:
       if (isalpha(c))
         *token_p++ = c;
       else {
@@ -122,6 +161,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           state = QUIT;
           break;
         default:
+          fputc(c, f_out);
           state = INIT;
         };
       };
