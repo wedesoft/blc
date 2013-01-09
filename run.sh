@@ -1,3 +1,3 @@
 #!/bin/sh
-rlwrap ./lambda -pipeto ./blc
+rlwrap ./lambda | ./blc
 

@@ -21,7 +21,7 @@
 #define NAMEBUFSIZE 65536
 #define TOKENSIZE 16
 
-typedef enum {QUIT = 0, INIT, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
+typedef enum {QUIT = 0, INIT, ZERO, ONE, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
 
 char names[NAMEBUFSIZE];
 char *name_p;
@@ -63,12 +63,44 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '-':
           state = MINUS;
           break;
+        case '0':
+          fputc('0', f_out);
+          state = ZERO;
+          break;
+        case '1':
+          fputc('1', f_out);
+          state = ONE;
+          break;
         case EOF:
           state = QUIT;
           break;
         default:
           fputc(c, f_out);
         };
+      break;
+    case ZERO:
+      switch (c) {
+      case '0':
+        fputc('0', f_out);
+        state = INIT;
+        break;
+      case '1':
+        fputc('1', f_out);
+        state = INIT;
+        break;
+      default:
+        fputc(c, f_out);
+      };
+      break;
+    case ONE:
+      switch (c) {
+      case '0':
+        fputc('0', f_out);
+        state = INIT;
+        break;
+      default:
+        fputc(c, f_out);
+      };
       break;
     case MINUS:
       switch (c) {
@@ -78,6 +110,16 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       case '>':
         fputs("00", f_out);
         state = LAMBDA;
+        break;
+      case '0':
+        fputc('-', f_out);
+        fputc('0', f_out);
+        state = ZERO;
+        break;
+      case '1':
+        fputc('-', f_out);
+        fputc('1', f_out);
+        state = ONE;
         break;
       case EOF:
         fputc('-', f_out);
@@ -103,6 +145,14 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '.':
           state = INIT;
           break;
+        case '0':
+          fputc('0', f_out);
+          state = ZERO;
+          break;
+        case '1':
+          fputc('1', f_out);
+          state = ONE;
+          break;
         default:
           fputc(c, f_out);
           state = INIT;
@@ -122,6 +172,14 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '.':
           state = INIT;
           break;
+        case '0':
+          fputc('0', f_out);
+          state = ZERO;
+          break;
+        case '1':
+          fputc('1', f_out);
+          state = ONE;
+          break;
         default:
           fputc(c, f_out);
           state = INIT;
@@ -138,6 +196,14 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         case '.':
           state = INIT;
+          break;
+        case '0':
+          fputc('0', f_out);
+          state = ZERO;
+          break;
+        case '1':
+          fputc('1', f_out);
+          state = ONE;
           break;
         default:
           fputc(c, f_out);
@@ -160,6 +226,14 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case EOF:
           state = QUIT;
           break;
+        case '0':
+          fputc('0', f_out);
+          state = ZERO;
+          break;
+        case '1':
+          fputc('1', f_out);
+          state = ONE;
+          break;
         default:
           fputc(c, f_out);
           state = INIT;
@@ -168,7 +242,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
     default:
       break;
     };
-    fflush(f_out);
+    if (c == '\n') fflush(f_out);
   };
   return retval;
 }
