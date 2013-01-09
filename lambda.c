@@ -82,6 +82,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       switch (c) {
       case '0':
         fputc('0', f_out);
+        *name_p++ = '\0';
         state = INIT;
         break;
       case '1':
