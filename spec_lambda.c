@@ -60,6 +60,9 @@ int main(void)
   retval = retval | test_compile("->x.->y.x", "000010");
   retval = retval | test_compile("->x.->y.y", "0000110");
   retval = retval | test_compile("00->x.x", "0000110");
+  retval = retval | test_compile("->x->y.x", "000010");
+  retval = retval | test_compile("->->10", "000010");
+  retval = retval | test_compile("-> x -> y . x", "00  00   10");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif

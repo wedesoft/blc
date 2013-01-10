@@ -146,6 +146,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '.':
           state = INIT;
           break;
+        case '-':
+          state = MINUS;
+          break;
         case '0':
           fputc('0', f_out);
           state = ZERO;
@@ -173,6 +176,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '.':
           state = INIT;
           break;
+        case '-':
+          state = MINUS;
+          break;
         case '0':
           fputc('0', f_out);
           state = ZERO;
@@ -194,6 +200,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         switch (c) {
         case EOF:
           state = QUIT;
+          break;
+        case '-':
+          state = MINUS;
           break;
         case '.':
           state = INIT;
