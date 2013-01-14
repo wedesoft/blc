@@ -18,11 +18,14 @@
 #include "blc.h"
 #include "lambda.h"
 
+#define STACKSIZE  16384
 #define NAMEBUFSIZE 65536
 #define TOKENSIZE 16
 
 typedef enum {QUIT = 0, INIT, ZERO, ONE, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
 
+int stack[STACKSIZE];
+int stack_n;
 char names[NAMEBUFSIZE];
 char *name_p;
 char token[TOKENSIZE];
@@ -45,9 +48,21 @@ int find_var(const char *token)
   return retval;
 }
 
+int depth(void)
+{
+  int retval = 0;
+  char *p = names;
+  while (p < name_p) {
+    retval++;
+    p += strlen(p) + 1;
+  };
+  return retval;
+}
+
 int compile_lambda(FILE *f_in, FILE *f_out)
 {
   int retval = 0;
+  stack_n = 0;
   state_t state = INIT;
   name_p = names;
   while (state) {
@@ -87,6 +102,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         break;
       case '1':
         fputc('1', f_out);
+        stack[stack_n++] = depth();
         state = INIT;
         break;
       default:
@@ -138,7 +154,8 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         state = SETVAR;
       } else if (isblank(c))
         fputc(c, f_out);
-      else
+      else {
+        *name_p++ = '\0';
         switch (c) {
         case EOF:
           state = QUIT;
@@ -161,6 +178,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           fputc(c, f_out);
           state = INIT;
         };
+      };
       break;
     case DOT:
       if (isalpha(c)) {
