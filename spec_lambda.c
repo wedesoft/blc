@@ -51,6 +51,7 @@ int main(void)
   retval = retval | test_compile("-->10", "-0010");
   retval = retval | test_compile("-10>", "-10>");
   retval = retval | test_compile("->x.x", "0010");
+  retval = retval | test_compile("->x x", "00 10");
   retval = retval | test_compile("->xy.xy", "0010");
   retval = retval | test_compile("-> x.x", "00 10");
   retval = retval | test_compile("->x .x", "00 10");

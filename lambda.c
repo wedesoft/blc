@@ -200,6 +200,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       break;
     case DOT:
       if (isalpha(c)) {
+        token_p = token;
         *token_p++ = c;
         state = GETVAR;
       } else if (isblank(c))
