@@ -81,6 +81,10 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '-':
           state = MINUS;
           break;
+        case '(':
+          fputs("01", f_out);
+          push();
+          break;
         case '0':
           fputc('0', f_out);
           state = ZERO;
@@ -146,6 +150,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         fputc('-', f_out);
         state = QUIT;
         break;
+      case '(':
+        fputs("-01", f_out);
+        push();
+        state = INIT;
+        break;
       default:
         fputc('-', f_out);
         fputc(c, f_out);
@@ -178,6 +187,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           fputc('1', f_out);
           state = ONE;
           break;
+        case '(':
+          fputs("01", f_out);
+          push();
+          state = INIT;
+          break;
         default:
           fputc(c, f_out);
           state = INIT;
@@ -209,6 +223,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           fputc('1', f_out);
           state = ONE;
           break;
+        case '(':
+          fputs("01", f_out);
+          push();
+          state = INIT;
+          break;
         default:
           fputc(c, f_out);
           state = INIT;
@@ -227,6 +246,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           state = MINUS;
           break;
         case '.':
+          state = INIT;
+          break;
+        case '(':
+          fputs("01", f_out);
+          push();
           state = INIT;
           break;
         case '0':
@@ -261,6 +285,11 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         case '-':
           state = MINUS;
+          break;
+        case '(':
+          fputs("01", f_out);
+          push();
+          state = INIT;
           break;
         case '0':
           fputc('0', f_out);
