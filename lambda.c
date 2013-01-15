@@ -24,12 +24,26 @@
 
 typedef enum {QUIT = 0, INIT, ZERO, ONE, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
 
-int stack[STACKSIZE];
+char *stack[STACKSIZE];
 int stack_n;
 char names[NAMEBUFSIZE];
 char *name_p;
 char token[TOKENSIZE];
 char *token_p;
+
+void push(void)
+{
+  stack[stack_n++] = name_p;
+}
+
+void pop(void)
+{
+  if (stack_n > 0) {
+    name_p = stack[stack_n - 1];
+    stack_n--;
+  } else
+    name_p = names;
+}
 
 int find_var(const char *token)
 {
@@ -45,17 +59,6 @@ int find_var(const char *token)
       break;
     }
   }
-  return retval;
-}
-
-int depth(void)
-{
-  int retval = 0;
-  char *p = names;
-  while (p < name_p) {
-    retval++;
-    p += strlen(p) + 1;
-  };
   return retval;
 }
 
@@ -102,7 +105,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         break;
       case '1':
         fputc('1', f_out);
-        stack[stack_n++] = depth();
+        push();
         state = INIT;
         break;
       default:
@@ -113,6 +116,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
       switch (c) {
       case '0':
         fputc('0', f_out);
+        pop();
         state = INIT;
         break;
       default:
@@ -250,9 +254,13 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           fputs(token, f_out);
         else
           print_var(var, f_out);
+        pop();
         switch (c) {
         case EOF:
           state = QUIT;
+          break;
+        case '-':
+          state = MINUS;
           break;
         case '0':
           fputc('0', f_out);
