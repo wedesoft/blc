@@ -1,3 +1,3 @@
 #!/bin/sh
-rlwrap ./pipe.sh
+rlwrap ./lambda.sh
 
