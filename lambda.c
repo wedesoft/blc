@@ -22,7 +22,7 @@
 #define NAMEBUFSIZE 65536
 #define TOKENSIZE 16
 
-typedef enum {QUIT = 0, INIT, ZERO, ONE, MINUS, LAMBDA, DOT, SETVAR, GETVAR} state_t;
+typedef enum {QUIT = 0, INIT, ZERO, ONE, MINUS, OxCE, LAMBDA, DOT, SETVAR, GETVAR} state_t;
 
 char *stack[STACKSIZE];
 int stack_n;
@@ -80,6 +80,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         switch (c) {
         case '-':
           state = MINUS;
+          break;
+        case 0xCE:
+          state = OxCE;
           break;
         case '(':
           fputs("01", f_out);
@@ -161,6 +164,18 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         state = INIT;
       };
       break;
+    case OxCE:
+      switch (c) {
+      case 0xBB:
+        fputs("00", f_out);
+        state = LAMBDA;
+        break;
+      default:
+        fputc(0xCE, f_out);
+        fputc(c, f_out);
+        state = INIT;
+      };
+      break;
     case LAMBDA:
       if (isalpha(c)) {
         *name_p++ = c;
@@ -178,6 +193,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         case '-':
           state = MINUS;
+          break;
+        case 0xCE:
+          state = OxCE;
           break;
         case '0':
           fputc('0', f_out);
@@ -216,6 +234,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         case '-':
           state = MINUS;
           break;
+        case 0xCE:
+          state = OxCE;
+          break;
         case '0':
           fputc('0', f_out);
           state = ZERO;
@@ -245,6 +266,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         case '-':
           state = MINUS;
+          break;
+        case 0xCE:
+          state = OxCE;
           break;
         case '.':
           state = INIT;
@@ -286,6 +310,9 @@ int compile_lambda(FILE *f_in, FILE *f_out)
           break;
         case '-':
           state = MINUS;
+          break;
+        case 0xCE:
+          state = OxCE;
           break;
         case '(':
           fputs("01", f_out);
