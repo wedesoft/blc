@@ -5,7 +5,7 @@
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
 * macros
-* primitives
+* primitives (implement using quote and eval?)
   - quote, null, true, false, cons, (1 . ()), first, rest
   - define, list, eq?, not, null?, pair?, and, or, xor, if
   - member?, append, assoc, cond, equal?
