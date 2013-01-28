@@ -48,16 +48,13 @@ void pop(void)
 int find_var(const char *token)
 {
   int retval = -1;
-  int n = 0;
   char *p = names;
   while (p < name_p) {
-    if (strcmp(p, token)) {
-      p += strlen(p) + 1;
-      n++;
-    } else {
-      retval = n;
-      break;
-    }
+    if (retval >= 0)
+      retval++;
+    else if (!strcmp(p, token))
+      retval = 0;
+    p += strlen(p) + 1;
   }
   return retval;
 }
