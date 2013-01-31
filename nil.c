@@ -2,7 +2,7 @@
 
 int main(void)
 {
-  fputs("000010", stdout);
+  fputs("000010\n", stdout);
   return 0;
 }
 

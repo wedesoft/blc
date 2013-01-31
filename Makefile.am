@@ -2,7 +2,7 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_blc spec_lambda blc lambda true
+bin_PROGRAMS = spec_blc spec_lambda blc lambda true false nil
 
 spec_blc_SOURCES = spec_blc.c blc.c
 spec_blc_LDFLAGS =
