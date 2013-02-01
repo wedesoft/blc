@@ -19,6 +19,8 @@
 
 #define BUFSIZE 102
 
+int make_false(void);
+int make_true(void);
 int lift_free_vars(int expr, int amount, int depth);
 int subst(int lambda, int replacement, int depth);
 
@@ -37,6 +39,30 @@ char *to_string(char *buffer, int bufsize, int i)
   print_expr(i, f);
   fclose(f);
   return buffer;
+}
+
+int test_false(char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, BUFSIZE, make_false());
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result of creating \"false\" is \"%s\" but should be \"%s\"\n", result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_true(char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  char *result = to_string(buffer, BUFSIZE, make_true());
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result of creating \"true\" is \"%s\" but should be \"%s\"\n", result, spec);
+    retval = 1;
+  };
+  return retval;
 }
 
 int test_io(char *cmd, char *spec)
@@ -99,6 +125,8 @@ int main(void)
 {
   int retval = 0;
 #ifdef HAVE_FMEMOPEN
+  retval = retval | test_false("000010");
+  retval = retval | test_true("0000110");
   retval = retval | test_io("10", "10");
   retval = retval | test_io("  10 ", "10");
   retval = retval | test_io("110", "110");

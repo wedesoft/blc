@@ -225,6 +225,16 @@ void print_pair(int fun, int arg, FILE *stream)
   print_expr(arg, stream);
 }
 
+int make_false(void)
+{
+  return make_lambda(make_lambda(make_var(0)));
+}
+
+int make_true(void)
+{
+  return make_lambda(make_lambda(make_var(1)));
+}
+
 int read_expr(FILE *stream)
 {
   int retval;

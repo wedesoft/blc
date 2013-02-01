@@ -1,3 +1,10 @@
+* simple variable lockup instead of eager substitution? <-> closures
+  ((->a.(->x.a x) 3) f)
+  ((->x.f x) 3)
+  (f 3)
+  --
+  ((->a.(a 3)) f)
+  (f 3)
 * IO objects, ffi
 * Earley parser for bits?
 * λx.x → 0010
