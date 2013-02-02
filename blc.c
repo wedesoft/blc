@@ -18,7 +18,7 @@
 #define MAX_CELLS 256
 #define MAX_REGISTERS 256
 
-typedef enum { VAR, LAMBDA, PAIR } type_t;
+typedef enum { VAR, LAMBDA, PAIR, PROC } type_t;
 
 typedef struct {
   int fun;
@@ -26,11 +26,17 @@ typedef struct {
 } pair_t;
 
 typedef struct {
+  int fun;
+  int env;
+} proc_t;
+
+typedef struct {
   type_t type;
   union {
     int var;
     int lambda;
     pair_t pair;
+    proc_t proc;
   };
   char mark;
 } cell_t;
@@ -72,6 +78,10 @@ void mark(int expr)
     case PAIR:
       mark(cells[expr].pair.fun);
       mark(cells[expr].pair.arg);
+      break;
+    case PROC:
+      mark(cells[expr].proc.fun);
+      mark(cells[expr].proc.env);
       break;
     }
   };
@@ -225,6 +235,29 @@ void print_pair(int fun, int arg, FILE *stream)
   print_expr(arg, stream);
 }
 
+int make_proc(int fun, int env)
+{
+  int retval;
+  gc_push(fun);
+  gc_push(env);
+  if (fun >= 0 && env >= 0) {
+    retval = cell();
+    cells[retval].type = PROC;
+    cells[retval].proc.fun = fun;
+    cells[retval].proc.env = env;
+  } else
+    retval = -1;
+  gc_pop(2);
+  return retval;
+}
+
+void print_proc(int fun, int env, FILE *stream)
+{
+  //fputs("00", stream);
+  //print_expr(fun, stream);
+  fputs("#<proc>", stream);
+}
+
 int make_false(void)
 {
   return make_lambda(make_lambda(make_var(0)));
@@ -266,6 +299,9 @@ void print_expr(int expr, FILE *stream)
       break;
     case PAIR:
       print_pair(cells[expr].pair.fun, cells[expr].pair.arg, stream);
+      break;
+    case PROC:
+      print_proc(cells[expr].proc.fun, cells[expr].proc.env, stream);
       break;
     default:
       fputs("#<err>", stream);
@@ -344,33 +380,60 @@ int subst(int expr, int replacement, int depth)
   return retval;
 }
 
-int eval_expr(int expr)
+int lookup(int var, int env)
+{
+  int retval;
+  if (cells[cells[env].lambda].type != PAIR)
+    retval = -1;
+  else if (var > 0)
+    retval = lookup(var - 1, cells[cells[env].lambda].pair.arg);
+  else
+    retval = cells[cells[cells[env].lambda].pair.fun].pair.arg;
+  return retval;
+}
+
+int eval_expr(int expr, int env)
 {
   int retval;
   int fun;
   int arg;
+  int local_env;
   gc_push(expr);
+  gc_push(env);
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
+      // printf("var = %d\n", cells[expr].var);
+      retval = lookup(cells[expr].var, env);
+      if (retval == -1) retval = expr;
+      /* if (retval == -1)
+        retval = expr;
+      else
+        retval = eval_expr(retval, env); */
+      break;
     case LAMBDA:
-      retval = expr;
+      retval = make_proc(cells[expr].lambda, env);
       break;
     case PAIR:
-      fun = gc_push(eval_expr(cells[expr].pair.fun));
+      fun = gc_push(eval_expr(cells[expr].pair.fun, env));
       arg = gc_push(cells[expr].pair.arg);
-      if (cells[fun].type == LAMBDA)
-        retval = eval_expr(lift_free_vars(subst(cells[fun].lambda, arg, 0), -1, 0));
-      else
+      local_env = gc_push(make_lambda(make_pair(make_pair(make_var(0), arg), cells[fun].proc.env)));
+      if (cells[fun].type == PROC) {
+        // retval = eval_expr(lift_free_vars(subst(cells[fun].proc.fun, arg, 0), -1, 0), local_env);
+        retval = eval_expr(cells[fun].proc.fun, local_env);
+      } else
         retval = -1;
-      gc_pop(2);
+      gc_pop(3);
+      break;
+    case PROC:
+      retval = expr;
       break;
     default:
       retval = -1;
     }
   } else
     retval = -1;
-  gc_pop(1);
+  gc_pop(2);
   return retval;
 }
 

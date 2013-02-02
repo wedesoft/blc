@@ -112,7 +112,7 @@ int test_eval(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd)));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), make_false()));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
