@@ -21,8 +21,6 @@
 
 int make_false(void);
 int make_true(void);
-int lift_free_vars(int expr, int amount, int depth);
-int subst(int lambda, int replacement, int depth);
 
 #ifdef HAVE_FMEMOPEN
 int from_string(char *str)
@@ -77,37 +75,6 @@ int test_io(char *cmd, char *spec)
   return retval;
 }
 
-int test_lift(char *cmd, int amount, char *spec)
-{
-  int retval = 0;
-  char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, lift_free_vars(from_string(cmd), amount, 0));
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result for lifting \"%s\" by %d is \"%s\" but should be \"%s\"\n",
-            cmd, amount, result, spec);
-    retval = 1;
-  };
-  return retval;
-}
-
-int test_subst(char *lambda, char *arg, char *spec)
-{
-  int retval = 0;
-  char buffer[BUFSIZE];
-  int expr;
-  int replacement;
-  expr = gc_push(from_string(lambda));
-  replacement = gc_push(from_string(arg));
-  char *result = to_string(buffer, BUFSIZE, subst(expr, replacement, 0));
-  gc_pop(2);
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of substituting \"01\" in \"%s\" with \"%s\" is \"%s\" but should be \"%s\"\n",
-            lambda, arg, result, spec);
-    retval = 1;
-  };
-  return retval;
-}
-
 int test_eval(char *cmd, char *spec)
 {
   int retval = 0;
@@ -140,29 +107,14 @@ int main(void)
   retval = retval | test_io("00", "#<err>");
   retval = retval | test_io("01", "#<err>");
   retval = retval | test_io("1", "#<err>");
-  retval = retval | test_lift("10", 1, "110");
-  retval = retval | test_lift("110", -1, "10");
-  retval = retval | test_lift("10", -1, "#<err>");
-  retval = retval | test_lift("0010", 1, "0010");
-  retval = retval | test_lift("0010", -1, "0010");
-  retval = retval | test_lift("001110", -1, "00110");
-  retval = retval | test_lift("00110", -1, "#<err>");
-  retval = retval | test_lift("01001000110", 1, "010010001110");
-  retval = retval | test_lift("010010001110", -1, "01001000110");
-  retval = retval | test_subst("10", "0010", "0010");
-  retval = retval | test_subst("110", "0010", "110");
-  retval = retval | test_subst("00110", "0010", "000010");
-  retval = retval | test_subst("0010", "0010", "0010");
-  retval = retval | test_subst("011010", "0010", "0100100010");
-  retval = retval | test_subst("01001010", "0010", "0100100010");
   retval = retval | test_eval("10", "10");
   retval = retval | test_eval("110", "110");
-  retval = retval | test_eval("0010", "0010");
-  retval = retval | test_eval("00 00 10", "000010");
-  retval = retval | test_eval("00 00 110", "0000110");
+  retval = retval | test_eval("0010", "#<proc>");// 0010
+  retval = retval | test_eval("00 00 10", "#<proc>");// 000010
+  retval = retval | test_eval("00 00 110", "#<proc>");// 0000110
   retval = retval | test_eval("01 0010 1110", "1110");
-  retval = retval | test_eval("01 000010 0010", "0010");
-  retval = retval | test_eval("01 0000110 0010", "000010");
+  retval = retval | test_eval("01 000010 0010", "#<proc>");// 0010
+  retval = retval | test_eval("01 0000110 0010", "#<proc>");// 000010
   retval = retval | test_eval("01 01 000010 0000110 000010", "000010");
   retval = retval | test_eval("01 01 0000110 0000110 000010", "0000110");
   retval = retval | test_eval("01 01 000010 110 10", "10");

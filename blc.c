@@ -310,76 +310,6 @@ void print_expr(int expr, FILE *stream)
     fputs("#<err>", stream);
 }
 
-int lift_free_vars(int expr, int amount, int depth)
-{
-  int retval;
-  int var;
-  int fun;
-  int arg;
-  gc_push(expr);
-  if (expr >= 0) {
-    switch (cells[expr].type) {
-    case VAR:
-      var = cells[expr].var;
-      if (var >= depth) {
-        if (var + amount >= depth)
-          retval = make_var(var + amount);
-        else
-          retval = -1;
-      } else
-        retval = expr;
-      break;
-    case LAMBDA:
-      retval = make_lambda(lift_free_vars(cells[expr].lambda, amount, depth + 1));
-      break;
-    case PAIR:
-      fun = gc_push(lift_free_vars(cells[expr].pair.fun, amount, depth));
-      arg = gc_push(lift_free_vars(cells[expr].pair.arg, amount, depth));
-      retval = make_pair(fun, arg);
-      gc_pop(2);
-      break;
-    default:
-      retval = 0;
-    }
-  } else
-    retval = -1;
-  gc_pop(1);
-  return retval;
-}
-
-int subst(int expr, int replacement, int depth)
-{
-  int retval;
-  int fun;
-  int arg;
-  gc_push(expr);
-  gc_push(replacement);
-  if (expr >= 0)
-    switch (cells[expr].type) {
-    case VAR:
-      if (cells[expr].var == depth)
-        retval = lift_free_vars(replacement, depth + 1, 0);
-      else
-        retval = expr;
-      break;
-    case LAMBDA:
-      retval = make_lambda(subst(cells[expr].lambda, replacement, depth + 1));
-      break;
-    case PAIR:
-      fun = gc_push(subst(cells[expr].pair.fun, replacement, depth));
-      arg = gc_push(subst(cells[expr].pair.arg, replacement, depth));
-      retval = make_pair(fun, arg);
-      gc_pop(2);
-      break;
-    default:
-      retval = -1;
-    }
-  else
-    retval = -1;
-  gc_pop(2);
-  return retval;
-}
-
 int lookup(int var, int env)
 {
   int retval;
@@ -389,6 +319,16 @@ int lookup(int var, int env)
     retval = lookup(var - 1, cells[cells[env].lambda].pair.arg);
   else
     retval = cells[cells[cells[env].lambda].pair.fun].pair.arg;
+  return retval;
+}
+
+int depth(int env)
+{
+  int retval;
+  if (cells[cells[env].lambda].type != PAIR)
+    retval = 0;
+  else
+    retval = 1 + depth(cells[cells[env].lambda].pair.arg);
   return retval;
 }
 
@@ -403,13 +343,8 @@ int eval_expr(int expr, int env)
   if (expr >= 0) {
     switch (cells[expr].type) {
     case VAR:
-      // printf("var = %d\n", cells[expr].var);
       retval = lookup(cells[expr].var, env);
-      if (retval == -1) retval = expr;
-      /* if (retval == -1)
-        retval = expr;
-      else
-        retval = eval_expr(retval, env); */
+      if (retval == -1) retval = make_var(cells[expr].var - depth(env));
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
