@@ -2,7 +2,7 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_blc spec_lambda blc lambda true false nil
+bin_PROGRAMS = spec_blc spec_lambda blc lambda
 
 spec_blc_SOURCES = spec_blc.c blc.c
 spec_blc_LDFLAGS =
@@ -19,18 +19,6 @@ blc_LDADD =
 lambda_SOURCES = lambda_repl.c lambda.c blc.c
 lambda_LDFLAGS = 
 lambda_LDADD =
-
-true_SOURCES = true.c
-true_LDFLAGS =
-true_LDADD =
-
-false_SOURCES = false.c
-false_LDFLAGS =
-false_LDADD =
-
-nil_SOURCES = nil.c
-nil_LDFLAGS =
-nil_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
