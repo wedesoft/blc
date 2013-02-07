@@ -17,16 +17,13 @@ config.status
 config.sub
 configure
 depcomp
-false
 install-sh
 lambda
 libtool
 ltmain.sh
 m4
 missing
-nil
 spec_blc
 spec_lambda
 stamp-h1
-true
 
