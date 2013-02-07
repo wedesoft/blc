@@ -325,13 +325,13 @@ int lookup(int var, int env)
   return retval;
 }
 
-int depth(int env)
+int length(int list)
 {
   int retval;
-  if (cells[cells[env].lambda].type != PAIR)
+  if (cells[cells[list].lambda].type != PAIR)
     retval = 0;
   else
-    retval = 1 + depth(cells[cells[env].lambda].pair.arg);
+    retval = 1 + length(cells[cells[list].lambda].pair.arg);
   return retval;
 }
 
@@ -347,7 +347,7 @@ int eval_expr(int expr, int env)
     switch (cells[expr].type) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-      if (retval == -1) retval = make_var(cells[expr].var - depth(env));
+      if (retval == -1) retval = make_var(cells[expr].var - length(env));
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);

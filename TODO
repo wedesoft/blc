@@ -1,3 +1,5 @@
+* rename pair to alpha-reduction
+* implement car, cdr, pair, ... in C
 * define, let, quote, eval
 * primitives (implement using quote and eval?)
   - quote, null, true, false, cons, (1 . ()), first, rest
