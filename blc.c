@@ -308,6 +308,11 @@ void print_expr(int expr, FILE *stream)
     fputs("#<err>", stream);
 }
 
+int push_env(int env, int var)
+{
+  return make_lambda(make_pair(make_pair(make_var(0), var), env));
+}
+
 int lookup(int var, int env)
 {
   int retval;
@@ -350,7 +355,7 @@ int eval_expr(int expr, int env)
     case PAIR:
       fun = gc_push(eval_expr(cells[expr].pair.fun, env));
       arg = gc_push(cells[expr].pair.arg);
-      local_env = gc_push(make_lambda(make_pair(make_pair(make_var(0), arg), cells[fun].proc.env)));
+      local_env = gc_push(push_env(cells[fun].proc.env, arg));
       if (cells[fun].type == PROC) {
         retval = eval_expr(cells[fun].proc.fun, local_env);
       } else
