@@ -1,3 +1,3 @@
 #!/bin/sh
-rlwrap ./boot-eval
+rlwrap ./lambda.sh
 

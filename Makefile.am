@@ -2,26 +2,49 @@ SUFFIXES = .c .h .tmp
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_bracket boot-eval
+bin_PROGRAMS = spec_blc spec_lambda blc lambda true false nil
 
-spec_bracket_SOURCES = spec_bracket.c boot-eval.c
-spec_bracket_LDFLAGS =
-spec_bracket_LDADD =
+spec_blc_SOURCES = spec_blc.c blc.c
+spec_blc_LDFLAGS =
+spec_blc_LDADD =
 
-boot_eval_SOURCES = repl.c boot-eval.c
-boot_eval_LDFLAGS = 
-boot_eval_LDADD =
+spec_lambda_SOURCES = spec_lambda.c lambda.c blc.c
+spec_lambda_LDFLAGS =
+spec_lambda_LDADD =
 
-noinst_HEADERS = boot-eval.h
+blc_SOURCES = blc_repl.c blc.c
+blc_LDFLAGS = 
+blc_LDADD =
+
+lambda_SOURCES = lambda_repl.c lambda.c blc.c
+lambda_LDFLAGS = 
+lambda_LDADD =
+
+true_SOURCES = true.c
+true_LDFLAGS =
+true_LDADD =
+
+false_SOURCES = false.c
+false_LDFLAGS =
+false_LDADD =
+
+nil_SOURCES = nil.c
+nil_LDFLAGS =
+nil_LDADD =
+
+noinst_HEADERS = blc.h lambda.h
 
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO boot.rkt run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO run.sh
 
-test: spec_bracket.tmp
+test: spec_blc.tmp spec_lambda.tmp
 
-spec_bracket.tmp: spec_bracket$(EXEEXT)
-	./spec_bracket$(EXEEXT) && $(TOUCH) $@
+spec_blc.tmp: spec_blc$(EXEEXT)
+	./spec_blc$(EXEEXT) && $(TOUCH) $@
+
+spec_lambda.tmp: spec_lambda$(EXEEXT)
+	./spec_lambda$(EXEEXT) && $(TOUCH) $@
 
 CLEANFILES = *~ *.tmp
 

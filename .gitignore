@@ -8,7 +8,7 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
-boot-eval
+blc
 config.h
 config.h.in
 config.log
@@ -17,10 +17,16 @@ config.status
 config.sub
 configure
 depcomp
+false
 install-sh
+lambda
 libtool
 ltmain.sh
 m4
 missing
-spec_bracket
+nil
+spec_blc
+spec_lambda
 stamp-h1
+true
+

@@ -13,26 +13,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-#include "boot-eval.h"
+#ifndef __BLC_H
+#define __BLC_H
 
-int main(void)
-{
-  initialize();
-  while (1) {
-#ifndef NDEBUG
-    // fputs("----------------------------------------\n", stderr);
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
-    int expr = read_expression(stdin);
-    if (feof(stdin)) break;
-#if 0
-    print_expression(expr, stderr);
-    fputc('\n', stderr);
+#include <stdio.h>
+
+int gc_push(int expr);
+
+void gc_pop(int n);
+
+int read_expr(FILE *stream);
+
+int eval_expr(int expr, int env);
+
+void print_var(int var, FILE *stream);
+
+void print_lambda(int lambda, FILE *stream);
+
+void print_pair(int fun, int arg, FILE *stream);
+
+void print_expr(int expr, FILE *stream);
+
 #endif
-    print_quoted(eval_expression(expr, environment), stdout);
-    fputc('\n', stdout);
-#if 0
-    fputc('\n', stderr);
-#endif
-  };
-  return 0;
-}
+
