@@ -253,8 +253,6 @@ int make_proc(int fun, int env)
 
 void print_proc(int fun, int env, FILE *stream)
 {
-  //fputs("00", stream);
-  //print_expr(fun, stream);
   fputs("#<proc>", stream);
 }
 
@@ -354,7 +352,6 @@ int eval_expr(int expr, int env)
       arg = gc_push(cells[expr].pair.arg);
       local_env = gc_push(make_lambda(make_pair(make_pair(make_var(0), arg), cells[fun].proc.env)));
       if (cells[fun].type == PROC) {
-        // retval = eval_expr(lift_free_vars(subst(cells[fun].proc.fun, arg, 0), -1, 0), local_env);
         retval = eval_expr(cells[fun].proc.fun, local_env);
       } else
         retval = -1;

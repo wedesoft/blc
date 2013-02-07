@@ -1,21 +1,12 @@
-* simple variable lockup instead of eager substitution? <-> closures
-  ((->a.(->x.a x) 3) f)
-  ((->x.f x) 3)
-  (f 3)
-  --
-  ((->a.(a 3)) f)
-  (f 3)
-* IO objects, ffi
-* Earley parser for bits?
-* λx.x → 0010
-* λxy.x → λx.λy.y → 0000110
-* binary tree tokenizer, compose grammars
-* overload representation of pairs?
-* macros
+* define, let, quote, eval
 * primitives (implement using quote and eval?)
   - quote, null, true, false, cons, (1 . ()), first, rest
   - define, list, eq?, not, null?, pair?, and, or, xor, if
   - member?, append, assoc, cond, equal?
   - eval, quasiquote, quote
   - sublis (substitution)
-
+* IO objects, ffi
+* Earley parser for bits?
+* binary tree tokenizer, compose grammars
+* overload representation of pairs?
+* macros
