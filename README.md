@@ -2,13 +2,13 @@ bracket
 ======
 
 **Author**:       Jan Wedekind
-**Copyright**:    2012
+**Copyright**:    2013
 **License**:      GPL
 
 Synopsis
 --------
 
-Attempt at writing a small Racket interpreter.
+Binary Lambda Calculus virtual machine with DSL on top of it.
 
 Installation
 ------------
