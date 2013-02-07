@@ -3,12 +3,13 @@
 *.swp
 *.o
 *.tmp
-bracket-*.tar.*
 Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
 blc
+blc-*.tar.bz2
+blc-*.tar.gz   
 config.h
 config.h.in
 config.log
