@@ -18,6 +18,8 @@
 #define MAX_CELLS 256
 #define MAX_REGISTERS 256
 
+#define NIL -1
+
 typedef enum { VAR, LAMBDA, CALL, PROC } type_t;
 
 typedef struct {
@@ -46,6 +48,16 @@ cell_t cells[MAX_CELLS];
 int n_registers = 0;
 int registers[MAX_REGISTERS];
 
+int is_nil(int cell)
+{
+  return cell == NIL;
+}
+
+int type(int cell)
+{
+  return cells[cell].type;
+}
+
 void clear_marks(void)
 {
   int i;
@@ -61,7 +73,7 @@ int find_cell(void)
     if (retval == MAX_CELLS) break;
   };
   if (retval == MAX_CELLS)
-    retval = -1;
+    retval = NIL;
   return retval;
 }
 
@@ -69,7 +81,7 @@ void mark(int expr)
 {
   if (!cells[expr].mark) {
     cells[expr].mark = 1;
-    switch (cells[expr].type) {
+    switch (type(expr)) {
     case VAR:
       break;
     case LAMBDA:
@@ -108,12 +120,12 @@ void gc_pop(int n)
 int cell(void)
 {
   int retval = find_cell();
-  if (retval == -1) {
+  if (is_nil(retval)) {
     clear_marks();
     mark_registers();
     retval = find_cell();
   };
-  if (retval != -1)
+  if (retval != NIL)
     cells[retval].mark = 1;
   return retval;
 }
@@ -130,7 +142,7 @@ int read_bit(FILE *stream)
     retval = 1;
     break;
   case EOF:
-    retval = -1;
+    retval = NIL;
     break;
   default:
     retval = read_bit(stream);
@@ -148,7 +160,7 @@ int make_var(int var)
       cells[retval].var = var;
     };
   } else
-    retval = -1;
+    retval = NIL;
   return retval;
 }
 
@@ -162,7 +174,7 @@ int read_var(FILE *stream)
     retval = read_var(stream);
     if (retval >= 0) cells[retval].var++;
   } else
-    retval = -1;
+    retval = NIL;
   return retval;
 }
 
@@ -173,6 +185,11 @@ void print_var(int var, FILE *stream)
     print_var(var - 1, stream);
   else
     fputc('0', stream);
+}
+
+int is_var(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == VAR;
 }
 
 int make_lambda(int lambda)
@@ -186,7 +203,7 @@ int make_lambda(int lambda)
       cells[retval].lambda = lambda;
     };
   } else
-    retval = -1;
+    retval = NIL;
   gc_pop(1);
   return retval;
 }
@@ -202,6 +219,11 @@ void print_lambda(int lambda, FILE *stream)
   print_expr(lambda, stream);
 }
 
+int is_lambda(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == LAMBDA;
+}
+
 int make_call(int fun, int arg)
 {
   int retval;
@@ -215,7 +237,7 @@ int make_call(int fun, int arg)
       cells[retval].call.arg = arg;
     };
   } else
-    retval = -1;
+    retval = NIL;
   gc_pop(2);
   return retval;
 }
@@ -235,6 +257,11 @@ void print_call(int fun, int arg, FILE *stream)
   print_expr(arg, stream);
 }
 
+int is_call(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == CALL;
+}
+
 int make_proc(int fun, int env)
 {
   int retval;
@@ -246,7 +273,7 @@ int make_proc(int fun, int env)
     cells[retval].proc.fun = fun;
     cells[retval].proc.env = env;
   } else
-    retval = -1;
+    retval = NIL;
   gc_pop(2);
   return retval;
 }
@@ -254,6 +281,11 @@ int make_proc(int fun, int env)
 void print_proc(int fun, int env, FILE *stream)
 {
   fputs("#<proc>", stream);
+}
+
+int is_proc(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == PROC;
 }
 
 int make_false(void)
@@ -277,18 +309,18 @@ int read_expr(FILE *stream)
     else if (b2 == 1)
       retval = read_call(stream);
     else
-      retval = -1;
+      retval = NIL;
   } else if (b1 == 1)
     retval = read_var(stream);
   else
-    retval = -1;
+    retval = NIL;
   return retval;
 }
 
 void print_expr(int expr, FILE *stream)
 {
   if (expr >= 0) {
-    switch (cells[expr].type) {
+    switch (type(expr)) {
     case VAR:
       print_var(cells[expr].var, stream);
       break;
@@ -316,12 +348,12 @@ int cons(int car, int cdr)
 int car(int list)
 {
   int retval;
-  if (cells[list].type != LAMBDA)
-    retval = -1;
-  else if (cells[cells[list].lambda].type != CALL)
-    retval = -1;
-  else if (cells[cells[cells[list].lambda].call.fun].type != CALL)
-    retval = -1;
+  if (!is_lambda(list))
+    retval = NIL;
+  else if (!is_call(cells[list].lambda))
+    retval = NIL;
+  else if (!is_call(cells[cells[list].lambda].call.fun))
+    retval = NIL;
   else
     retval = cells[cells[cells[list].lambda].call.fun].call.arg;
   return retval;
@@ -330,10 +362,10 @@ int car(int list)
 int cdr(int list)
 {
   int retval;
-  if (cells[list].type != LAMBDA)
-    retval = -1;
-  else if (cells[cells[list].lambda].type != CALL)
-    retval = -1;
+  if (!is_lambda(list))
+    retval = NIL;
+  else if (!is_call(cells[list].lambda))
+    retval = NIL;
   else
     retval = cells[cells[list].lambda].call.arg;
   return retval;
@@ -352,7 +384,7 @@ int lookup(int var, int env)
 int length(int list)
 {
   int retval;
-  if (cells[cells[list].lambda].type != CALL)
+  if (!is_call(cells[list].lambda))
     retval = 0;
   else
     retval = 1 + length(cells[cells[list].lambda].call.arg);
@@ -368,10 +400,10 @@ int eval_expr(int expr, int env)
   gc_push(expr);
   gc_push(env);
   if (expr >= 0) {
-    switch (cells[expr].type) {
+    switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-      if (retval == -1) retval = make_var(cells[expr].var - length(env));
+      if (is_nil(retval)) retval = make_var(cells[expr].var - length(env));
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
@@ -380,20 +412,20 @@ int eval_expr(int expr, int env)
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
       arg = gc_push(cells[expr].call.arg);
       local_env = gc_push(cons(arg, cells[fun].proc.env));
-      if (cells[fun].type == PROC) {
+      if (is_proc(fun)) {
         retval = eval_expr(cells[fun].proc.fun, local_env);
       } else
-        retval = -1;
+        retval = NIL;
       gc_pop(3);
       break;
     case PROC:
       retval = expr;
       break;
     default:
-      retval = -1;
+      retval = NIL;
     }
   } else
-    retval = -1;
+    retval = NIL;
   gc_pop(2);
   return retval;
 }
