@@ -155,7 +155,7 @@ int make_var(int var)
   int retval;
   if (var >= 0) {
     retval = cell();
-    if (retval >= 0) {
+    if (!is_nil(retval)) {
       cells[retval].type = VAR;
       cells[retval].var = var;
     };
@@ -172,7 +172,7 @@ int read_var(FILE *stream)
     retval = make_var(0);
   else if (b == 1) {
     retval = read_var(stream);
-    if (retval >= 0) cells[retval].var++;
+    if (!is_nil(retval)) cells[retval].var++;
   } else
     retval = NIL;
   return retval;
@@ -196,9 +196,9 @@ int make_lambda(int lambda)
 {
   int retval;
   gc_push(lambda);
-  if (lambda >= 0) {
+  if (!is_nil(lambda)) {
     retval = cell();
-    if (retval >= 0) {
+    if (!is_nil(retval)) {
       cells[retval].type = LAMBDA;
       cells[retval].lambda = lambda;
     };
@@ -229,9 +229,9 @@ int make_call(int fun, int arg)
   int retval;
   gc_push(fun);
   gc_push(arg);
-  if (fun >= 0 && arg >= 0) {
+  if (!is_nil(fun) && !is_nil(arg)) {
     retval = cell();
-    if (retval >= 0) {
+    if (!is_nil(retval)) {
       cells[retval].type = CALL;
       cells[retval].call.fun = fun;
       cells[retval].call.arg = arg;
@@ -319,7 +319,7 @@ int read_expr(FILE *stream)
 
 void print_expr(int expr, FILE *stream)
 {
-  if (expr >= 0) {
+  if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
       print_var(cells[expr].var, stream);
@@ -399,7 +399,7 @@ int eval_expr(int expr, int env)
   int local_env;
   gc_push(expr);
   gc_push(env);
-  if (expr >= 0) {
+  if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
