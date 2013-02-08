@@ -28,7 +28,7 @@ typedef struct {
 } call_t;
 
 typedef struct {
-  int fun;
+  int block;
   int env;
 } proc_t;
 
@@ -92,7 +92,7 @@ void mark(int expr)
       mark(cells[expr].call.arg);
       break;
     case PROC:
-      mark(cells[expr].proc.fun);
+      mark(cells[expr].proc.block);
       mark(cells[expr].proc.env);
       break;
     }
@@ -262,15 +262,15 @@ int is_call(int cell)
   return is_nil(cell) ? 0 : type(cell) == CALL;
 }
 
-int make_proc(int fun, int env)
+int make_proc(int block, int env)
 {
   int retval;
-  gc_push(fun);
+  gc_push(block);
   gc_push(env);
-  if (fun >= 0 && env >= 0) {
+  if (!is_nil(block) && !is_nil(env)) {
     retval = cell();
     cells[retval].type = PROC;
-    cells[retval].proc.fun = fun;
+    cells[retval].proc.block = block;
     cells[retval].proc.env = env;
   } else
     retval = NIL;
@@ -331,7 +331,7 @@ void print_expr(int expr, FILE *stream)
       print_call(cells[expr].call.fun, cells[expr].call.arg, stream);
       break;
     case PROC:
-      print_proc(cells[expr].proc.fun, cells[expr].proc.env, stream);
+      print_proc(cells[expr].proc.block, cells[expr].proc.env, stream);
       break;
     default:
       fputs("#<err>", stream);
@@ -413,7 +413,7 @@ int eval_expr(int expr, int env)
       arg = gc_push(cells[expr].call.arg);
       local_env = gc_push(cons(arg, cells[fun].proc.env));
       if (is_proc(fun)) {
-        retval = eval_expr(cells[fun].proc.fun, local_env);
+        retval = eval_expr(cells[fun].proc.block, local_env);
       } else
         retval = NIL;
       gc_pop(3);
