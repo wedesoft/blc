@@ -1,4 +1,3 @@
-* garbage collection for car, cdr, cons, ... ?
 * add quote and eval to environment
 * implement define
 * primitives (implement using quote and eval?)
