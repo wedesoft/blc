@@ -20,7 +20,7 @@
 
 #define NIL -1
 
-typedef enum { VAR, LAMBDA, CALL, PROC } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, INPUT } type_t;
 
 typedef struct {
   int fun;
@@ -39,6 +39,7 @@ typedef struct {
     int lambda;
     call_t call;
     proc_t proc;
+    // void input;
   };
   char mark;
 } cell_t;
@@ -94,6 +95,8 @@ void mark(int expr)
     case PROC:
       mark(cells[expr].proc.block);
       mark(cells[expr].proc.env);
+      break;
+    case INPUT:
       break;
     }
   };
@@ -278,14 +281,18 @@ int make_proc(int block, int env)
   return retval;
 }
 
-void print_proc(int fun, int env, FILE *stream)
-{
-  fputs("#<proc>", stream);
-}
-
 int is_proc(int cell)
 {
   return is_nil(cell) ? 0 : type(cell) == PROC;
+}
+
+int make_input(void)
+{
+  int retval = cell();
+  if (!is_nil(retval)) {
+    cells[retval].type = INPUT;
+  };
+  return retval;
 }
 
 int make_false(void)
@@ -331,7 +338,10 @@ void print_expr(int expr, FILE *stream)
       print_call(cells[expr].call.fun, cells[expr].call.arg, stream);
       break;
     case PROC:
-      print_proc(cells[expr].proc.block, cells[expr].proc.env, stream);
+      fputs("#<proc>", stream);
+      break;
+    case INPUT:
+      fputs("#<input>", stream);
       break;
     default:
       fputs("#<err>", stream);
@@ -426,6 +436,9 @@ int eval_expr(int expr, int env)
     case PROC:
       retval = expr;
       break;
+    case INPUT:
+      retval = expr;
+      break;
     default:
       retval = NIL;
     }
@@ -434,4 +447,3 @@ int eval_expr(int expr, int env)
   gc_pop(2);
   return retval;
 }
-

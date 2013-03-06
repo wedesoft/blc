@@ -21,21 +21,23 @@
 #endif
 #include <stdio.h>
 
-int gc_push(int expr);
-
-void gc_pop(int n);
-
 int read_expr(FILE *stream);
 
 int eval_expr(int expr, int env);
 
-void print_var(int var, FILE *stream);
-
-void print_lambda(int lambda, FILE *stream);
-
-void print_call(int fun, int arg, FILE *stream);
-
 void print_expr(int expr, FILE *stream);
+
+int make_input(void);
+
+int make_false(void);
+
+int make_true(void);
+
+int cons(int car, int cdr);
+
+int car(int list);
+
+int cdr(int list);
 
 #endif
 
