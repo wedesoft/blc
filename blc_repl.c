@@ -17,7 +17,7 @@
 
 int main(void)
 {
-  int env = cons(make_input(), make_false());
+  int env = cons(make_stdin(), make_false());
   while (1) {
     int expr = read_expr(stdin);
     if (feof(stdin)) break;

@@ -27,7 +27,7 @@ int eval_expr(int expr, int env);
 
 void print_expr(int expr, FILE *stream);
 
-int make_input(void);
+int make_stdin(void);
 
 int make_false(void);
 

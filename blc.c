@@ -20,7 +20,7 @@
 
 #define NIL -1
 
-typedef enum { VAR, LAMBDA, CALL, PROC, INPUT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, STDIN } type_t;
 
 typedef struct {
   int fun;
@@ -39,7 +39,7 @@ typedef struct {
     int lambda;
     call_t call;
     proc_t proc;
-    // void input;
+    // void stdin;
   };
   char mark;
 } cell_t;
@@ -96,7 +96,7 @@ void mark(int expr)
       mark(cells[expr].proc.block);
       mark(cells[expr].proc.env);
       break;
-    case INPUT:
+    case STDIN:
       break;
     }
   };
@@ -286,13 +286,18 @@ int is_proc(int cell)
   return is_nil(cell) ? 0 : type(cell) == PROC;
 }
 
-int make_input(void)
+int make_stdin(void)
 {
   int retval = cell();
   if (!is_nil(retval)) {
-    cells[retval].type = INPUT;
+    cells[retval].type = STDIN;
   };
   return retval;
+}
+
+int is_stdin(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == STDIN;
 }
 
 int make_false(void)
@@ -340,8 +345,8 @@ void print_expr(int expr, FILE *stream)
     case PROC:
       fputs("#<proc>", stream);
       break;
-    case INPUT:
-      fputs("#<input>", stream);
+    case STDIN:
+      fputs("#<stdin>", stream);
       break;
     default:
       fputs("#<err>", stream);
@@ -436,8 +441,8 @@ int eval_expr(int expr, int env)
     case PROC:
       retval = expr;
       break;
-    case INPUT:
-      retval = expr;
+    case STDIN:
+      retval = STDIN;
       break;
     default:
       retval = NIL;
