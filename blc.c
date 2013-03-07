@@ -423,10 +423,7 @@ int eval_expr(int expr, int env)
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-      if (is_nil(retval))
-        retval = make_var(cells[expr].var - length(env));
-      else
-        retval = eval_expr(retval, env);// !!!
+      if (is_nil(retval)) retval = make_var(cells[expr].var - length(env));
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
@@ -447,6 +444,7 @@ int eval_expr(int expr, int env)
     case STDIN:
       // retval = expr;
       retval = make_lambda(make_call(make_call(make_var(0), read_bit(stdin) ? make_true() : make_false()), expr));
+      // retval = make_proc(make_call(make_call(make_var(0), make_var(1)), make_var(2)), env);
       break;
     default:
       retval = NIL;
