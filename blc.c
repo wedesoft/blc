@@ -413,6 +413,9 @@ int length(int list)
 
 int eval_expr(int expr, int env)
 {
+#ifndef NDEBUG
+  print_expr(expr, stderr); fputs("\n", stderr);
+#endif
   int retval;
   int fun;
   int arg;
@@ -423,27 +426,37 @@ int eval_expr(int expr, int env)
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-      if (is_nil(retval)) retval = make_var(cells[expr].var - length(env));
+#ifndef NDEBUG
+      // print_expr(retval, stderr); fputs("\n", stderr);
+#endif
+      if (is_nil(retval))
+        retval = make_var(cells[expr].var - length(env));
+      //else
+      //  retval = eval_expr(retval, env);// wrong environment!
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
       break;
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
-      arg = gc_push(eval_expr(cells[expr].call.arg, env));// how to do lazy evaluation?
+      // arg = gc_push(eval_expr(cells[expr].call.arg, env));// how to do lazy evaluation?
+      arg = gc_push(cells[expr].call.arg);// set environment?
       local_env = gc_push(cons(arg, cells[fun].proc.env));
       if (is_proc(fun))
         retval = eval_expr(cells[fun].proc.block, local_env);
-      else
+      else {
+        print_expr(fun, stderr);
+        fprintf(stderr, " not a proc (#env = %d)\n", length(env));
         retval = NIL;
+      };
       gc_pop(3);
       break;
     case PROC:
       retval = expr;
       break;
     case STDIN:
-      // retval = expr;
-      retval = make_lambda(make_call(make_call(make_var(0), read_bit(stdin) ? make_true() : make_false()), expr));
+      retval = expr;
+      // retval = make_lambda(make_call(make_call(make_var(0), read_bit(stdin) ? make_true() : make_false()), expr));
       // retval = make_proc(make_call(make_call(make_var(0), make_var(1)), make_var(2)), env);
       break;
     default:

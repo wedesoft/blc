@@ -1,3 +1,4 @@
+* split up proc and setting of environment?
 * readBit function (monadic IO) <-> quote, eval?
 * add quote and eval to environment
 * implement define
