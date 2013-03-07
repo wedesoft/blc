@@ -430,7 +430,7 @@ int eval_expr(int expr, int env)
       break;
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
-      arg = gc_push(eval_expr(cells[expr].call.arg, env));
+      arg = gc_push(eval_expr(cells[expr].call.arg, env));// how to do lazy evaluation?
       local_env = gc_push(cons(arg, cells[fun].proc.env));
       if (is_proc(fun))
         retval = eval_expr(cells[fun].proc.block, local_env);
