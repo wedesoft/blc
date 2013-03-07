@@ -115,16 +115,16 @@ int main(void)
   retval = retval | test_eval("01 0010 1110", "1110");
   retval = retval | test_eval("01 000010 0010", "#<proc>");// 0010
   retval = retval | test_eval("01 0000110 0010", "#<proc>");// 000010
-  retval = retval | test_eval("01 01 000010 0000110 000010", "000010");
-  retval = retval | test_eval("01 01 0000110 0000110 000010", "0000110");
+  retval = retval | test_eval("01 01 000010 0000110 000010", "#<proc>");// 000010
+  retval = retval | test_eval("01 01 0000110 0000110 000010", "#<proc>");// 0000110
   retval = retval | test_eval("01 01 000010 110 10", "10");
   retval = retval | test_eval("01 00 01 01 10 1110 110 000010", "10");
   retval = retval | test_eval("01 01 0000110 110 10", "110");
   retval = retval | test_eval("01 00 01 01 10 1110 110 0000110", "110");
-  retval = retval | test_eval("01 01 000010 001110 00110", "00110");
-  retval = retval | test_eval("01 01 0000110 001110 00110", "001110");
+  retval = retval | test_eval("01 01 000010 001110 00110", "#<proc>");// 00110
+  retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc>");// 001110
   retval = retval | test_eval("01 00110 0010", "10");
-  retval = retval | test_eval("0100100010", "0010");
+  retval = retval | test_eval("0100100010", "#<proc>");// 0010
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
