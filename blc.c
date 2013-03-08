@@ -311,8 +311,8 @@ int make_wrap(int block, int env)
   if (!is_nil(block) && !is_nil(env)) {
     retval = cell();
     cells[retval].type = WRAP;
-    cells[retval].proc.block = block;
-    cells[retval].proc.env = env;
+    cells[retval].wrap.block = block;
+    cells[retval].wrap.env = env;
   } else
     retval = NIL;
   gc_pop(2);
@@ -468,30 +468,16 @@ int eval_expr(int expr, int env)
   int fun;
   int arg;
   int local_env;
-#ifndef NDEBUG
-  int x;
-#endif
   gc_push(expr);
   gc_push(env);
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-#ifndef NDEBUG
-      x = retval;
-#endif
       if (is_nil(retval))
         retval = make_var(cells[expr].var - length(env));
       else
         retval = eval_expr(retval, env);
-#ifndef NDEBUG
-      print_expr(expr, stderr);
-      fputs(" -> ", stderr);
-      print_expr(x, stderr);
-      fputs(" -> ", stderr);
-      print_expr(retval, stderr);
-      fputs("\n", stderr);
-#endif
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
@@ -504,7 +490,7 @@ int eval_expr(int expr, int env)
       if (is_proc(fun))
         retval = eval_expr(cells[fun].proc.block, local_env);
       else
-        retval = eval_expr(fun, env);// Test this!
+        retval = NIL;// eval_expr(fun, env);// Test this!
       gc_pop(3);
       break;
     case PROC:
@@ -524,5 +510,11 @@ int eval_expr(int expr, int env)
   } else
     retval = NIL;
   gc_pop(2);
+#ifndef NDEBUG
+  print_expr(expr, stderr);
+  fputs(" -> ", stderr);
+  print_expr(retval, stderr);
+  fputs("\n", stderr);
+#endif
   return retval;
 }
