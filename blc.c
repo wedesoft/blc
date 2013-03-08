@@ -468,24 +468,30 @@ int eval_expr(int expr, int env)
   int fun;
   int arg;
   int local_env;
+#ifndef NDEBUG
   int x;
+#endif
   gc_push(expr);
   gc_push(env);
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
+#ifndef NDEBUG
       x = retval;
+#endif
       if (is_nil(retval))
         retval = make_var(cells[expr].var - length(env));
       else
         retval = eval_expr(retval, env);
+#ifndef NDEBUG
       print_expr(expr, stderr);
       fputs(" -> ", stderr);
       print_expr(x, stderr);
       fputs(" -> ", stderr);
       print_expr(retval, stderr);
       fputs("\n", stderr);
+#endif
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
