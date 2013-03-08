@@ -291,6 +291,13 @@ int make_proc(int block, int env)
   return retval;
 }
 
+void print_proc(int block, int env, FILE *stream)
+{
+  fputs("#<proc:", stream);
+  print_expr(block, stream);
+  fputs(">", stream);
+}
+
 int is_proc(int cell)
 {
   return is_nil(cell) ? 0 : type(cell) == PROC;
@@ -310,6 +317,13 @@ int make_wrap(int block, int env)
     retval = NIL;
   gc_pop(2);
   return retval;
+}
+
+void print_wrap(int block, int env, FILE *stream)
+{
+  fputs("#<wrap:", stream);
+  print_expr(block, stream);
+  fputs(">", stream);
 }
 
 int is_wrap(int cell)
@@ -374,10 +388,10 @@ void print_expr(int expr, FILE *stream)
       print_call(cells[expr].call.fun, cells[expr].call.arg, stream);
       break;
     case PROC:
-      fputs("#<proc>", stream);
+      print_proc(cells[expr].proc.block, cells[expr].proc.env, stream);
       break;
     case WRAP:
-      fputs("#<wrap>", stream);
+      print_wrap(cells[expr].wrap.block, cells[expr].wrap.env, stream);
       break;
     case STDIN:
       fputs("#<stdin>", stream);
@@ -454,28 +468,37 @@ int eval_expr(int expr, int env)
   int fun;
   int arg;
   int local_env;
+  int x;
   gc_push(expr);
   gc_push(env);
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
+      x = retval;
       if (is_nil(retval))
         retval = make_var(cells[expr].var - length(env));
       else
         retval = eval_expr(retval, env);
+      print_expr(expr, stderr);
+      fputs(" -> ", stderr);
+      print_expr(x, stderr);
+      fputs(" -> ", stderr);
+      print_expr(retval, stderr);
+      fputs("\n", stderr);
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
       break;
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
-      arg = gc_push(make_wrap(cells[expr].call.arg, env));// set environment?
+      arg = gc_push(make_wrap(cells[expr].call.arg, env));
+      // arg = gc_push(cells[expr].call.arg);// set environment?
       local_env = gc_push(cons(arg, cells[fun].proc.env));
       if (is_proc(fun))
         retval = eval_expr(cells[fun].proc.block, local_env);
       else
-        retval = NIL; // eval_expr(fun, env);
+        retval = eval_expr(fun, env);// Test this!
       gc_pop(3);
       break;
     case PROC:
