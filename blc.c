@@ -20,7 +20,7 @@
 
 #define NIL -1
 
-typedef enum { VAR, LAMBDA, CALL, PROC, STDIN } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, STDIN } type_t;
 
 typedef struct {
   int fun;
@@ -33,12 +33,18 @@ typedef struct {
 } proc_t;
 
 typedef struct {
+  int block;
+  int env;
+} wrap_t;
+
+typedef struct {
   type_t type;
   union {
     int var;
     int lambda;
     call_t call;
     proc_t proc;
+    wrap_t wrap;
     // void stdin;
   };
   char mark;
@@ -95,6 +101,10 @@ void mark(int expr)
     case PROC:
       mark(cells[expr].proc.block);
       mark(cells[expr].proc.env);
+      break;
+    case WRAP:
+      mark(cells[expr].wrap.block);
+      mark(cells[expr].wrap.env);
       break;
     case STDIN:
       break;
@@ -286,6 +296,27 @@ int is_proc(int cell)
   return is_nil(cell) ? 0 : type(cell) == PROC;
 }
 
+int make_wrap(int block, int env)
+{
+  int retval;
+  gc_push(block);
+  gc_push(env);
+  if (!is_nil(block) && !is_nil(env)) {
+    retval = cell();
+    cells[retval].type = WRAP;
+    cells[retval].proc.block = block;
+    cells[retval].proc.env = env;
+  } else
+    retval = NIL;
+  gc_pop(2);
+  return retval;
+}
+
+int is_wrap(int cell)
+{
+  return is_nil(cell) ? 0 : type(cell) == WRAP;
+}
+
 int make_stdin(void)
 {
   int retval = cell();
@@ -344,6 +375,9 @@ void print_expr(int expr, FILE *stream)
       break;
     case PROC:
       fputs("#<proc>", stream);
+      break;
+    case WRAP:
+      fputs("#<wrap>", stream);
       break;
     case STDIN:
       fputs("#<stdin>", stream);
@@ -414,7 +448,7 @@ int length(int list)
 int eval_expr(int expr, int env)
 {
 #ifndef NDEBUG
-  print_expr(expr, stderr); fputs("\n", stderr);
+  // print_expr(expr, stderr); fputs("\n", stderr);
 #endif
   int retval;
   int fun;
@@ -426,33 +460,29 @@ int eval_expr(int expr, int env)
     switch (type(expr)) {
     case VAR:
       retval = lookup(cells[expr].var, env);
-#ifndef NDEBUG
-      // print_expr(retval, stderr); fputs("\n", stderr);
-#endif
       if (is_nil(retval))
         retval = make_var(cells[expr].var - length(env));
-      //else
-      //  retval = eval_expr(retval, env);// wrong environment!
+      else
+        retval = eval_expr(retval, env);
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
       break;
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
-      // arg = gc_push(eval_expr(cells[expr].call.arg, env));// how to do lazy evaluation?
-      arg = gc_push(cells[expr].call.arg);// set environment?
+      arg = gc_push(make_wrap(cells[expr].call.arg, env));// set environment?
       local_env = gc_push(cons(arg, cells[fun].proc.env));
       if (is_proc(fun))
         retval = eval_expr(cells[fun].proc.block, local_env);
-      else {
-        print_expr(fun, stderr);
-        fprintf(stderr, " not a proc (#env = %d)\n", length(env));
-        retval = NIL;
-      };
+      else
+        retval = NIL; // eval_expr(fun, env);
       gc_pop(3);
       break;
     case PROC:
       retval = expr;
+      break;
+    case WRAP:
+      retval = eval_expr(cells[fun].wrap.block, cells[fun].wrap.env);
       break;
     case STDIN:
       retval = expr;
