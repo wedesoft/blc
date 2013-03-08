@@ -291,11 +291,13 @@ int make_proc(int block, int env)
   return retval;
 }
 
+int length(int list);
+
 void print_proc(int block, int env, FILE *stream)
 {
   fputs("#<proc:", stream);
   print_expr(block, stream);
-  fputs(">", stream);
+  fprintf(stream, ";#env=%d>", length(env));
 }
 
 int is_proc(int cell)
@@ -323,7 +325,7 @@ void print_wrap(int block, int env, FILE *stream)
 {
   fputs("#<wrap:", stream);
   print_expr(block, stream);
-  fputs(">", stream);
+  fprintf(stream, ";#env=%d>", length(env));
 }
 
 int is_wrap(int cell)
@@ -497,7 +499,7 @@ int eval_expr(int expr, int env)
       retval = expr;
       break;
     case WRAP:
-      retval = eval_expr(cells[fun].wrap.block, cells[fun].wrap.env);
+      retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
       break;
     case STDIN:
       retval = expr;
@@ -511,10 +513,10 @@ int eval_expr(int expr, int env)
     retval = NIL;
   gc_pop(2);
 #ifndef NDEBUG
-  print_expr(expr, stderr);
-  fputs(" -> ", stderr);
-  print_expr(retval, stderr);
-  fputs("\n", stderr);
+  //print_expr(expr, stderr);
+  //fputs(" -> ", stderr);
+  //print_expr(retval, stderr);
+  //puts("\n", stderr);
 #endif
   return retval;
 }
