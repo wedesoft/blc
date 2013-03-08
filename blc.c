@@ -282,9 +282,11 @@ int make_proc(int block, int env)
   gc_push(env);
   if (!is_nil(block) && !is_nil(env)) {
     retval = cell();
-    cells[retval].type = PROC;
-    cells[retval].proc.block = block;
-    cells[retval].proc.env = env;
+    if (!is_nil(retval)) {
+      cells[retval].type = PROC;
+      cells[retval].proc.block = block;
+      cells[retval].proc.env = env;
+    };
   } else
     retval = NIL;
   gc_pop(2);
@@ -312,9 +314,11 @@ int make_wrap(int block, int env)
   gc_push(env);
   if (!is_nil(block) && !is_nil(env)) {
     retval = cell();
-    cells[retval].type = WRAP;
-    cells[retval].wrap.block = block;
-    cells[retval].wrap.env = env;
+    if (!is_nil(retval)) {
+      cells[retval].type = WRAP;
+      cells[retval].wrap.block = block;
+      cells[retval].wrap.env = env;
+    };
   } else
     retval = NIL;
   gc_pop(2);
@@ -336,9 +340,8 @@ int is_wrap(int cell)
 int make_stdin(void)
 {
   int retval = cell();
-  if (!is_nil(retval)) {
+  if (!is_nil(retval))
     cells[retval].type = STDIN;
-  };
   return retval;
 }
 
