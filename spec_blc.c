@@ -80,7 +80,7 @@ int test_eval(char *cmd, char *spec)
   int retval = 0;
   char buffer[BUFSIZE];
   int env = make_false();
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env, NULL));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
@@ -88,12 +88,14 @@ int test_eval(char *cmd, char *spec)
   return retval;
 }
 
-int test_stdin(char *cmd, char *spec)
+int test_input(char *cmd, char *data, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  int env = cons(make_stdin(), make_false());
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
+  int env = cons(make_input(), make_false());
+  FILE *input = fmemopen(data, strlen(data), "r");
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env, input));
+  fclose(input);
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
@@ -141,7 +143,8 @@ int main(void)
   retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc:1110;#env=0>");
   retval = retval | test_eval("01 00110 0010", "10");
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
-  // retval = retval | test_stdin("10", "#<stdin>");
+  retval = retval | test_input("01 10 0000110", "0", "#<proc:0010;#env=2>");
+  retval = retval | test_input("01 10 0000110", "1", "#<proc:00110;#env=2>");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
