@@ -79,7 +79,21 @@ int test_eval(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), make_false()));
+  int env = make_false();
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
+  if (strcmp(spec, result)) {
+    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_stdin(char *cmd, char *spec)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  int env = cons(make_stdin(), make_false());
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
@@ -127,6 +141,7 @@ int main(void)
   retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc:1110;#env=0>");
   retval = retval | test_eval("01 00110 0010", "10");
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
+  // retval = retval | test_stdin("10", "#<stdin>");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif

@@ -504,9 +504,7 @@ int eval_expr(int expr, int env)
       retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
       break;
     case STDIN:
-      retval = expr;
-      // retval = make_lambda(make_call(make_call(make_var(0), read_bit(stdin) ? make_true() : make_false()), expr));
-      // retval = make_proc(make_call(make_call(make_var(0), make_var(1)), make_var(2)), env);
+      retval = make_proc(make_call(make_call(make_var(0), read_bit(stdin) ? make_true() : make_false()), expr), env);
       break;
     default:
       retval = NIL;
