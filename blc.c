@@ -490,12 +490,11 @@ int eval_expr(int expr, int env)
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
       arg = gc_push(make_wrap(cells[expr].call.arg, env));
-      // arg = gc_push(cells[expr].call.arg);// set environment?
-      local_env = gc_push(cons(arg, cells[fun].proc.env));
-      if (is_proc(fun))
+      if (is_proc(fun)) {
+        local_env = gc_push(cons(arg, cells[fun].proc.env));
         retval = eval_expr(cells[fun].proc.block, local_env);
-      else
-        retval = NIL;// eval_expr(fun, env);// Test this!
+      } else
+        retval = eval_expr(fun, env);
       gc_pop(3);
       break;
     case PROC:

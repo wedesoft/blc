@@ -112,6 +112,8 @@ int main(void)
   retval = retval | test_eval("0010", "#<proc:10;#env=0>");
   retval = retval | test_eval("00 00 10", "#<proc:0010;#env=0>");
   retval = retval | test_eval("00 00 110", "#<proc:00110;#env=0>");
+  retval = retval | test_eval("01 10 110", "10");
+  retval = retval | test_eval("01 110 10", "110");
   retval = retval | test_eval("01 0010 1110", "1110");
   retval = retval | test_eval("01 000010 0010", "#<proc:10;#env=1>");
   retval = retval | test_eval("01 0000110 0010", "#<proc:110;#env=1>");
