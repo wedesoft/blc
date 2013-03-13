@@ -80,7 +80,7 @@ int test_eval(char *cmd, char *spec)
   int retval = 0;
   char buffer[BUFSIZE];
   int env = make_false();
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env, NULL));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;
@@ -92,9 +92,9 @@ int test_input(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  int env = cons(make_input(), make_false());
   FILE *f = fmemopen(cmd, strlen(cmd), "r");
-  char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(f), env, f));
+  int env = cons(make_input(f), make_false());
+  char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(f), env));
   fclose(f);
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);

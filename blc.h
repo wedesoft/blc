@@ -23,13 +23,13 @@
 
 int read_expr(FILE *stream);
 
-int eval_expr(int expr, int env, FILE *input);
+int eval_expr(int expr, int env);
 
 void print_expr(int expr, FILE *stream);
 
 void print_var(int var, FILE *stream);
 
-int make_input(void);
+int make_input(FILE *input);
 
 int make_false(void);
 

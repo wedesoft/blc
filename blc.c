@@ -45,7 +45,7 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
-    // void input;
+    FILE *input;
   };
   char mark;
 } cell_t;
@@ -337,11 +337,13 @@ int is_wrap(int cell)
   return is_nil(cell) ? 0 : type(cell) == WRAP;
 }
 
-int make_input(void)
+int make_input(FILE *input)
 {
   int retval = cell();
-  if (!is_nil(retval))
+  if (!is_nil(retval)) {
     cells[retval].type = INPUT;
+    cells[retval].input = input;
+  };
   return retval;
 }
 
@@ -464,7 +466,7 @@ int length(int list)
   return retval;
 }
 
-int eval_expr(int expr, int env, FILE *input)
+int eval_expr(int expr, int env)
 {
 #ifndef NDEBUG
   // print_expr(expr, stderr); fputs("\n", stderr);
@@ -482,29 +484,32 @@ int eval_expr(int expr, int env, FILE *input)
       if (is_nil(retval))
         retval = make_var(cells[expr].var - length(env));
       else
-        retval = eval_expr(retval, env, input);
+        retval = eval_expr(retval, env);
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
       break;
     case CALL:
-      fun = gc_push(eval_expr(cells[expr].call.fun, env, input));
+      fun = gc_push(eval_expr(cells[expr].call.fun, env));
       arg = gc_push(make_wrap(cells[expr].call.arg, env));
       if (is_proc(fun)) {
         local_env = gc_push(cons(arg, cells[fun].proc.env));
-        retval = eval_expr(cells[fun].proc.block, local_env, input);
+        retval = eval_expr(cells[fun].proc.block, local_env);
       } else
-        retval = eval_expr(fun, env, input);
+        retval = eval_expr(fun, env);
       gc_pop(3);
       break;
     case PROC:
       retval = expr;
       break;
     case WRAP:
-      retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env, input);
+      retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
       break;
     case INPUT:
-      retval = make_proc(make_call(make_call(make_var(0), read_bit(input) ? make_true() : make_false()), expr), env);
+      retval = make_proc(make_call(make_call(make_var(0), 
+                                             read_bit(cells[expr].input) ?
+                                             make_true() :
+                                             make_false()), expr), env);
       break;
     default:
       retval = NIL;
