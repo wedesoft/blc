@@ -1,4 +1,4 @@
-* run eval from input stream?
+* run eval_expr from input stream?
 * add method (define?) for adding input-variable to environment
 * readBit function (monadic IO) <-> quote, eval?
 * add quote and eval to environment

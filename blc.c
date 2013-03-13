@@ -132,7 +132,11 @@ void gc_pop(int n)
 
 int cell(void)
 {
+#ifdef NDEBUG
   int retval = find_cell();
+#else
+  int retval = NIL;
+#endif
   if (is_nil(retval)) {
     clear_marks();
     mark_registers();
