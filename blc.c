@@ -499,9 +499,10 @@ int eval_expr(int expr, int env)
       if (is_proc(fun)) {
         local_env = gc_push(cons(arg, cells[fun].proc.env));
         retval = eval_expr(cells[fun].proc.block, local_env);
+        gc_pop(1);
       } else
         retval = eval_expr(fun, env);
-      gc_pop(3);
+      gc_pop(2);
       break;
     case PROC:
       retval = expr;
