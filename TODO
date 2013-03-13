@@ -1,4 +1,5 @@
-* add method for adding input-variable to environment
+* run eval from input stream?
+* add method (define?) for adding input-variable to environment
 * readBit function (monadic IO) <-> quote, eval?
 * add quote and eval to environment
 * implement define
@@ -8,7 +9,7 @@
   - member?, append, assoc, cond, equal?
   - eval, quasiquote, quote
   - sublis (substitution)
-* IO objects, ffi
+* ffi
 * Earley parser for bits?
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
