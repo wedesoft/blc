@@ -511,10 +511,11 @@ int eval_expr(int expr, int env)
       retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
       break;
     case INPUT:
-      retval = make_proc(make_call(make_call(make_var(0), 
-                                             read_bit(cells[expr].input) ?
-                                             make_true() :
-                                             make_false()), expr), env);
+      retval = make_proc(make_call(make_call(gc_push(make_var(0)), 
+                                             gc_push(read_bit(cells[expr].input) ?
+                                                     make_true() :
+                                                     make_false())), expr), env);
+      gc_pop(2);
       break;
     default:
       retval = NIL;

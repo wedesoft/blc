@@ -93,8 +93,9 @@ int test_input(char *cmd, char *spec)
   int retval = 0;
   char buffer[BUFSIZE];
   FILE *f = fmemopen(cmd, strlen(cmd), "r");
-  int env = cons(make_input(f), make_false());
+  int env = gc_push(cons(gc_push(make_input(f)), gc_push(make_false())));
   char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(f), env));
+  gc_pop(3);
   fclose(f);
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);

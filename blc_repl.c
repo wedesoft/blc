@@ -17,12 +17,13 @@
 
 int main(void)
 {
-  int env = cons(make_input(stdin), make_false());
+  int env = gc_push(cons(gc_push(make_input(stdin)), gc_push(make_false())));
   while (1) {
     int expr = read_expr(stdin);
     if (feof(stdin)) break;
     print_expr(eval_expr(expr, env), stdout);
     fputc('\n', stdout);
   };
+  gc_pop(3);
   return 0;
 }

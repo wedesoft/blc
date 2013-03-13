@@ -21,6 +21,10 @@
 #endif
 #include <stdio.h>
 
+int gc_push(int expr);
+
+void gc_pop(int n);
+
 int read_expr(FILE *stream);
 
 int eval_expr(int expr, int env);
