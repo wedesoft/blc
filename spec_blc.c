@@ -145,6 +145,8 @@ int main(void)
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
   retval = retval | test_input("01 10 0000110", "0", "#<proc:0010;#env=2>");
   retval = retval | test_input("01 10 0000110", "1", "#<proc:00110;#env=2>");
+  retval = retval | test_input("01 01 01 10 0000110 1110 110", "0", "10");
+  retval = retval | test_input("01 01 01 10 0000110 1110 110", "1", "110");
 #else
   fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
 #endif
