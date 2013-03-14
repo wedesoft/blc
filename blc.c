@@ -454,9 +454,6 @@ int length(int list)
 
 int eval_expr(int expr, int env)
 {
-#ifndef NDEBUG
-  // print_expr(expr, stderr); fputs("\n", stderr);
-#endif
   int retval;
   int fun;
   int arg;
@@ -505,11 +502,5 @@ int eval_expr(int expr, int env)
   } else
     retval = NIL;
   gc_pop(2);
-#ifndef NDEBUG
-  //print_expr(expr, stderr);
-  //fputs(" -> ", stderr);
-  //print_expr(retval, stderr);
-  //puts("\n", stderr);
-#endif
   return retval;
 }
