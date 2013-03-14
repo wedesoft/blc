@@ -5,11 +5,11 @@
 * add quote and eval to environment
 * implement define
 * primitives (implement using quote and eval?)
-  - quote, null, true, false, cons, (1 . ()), first, rest
-  - define, list, eq?, not, null?, pair?, and, or, xor, if
-  - member?, append, assoc, cond, equal?
-  - eval, quasiquote, quote
-  - sublis (substitution)
+    * quote, null, true, false, cons, (1 . ()), first, rest
+    * define, list, eq?, not, null?, pair?, and, or, xor, if
+    * member?, append, assoc, cond, equal?
+    * eval, quasiquote, quote
+    * sublis (substitution)
 * ffi
 * Earley parser for bits?
 * binary tree tokenizer, compose grammars
