@@ -22,20 +22,11 @@
 
 typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
-typedef struct {
-  int fun;
-  int arg;
-} call_t;
+typedef struct { int fun; int arg; } call_t;
 
-typedef struct {
-  int block;
-  int env;
-} proc_t;
+typedef struct { int block; int env; } proc_t;
 
-typedef struct {
-  int block;
-  int env;
-} wrap_t;
+typedef struct { int block; int env; } wrap_t;
 
 typedef struct {
   type_t type;
@@ -55,15 +46,9 @@ cell_t cells[MAX_CELLS];
 int n_registers = 0;
 int registers[MAX_REGISTERS];
 
-int is_nil(int cell)
-{
-  return cell == NIL;
-}
+int is_nil(int cell) { return cell == NIL; }
 
-int type(int cell)
-{
-  return cells[cell].type;
-}
+int type(int cell) { return cells[cell].type; }
 
 void clear_marks(void)
 {
@@ -119,16 +104,9 @@ void mark_registers(void)
     mark(registers[i]);
 }
 
-int gc_push(int expr)
-{
-  registers[n_registers++] = expr;
-  return expr;
-}
+int gc_push(int expr) { registers[n_registers++] = expr; return expr; }
 
-void gc_pop(int n)
-{
-  n_registers -= n;
-}
+void gc_pop(int n) { n_registers -= n; }
 
 int cell(void)
 {
@@ -204,10 +182,7 @@ void print_var(int var, FILE *stream)
     fputc('0', stream);
 }
 
-int is_var(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == VAR;
-}
+int is_var(int cell) { return is_nil(cell) ? 0 : type(cell) == VAR; }
 
 int make_lambda(int lambda)
 {
@@ -236,10 +211,7 @@ void print_lambda(int lambda, FILE *stream)
   print_expr(lambda, stream);
 }
 
-int is_lambda(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == LAMBDA;
-}
+int is_lambda(int cell) { return is_nil(cell) ? 0 : type(cell) == LAMBDA; }
 
 int make_call(int fun, int arg)
 {
@@ -274,10 +246,7 @@ void print_call(int fun, int arg, FILE *stream)
   print_expr(arg, stream);
 }
 
-int is_call(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == CALL;
-}
+int is_call(int cell) { return is_nil(cell) ? 0 : type(cell) == CALL; }
 
 int make_proc(int block, int env)
 {
@@ -306,10 +275,7 @@ void print_proc(int block, int env, FILE *stream)
   fprintf(stream, ";#env=%d>", length(env));
 }
 
-int is_proc(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == PROC;
-}
+int is_proc(int cell) { return is_nil(cell) ? 0 : type(cell) == PROC; }
 
 int make_wrap(int block, int env)
 {
@@ -336,10 +302,7 @@ void print_wrap(int block, int env, FILE *stream)
   fprintf(stream, ";#env=%d>", length(env));
 }
 
-int is_wrap(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == WRAP;
-}
+int is_wrap(int cell) { return is_nil(cell) ? 0 : type(cell) == WRAP; }
 
 int make_input(FILE *input)
 {
@@ -351,10 +314,7 @@ int make_input(FILE *input)
   return retval;
 }
 
-int is_input(int cell)
-{
-  return is_nil(cell) ? 0 : type(cell) == INPUT;
-}
+int is_input(int cell) { return is_nil(cell) ? 0 : type(cell) == INPUT; }
 
 int make_false(void)
 {
