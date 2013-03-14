@@ -20,7 +20,9 @@
 
 #define BUFSIZE 102
 
-#ifdef HAVE_FMEMOPEN
+#ifndef HAVE_FMEMOPEN
+#endif
+
 int test_compile(char *cmd, char *spec)
 {
   int retval = 0;
@@ -37,12 +39,10 @@ int test_compile(char *cmd, char *spec)
   };
   return retval;
 }
-#endif
 
 int main(void)
 {
   int retval = 0;
-#ifdef HAVE_FMEMOPEN
   retval = retval | test_compile("0010", "0010");
   retval = retval | test_compile("00.10", "00.10");
   retval = retval | test_compile("-10", "-10");
@@ -77,9 +77,6 @@ int main(void)
   retval = retval | test_compile("010010->y.y", "0100100010");
   retval = retval | test_compile("01->x.x0010", "0100100010");
   retval = retval | test_compile("(->x.x)->x.x", "010010)0010");
-#else
-  fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
-#endif
   return retval;
 }
 

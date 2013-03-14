@@ -22,22 +22,8 @@
 int make_false(void);
 int make_true(void);
 
-#ifdef HAVE_FMEMOPEN
-int from_string(char *str)
-{
-  FILE *f = fmemopen(str, strlen(str), "r");
-  int retval = read_expr(f);
-  fclose(f);
-  return retval;
-}
-
-char *to_string(char *buffer, int bufsize, int i)
-{
-  FILE *f = fmemopen(buffer, bufsize, "w");
-  print_expr(i, f);
-  fclose(f);
-  return buffer;
-}
+#ifndef HAVE_FMEMOPEN
+#endif
 
 int test_false(char *spec)
 {
@@ -103,12 +89,10 @@ int test_input(char *cmd, char *spec)
   };
   return retval;
 }
-#endif
 
 int main(void)
 {
   int retval = 0;
-#ifdef HAVE_FMEMOPEN
   retval = retval | test_false("000010");
   retval = retval | test_true("0000110");
   retval = retval | test_io("10", "10");
@@ -148,9 +132,6 @@ int main(void)
   retval = retval | test_input("01 10 0000110 1", "#<proc:00110;#env=2>");
   retval = retval | test_input("01 01 01 10 0000110 1110 110 0", "10");
   retval = retval | test_input("01 01 01 10 0000110 1110 110 1", "110");
-#else
-  fprintf(stderr, "Cannot run tests without 'fmemopen'!\n");
-#endif
   return retval;
 }
 

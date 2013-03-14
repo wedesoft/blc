@@ -14,7 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include <stdio.h>
+#include <string.h>
 #include "blc.h"
+
 #define MAX_CELLS 256
 #define MAX_REGISTERS 256
 
@@ -322,12 +324,12 @@ int is_input(int cell) { return is_type(cell, INPUT); }
 
 int make_false(void)
 {
-  return make_lambda(make_lambda(make_var(0)));
+  return from_string("000010");
 }
 
 int make_true(void)
 {
-  return make_lambda(make_lambda(make_var(1)));
+  return from_string("0000110");
 }
 
 int read_expr(FILE *stream)
@@ -346,6 +348,14 @@ int read_expr(FILE *stream)
     retval = read_var(stream);
   else
     retval = NIL;
+  return retval;
+}
+
+int from_string(char *str)
+{
+  FILE *f = fmemopen(str, strlen(str), "r");
+  int retval = read_expr(f);
+  fclose(f);
   return retval;
 }
 
@@ -376,6 +386,14 @@ void print_expr(int expr, FILE *stream)
     }
   } else
     fputs("#<err>", stream);
+}
+
+char *to_string(char *buffer, int bufsize, int expr)
+{
+  FILE *f = fmemopen(buffer, bufsize, "w");
+  print_expr(expr, f);
+  fclose(f);
+  return buffer;
 }
 
 int cons(int car, int cdr)
