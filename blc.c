@@ -52,12 +52,9 @@ int is_nil(int cell) { return cell == NIL; }
 
 int type(int cell) { return cells[cell].type; }
 
-int is_type(int cell, int type) {
-  return is_nil(cell) ? 0 : cells[cell].type == type;
-}
+int is_type(int cell, int t) { return is_nil(cell) ? 0 : type(cell) == t; }
 
-void clear_marks(void)
-{
+void clear_marks(void) {
   int i;
   for (i=0; i<MAX_CELLS; i++)
     cells[i].mark = 0;
@@ -70,8 +67,7 @@ int find_cell(void)
     retval++;
     if (retval == MAX_CELLS) break;
   };
-  if (retval == MAX_CELLS)
-    retval = NIL;
+  if (retval == MAX_CELLS) retval = NIL;
   return retval;
 }
 
@@ -126,8 +122,7 @@ int cell(void)
     mark_registers();
     retval = find_cell();
   };
-  if (retval != NIL)
-    cells[retval].mark = 1;
+  if (retval != NIL) cells[retval].mark = 1;
   return retval;
 }
 
@@ -272,7 +267,15 @@ int make_proc(int block, int env)
   return retval;
 }
 
-int length(int list);
+int length(int list)
+{
+  int retval;
+  if (!is_call(cells[list].lambda))
+    retval = 0;
+  else
+    retval = 1 + length(cells[cells[list].lambda].call.arg);
+  return retval;
+}
 
 void print_proc(int block, int env, FILE *stream)
 {
@@ -322,15 +325,9 @@ int make_input(FILE *input)
 
 int is_input(int cell) { return is_type(cell, INPUT); }
 
-int make_false(void)
-{
-  return from_string("000010");
-}
+int make_false(void) { return from_string("000010"); }
 
-int make_true(void)
-{
-  return from_string("0000110");
-}
+int make_true(void) { return from_string("0000110"); }
 
 int read_expr(FILE *stream)
 {
@@ -409,11 +406,9 @@ int cons(int car, int cdr)
 int car(int list)
 {
   int retval;
-  if (!is_lambda(list))
-    retval = NIL;
-  else if (!is_call(cells[list].lambda))
-    retval = NIL;
-  else if (!is_call(cells[cells[list].lambda].call.fun))
+  if (!is_lambda(list) ||
+      !is_call(cells[list].lambda) ||
+      !is_call(cells[cells[list].lambda].call.fun))
     retval = NIL;
   else
     retval = cells[cells[cells[list].lambda].call.fun].call.arg;
@@ -423,9 +418,8 @@ int car(int list)
 int cdr(int list)
 {
   int retval;
-  if (!is_lambda(list))
-    retval = NIL;
-  else if (!is_call(cells[list].lambda))
+  if (!is_lambda(list) ||
+      !is_call(cells[list].lambda))
     retval = NIL;
   else
     retval = cells[cells[list].lambda].call.arg;
@@ -439,16 +433,6 @@ int lookup(int var, int env)
     retval = lookup(var - 1, cdr(env));
   else
     retval = car(env);
-  return retval;
-}
-
-int length(int list)
-{
-  int retval;
-  if (!is_call(cells[list].lambda))
-    retval = 0;
-  else
-    retval = 1 + length(cells[cells[list].lambda].call.arg);
   return retval;
 }
 
