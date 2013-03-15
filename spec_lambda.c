@@ -20,9 +20,6 @@
 
 #define BUFSIZE 102
 
-#ifndef HAVE_FMEMOPEN
-#endif
-
 int test_compile(char *cmd, char *spec)
 {
   int retval = 0;

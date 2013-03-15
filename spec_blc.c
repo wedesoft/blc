@@ -22,9 +22,6 @@
 int make_false(void);
 int make_true(void);
 
-#ifndef HAVE_FMEMOPEN
-#endif
-
 int test_false(char *spec)
 {
   int retval = 0;

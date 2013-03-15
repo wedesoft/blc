@@ -7,7 +7,6 @@ AM_CONFIG_HEADER(config.h)
 AC_CHECK_PROG(CAT,cat,cat)
 AC_CHECK_PROG(TOUCH,touch,touch)
 AC_CHECK_PROG(DIFF,diff,diff)
-AC_CHECK_FUNCS([fmemopen])
 
 dnl Switch for debug or release mode.
 AC_ARG_ENABLE(debug,
