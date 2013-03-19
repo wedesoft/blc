@@ -23,7 +23,7 @@
 
 #define NIL -1
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT, EVAL } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 
@@ -59,7 +59,6 @@ int is_call(int cell) { return is_type(cell, CALL); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
-int is_eval(int cell) { return is_type(cell, EVAL); }
 
 int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
 int lambda(int cell) { return is_lambda(cell) ? cells[cell].lambda : NIL; }
@@ -105,9 +104,6 @@ void mark(int expr)
       mark(env(expr));
       break;
     case INPUT:
-      break;
-    case EVAL:
-      mark(cells[expr].eval);
       break;
     }
   };
@@ -332,13 +328,6 @@ int make_input(FILE *input)
   return retval;
 }
 
-void print_eval(int eval, FILE *stream)
-{
-  fputs("#<eval:", stream);
-  print_expr(eval, stream);
-  fputs(">", stream);
-}
-
 int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
 
 int is_false(int expr) { return var(lambda(lambda(expr))) == 0; }
@@ -397,9 +386,6 @@ void print_expr(int expr, FILE *stream)
       break;
     case INPUT:
       fputs("#<input>", stream);
-      break;
-    case EVAL:
-      print_eval(cells[expr].eval, stream);
       break;
     default:
       fputs("#<err>", stream);
@@ -500,9 +486,6 @@ int eval_expr(int expr, int _env)
       retval = make_proc(make_call(make_call(gc_push(make_var(0)),
                                              gc_push(read_bit(cells[expr].input))), expr), _env);
       gc_pop(2);
-      break;
-    case EVAL:
-      retval = expr;
       break;
     default:
       retval = NIL;
