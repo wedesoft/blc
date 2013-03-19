@@ -27,7 +27,7 @@ void gc_pop(int n);
 
 int read_expr(FILE *stream);
 
-int eval_expr(int expr, int _env);
+int eval_expr(int expr, int local_env);
 
 void print_expr(int expr, FILE *stream);
 

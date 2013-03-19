@@ -399,35 +399,35 @@ int cdr(int list) { return arg(lambda(list)); }
 
 int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(env); }
 
-int eval_expr(int expr, int _env)
+int eval_expr(int expr, int local_env)
 {
   int retval;
   int eval_fun;
   int wrap_arg;
-  int local_env;
+  int call_env;
   gc_push(expr);
-  gc_push(_env);
+  gc_push(local_env);
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
-      retval = lookup(var(expr), _env);
+      retval = lookup(var(expr), local_env);
       if (!is_nil(retval))
-        retval = eval_expr(retval, _env);
+        retval = eval_expr(retval, local_env);
       else
-        retval = make_var(var(expr) - length(_env));
+        retval = make_var(var(expr) - length(local_env));
       break;
     case LAMBDA:
-      retval = make_proc(lambda(expr), _env);
+      retval = make_proc(lambda(expr), local_env);
       break;
     case CALL:
-      eval_fun = gc_push(eval_expr(fun(expr), _env));
-      wrap_arg = gc_push(make_wrap(arg(expr), _env));
+      eval_fun = gc_push(eval_expr(fun(expr), local_env));
+      wrap_arg = gc_push(make_wrap(arg(expr), local_env));
       if (is_proc(eval_fun)) {
-        local_env = gc_push(cons(wrap_arg, env(eval_fun)));
-        retval = eval_expr(block(eval_fun), local_env);
+        call_env = gc_push(cons(wrap_arg, env(eval_fun)));
+        retval = eval_expr(block(eval_fun), call_env);
         gc_pop(1);
       } else
-        retval = eval_expr(eval_fun, _env);
+        retval = eval_expr(eval_fun, local_env);
       gc_pop(2);
       break;
     case PROC:
@@ -438,7 +438,7 @@ int eval_expr(int expr, int _env)
       break;
     case INPUT:
       retval = make_proc(make_call(make_call(gc_push(make_var(0)),
-                                             gc_push(read_bit(input(expr)))), expr), _env);
+                                             gc_push(read_bit(input(expr)))), expr), local_env);
       gc_pop(2);
       break;
     default:
