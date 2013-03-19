@@ -402,8 +402,8 @@ int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(
 int eval_expr(int expr, int _env)
 {
   int retval;
-  int _fun;
-  int _arg;
+  int eval_fun;
+  int wrap_arg;
   int local_env;
   gc_push(expr);
   gc_push(_env);
@@ -420,14 +420,14 @@ int eval_expr(int expr, int _env)
       retval = make_proc(lambda(expr), _env);
       break;
     case CALL:
-      _fun = gc_push(eval_expr(fun(expr), _env));
-      _arg = gc_push(make_wrap(arg(expr), _env));
-      if (is_proc(_fun)) {
-        local_env = gc_push(cons(_arg, env(_fun)));
-        retval = eval_expr(block(_fun), local_env);
+      eval_fun = gc_push(eval_expr(fun(expr), _env));
+      wrap_arg = gc_push(make_wrap(arg(expr), _env));
+      if (is_proc(eval_fun)) {
+        local_env = gc_push(cons(wrap_arg, env(eval_fun)));
+        retval = eval_expr(block(eval_fun), local_env);
         gc_pop(1);
       } else
-        retval = eval_expr(_fun, _env);
+        retval = eval_expr(eval_fun, _env);
       gc_pop(2);
       break;
     case PROC:

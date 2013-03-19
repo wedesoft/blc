@@ -1,4 +1,4 @@
-* implement read_expr using input object / make read_expr work on list of booleans
+* implement *read_expr* using input object / make *read_expr* work on list of booleans
 * add *quote* and *eval* to environment
 * add input, eval, and quote without introducing new types?
 * implement *define*: place *eval* reading from input into lambda expression?
