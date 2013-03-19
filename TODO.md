@@ -1,4 +1,7 @@
+* make read_bit return boolean
+* make read_expr work on list of booleans
 * add *quote* and *eval* to environment
+* add input, eval, and quote without introducing new types?
 * implement *define*: place *eval* reading from input into lambda expression?
 * *readBit* function (monadic IO) <-> quote, eval?
 * implement meta-circular interpreter
