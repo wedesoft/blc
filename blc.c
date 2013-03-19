@@ -136,26 +136,6 @@ int cell(void)
   return retval;
 }
 
-int read_bit(FILE *stream)
-{
-  int retval;
-  int c = fgetc(stream);
-  switch (c) {
-  case '0':
-    retval = make_false();
-    break;
-  case '1':
-    retval = make_true();
-    break;
-  case EOF:
-    retval = NIL;
-    break;
-  default:
-    retval = read_bit(stream);
-  };
-  return retval;
-}
-
 int make_var(int var)
 {
   int retval;
@@ -168,34 +148,6 @@ int make_var(int var)
   } else
     retval = NIL;
   return retval;
-}
-
-int is_false(int expr);
-
-int is_true(int expr);
-
-int read_var(FILE *stream)
-{
-  int retval;
-  int b = gc_push(read_bit(stream));
-  if (is_false(b))
-    retval = make_var(0);
-  else if (is_true(b)) {
-    retval = read_var(stream);
-    if (!is_nil(retval)) cells[retval].var++;
-  } else
-    retval = NIL;
-  gc_pop(1);
-  return retval;
-}
-
-void print_var(int var, FILE *stream)
-{
-  fputc('1', stream);
-  if (var > 0)
-    print_var(var - 1, stream);
-  else
-    fputc('0', stream);
 }
 
 int make_lambda(int lambda)
@@ -212,17 +164,6 @@ int make_lambda(int lambda)
     retval = NIL;
   gc_pop(1);
   return retval;
-}
-
-int read_lambda(FILE *stream)
-{
-  return make_lambda(read_expr(stream));
-}
-
-void print_lambda(int lambda, FILE *stream)
-{
-  fputs("00", stream);
-  print_expr(lambda, stream);
 }
 
 int make_call(int fun, int arg)
@@ -243,21 +184,6 @@ int make_call(int fun, int arg)
   return retval;
 }
 
-int read_call(FILE *stream)
-{
-  int fun = gc_push(read_expr(stream));
-  int arg = gc_push(read_expr(stream));
-  gc_pop(2);
-  return make_call(fun, arg);
-}
-
-void print_call(int fun, int arg, FILE *stream)
-{
-  fputs("01", stream);
-  print_expr(fun, stream);
-  print_expr(arg, stream);
-}
-
 int make_proc(int block, int env)
 {
   int retval;
@@ -274,23 +200,6 @@ int make_proc(int block, int env)
     retval = NIL;
   gc_pop(2);
   return retval;
-}
-
-int length(int list)
-{
-  int retval;
-  if (!is_call(lambda(list)))
-    retval = 0;
-  else
-    retval = 1 + length(arg(lambda(list)));
-  return retval;
-}
-
-void print_proc(int block, int env, FILE *stream)
-{
-  fputs("#<proc:", stream);
-  print_expr(block, stream);
-  fprintf(stream, ";#env=%d>", length(env));
 }
 
 int make_wrap(int block, int env)
@@ -311,13 +220,6 @@ int make_wrap(int block, int env)
   return retval;
 }
 
-void print_wrap(int block, int env, FILE *stream)
-{
-  fputs("#<wrap:", stream);
-  print_expr(block, stream);
-  fprintf(stream, ";#env=%d>", length(env));
-}
-
 int make_input(FILE *input)
 {
   int retval = cell();
@@ -335,6 +237,54 @@ int is_false(int expr) { return var(lambda(lambda(expr))) == 0; }
 int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
 
 int is_true(int expr) { return var(lambda(lambda(expr))) == 1; }
+
+int read_bit(FILE *stream)
+{
+  int retval;
+  int c = fgetc(stream);
+  switch (c) {
+  case '0':
+    retval = make_false();
+    break;
+  case '1':
+    retval = make_true();
+    break;
+  case EOF:
+    retval = NIL;
+    break;
+  default:
+    retval = read_bit(stream);
+  };
+  return retval;
+}
+
+int read_var(FILE *stream)
+{
+  int retval;
+  int b = gc_push(read_bit(stream));
+  if (is_false(b))
+    retval = make_var(0);
+  else if (is_true(b)) {
+    retval = read_var(stream);
+    if (!is_nil(retval)) cells[retval].var++;
+  } else
+    retval = NIL;
+  gc_pop(1);
+  return retval;
+}
+
+int read_lambda(FILE *stream)
+{
+  return make_lambda(read_expr(stream));
+}
+
+int read_call(FILE *stream)
+{
+  int fun = gc_push(read_expr(stream));
+  int arg = gc_push(read_expr(stream));
+  gc_pop(2);
+  return make_call(fun, arg);
+}
 
 int read_expr(FILE *stream)
 {
@@ -357,12 +307,50 @@ int read_expr(FILE *stream)
   return retval;
 }
 
-int from_string(char *str)
+int length(int list)
 {
-  FILE *f = fmemopen(str, strlen(str), "r");
-  int retval = read_expr(f);
-  fclose(f);
+  int retval;
+  if (!is_call(lambda(list)))
+    retval = 0;
+  else
+    retval = 1 + length(arg(lambda(list)));
   return retval;
+}
+
+void print_var(int var, FILE *stream)
+{
+  fputc('1', stream);
+  if (var > 0)
+    print_var(var - 1, stream);
+  else
+    fputc('0', stream);
+}
+
+void print_lambda(int lambda, FILE *stream)
+{
+  fputs("00", stream);
+  print_expr(lambda, stream);
+}
+
+void print_call(int fun, int arg, FILE *stream)
+{
+  fputs("01", stream);
+  print_expr(fun, stream);
+  print_expr(arg, stream);
+}
+
+void print_proc(int block, int env, FILE *stream)
+{
+  fputs("#<proc:", stream);
+  print_expr(block, stream);
+  fprintf(stream, ";#env=%d>", length(env));
+}
+
+void print_wrap(int block, int env, FILE *stream)
+{
+  fputs("#<wrap:", stream);
+  print_expr(block, stream);
+  fprintf(stream, ";#env=%d>", length(env));
 }
 
 void print_expr(int expr, FILE *stream)
@@ -387,19 +375,9 @@ void print_expr(int expr, FILE *stream)
     case INPUT:
       fputs("#<input>", stream);
       break;
-    default:
-      fputs("#<err>", stream);
     }
   } else
     fputs("#<err>", stream);
-}
-
-char *to_string(char *buffer, int bufsize, int expr)
-{
-  FILE *f = fmemopen(buffer, bufsize, "w");
-  print_expr(expr, f);
-  fclose(f);
-  return buffer;
 }
 
 int cons(int car, int cdr)
@@ -412,38 +390,11 @@ int cons(int car, int cdr)
   return retval;
 }
 
-int car(int list)
-{
-  int retval;
-  if (!is_lambda(list) ||
-      !is_call(cells[list].lambda) ||
-      !is_call(cells[cells[list].lambda].call.fun))
-    retval = NIL;
-  else
-    retval = arg(fun(lambda(list)));
-  return retval;
-}
+int car(int list) { return arg(fun(lambda(list))); }
 
-int cdr(int list)
-{
-  int retval;
-  if (!is_lambda(list) ||
-      !is_call(cells[list].lambda))
-    retval = NIL;
-  else
-    retval = arg(lambda(list));
-  return retval;
-}
+int cdr(int list) { return arg(lambda(list)); }
 
-int lookup(int var, int env)
-{
-  int retval;
-  if (var > 0)
-    retval = lookup(var - 1, cdr(env));
-  else
-    retval = car(env);
-  return retval;
-}
+int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(env); }
 
 int eval_expr(int expr, int _env)
 {

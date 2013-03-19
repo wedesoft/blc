@@ -19,8 +19,21 @@
 
 #define BUFSIZE 102
 
-int make_false(void);
-int make_true(void);
+int from_string(char *str)
+{
+  FILE *f = fmemopen(str, strlen(str), "r");
+  int retval = read_expr(f);
+  fclose(f);
+  return retval;
+}
+
+char *to_string(char *buffer, int bufsize, int expr)
+{
+  FILE *f = fmemopen(buffer, bufsize, "w");
+  print_expr(expr, f);
+  fclose(f);
+  return buffer;
+}
 
 int test_false(char *spec)
 {

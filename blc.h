@@ -27,13 +27,9 @@ void gc_pop(int n);
 
 int read_expr(FILE *stream);
 
-int from_string(char *str);
-
 int eval_expr(int expr, int _env);
 
 void print_expr(int expr, FILE *stream);
-
-char *to_string(char *buffer, int bufsize, int expr);
 
 void print_var(int var, FILE *stream);
 
