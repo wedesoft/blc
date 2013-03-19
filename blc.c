@@ -383,10 +383,13 @@ void print_expr(int expr, FILE *stream)
 int cons(int car, int cdr)
 {
   int retval;
-  gc_push(car);
-  gc_push(cdr);
-  retval = make_lambda(make_call(make_call(make_var(0), car), cdr));
-  gc_pop(2);
+  if (!is_nil(car) && !is_nil(cdr)) {
+    gc_push(car);
+    gc_push(cdr);
+    retval = make_lambda(make_call(make_call(make_var(0), car), cdr));
+    gc_pop(2);
+  } else
+    retval = NIL;
   return retval;
 }
 
