@@ -29,7 +29,7 @@ int read_expr(FILE *stream);
 
 int from_string(char *str);
 
-int eval_expr(int expr, int env);
+int eval_expr(int expr, int _env);
 
 void print_expr(int expr, FILE *stream);
 
