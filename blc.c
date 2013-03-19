@@ -65,6 +65,7 @@ int is_input(int cell) { return is_type(cell, INPUT); }
 int is_eval(int cell) { return is_type(cell, EVAL); }
 
 int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
+int lambda(int cell) { return is_lambda(cell) ? cells[cell].lambda : NIL; }
 
 void clear_marks(void) {
   int i;
@@ -91,7 +92,7 @@ void mark(int expr)
     case VAR:
       break;
     case LAMBDA:
-      mark(cells[expr].lambda);
+      mark(lambda(expr));
       break;
     case CALL:
       mark(cells[expr].call.fun);
@@ -284,10 +285,10 @@ int make_proc(int block, int env)
 int length(int list)
 {
   int retval;
-  if (!is_call(cells[list].lambda))
+  if (!is_call(lambda(list)))
     retval = 0;
   else
-    retval = 1 + length(cells[cells[list].lambda].call.arg);
+    retval = 1 + length(cells[lambda(list)].call.arg);
   return retval;
 }
 
@@ -350,7 +351,7 @@ int is_false(int expr)
       !is_var(cells[cells[expr].lambda].lambda))
     retval = 0;
   else
-    retval = var(cells[cells[expr].lambda].lambda) == 0;
+    retval = var(lambda(lambda(expr))) == 0;
   return retval;
 }
 
@@ -364,7 +365,7 @@ int is_true(int expr)
       !is_var(cells[cells[expr].lambda].lambda))
     retval = 0;
   else
-    retval = var(cells[cells[expr].lambda].lambda) == 1;
+    retval = var(lambda(lambda(expr))) == 1;
   return retval;
 }
 
@@ -405,7 +406,7 @@ void print_expr(int expr, FILE *stream)
       print_var(var(expr), stream);
       break;
     case LAMBDA:
-      print_lambda(cells[expr].lambda, stream);
+      print_lambda(lambda(expr), stream);
       break;
     case CALL:
       print_call(cells[expr].call.fun, cells[expr].call.arg, stream);
@@ -455,7 +456,7 @@ int car(int list)
       !is_call(cells[cells[list].lambda].call.fun))
     retval = NIL;
   else
-    retval = cells[cells[cells[list].lambda].call.fun].call.arg;
+    retval = cells[cells[lambda(list)].call.fun].call.arg;
   return retval;
 }
 
@@ -466,7 +467,7 @@ int cdr(int list)
       !is_call(cells[list].lambda))
     retval = NIL;
   else
-    retval = cells[cells[list].lambda].call.arg;
+    retval = cells[lambda(list)].call.arg;
   return retval;
 }
 
@@ -498,7 +499,7 @@ int eval_expr(int expr, int env)
         retval = make_var(var(expr) - length(env));
       break;
     case LAMBDA:
-      retval = make_proc(cells[expr].lambda, env);
+      retval = make_proc(lambda(expr), env);
       break;
     case CALL:
       fun = gc_push(eval_expr(cells[expr].call.fun, env));
