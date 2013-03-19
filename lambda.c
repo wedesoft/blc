@@ -1,4 +1,4 @@
-/* Bracket - Attempt at writing a small Racket (Scheme) interpreter
+/* Bracket - Binary Lambda Calculus VM and DSL on top of it
  * Copyright (C) 2012  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
