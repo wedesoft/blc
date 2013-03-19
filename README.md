@@ -36,14 +36,14 @@ The tests can be run using the following command.
 External Links
 --------------
 
-* [Racket Programming Language](http://www.racket-lang.org/)
-* [Revised⁶ Report on the Algorithmic Language Scheme](http://www.r6rs.org/)
-* [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
-* [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
-* [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
 * [Binary lambda calculus interpreter by John Tromp](http://homepages.cwi.nl/~tromp/cl/cl.html)
 * [De Bruijn index](http://en.wikipedia.org/wiki/De\_Bruijn\_index)
+* [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
+* [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
+* [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
+* [Racket Programming Language](http://www.racket-lang.org/)
+* [Revised⁶ Report on the Algorithmic Language Scheme](http://www.r6rs.org/)
 * [Scheme implemented in Python](https://github.com/codebox/scheme-interpreter/blob/master/scheme.py)
 * [Repl.It: Online REPL for several programming languages](http://repl.it/)
 * [Lisp as the Maxwell’s equations of software](http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/) (also see [here](http://gliese1337.blogspot.co.uk/2012/04/schrodingers-equation-of-software.html))
