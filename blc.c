@@ -153,70 +153,70 @@ int make_var(int var)
 int make_lambda(int lambda)
 {
   int retval;
-  gc_push(lambda);
   if (!is_nil(lambda)) {
+    gc_push(lambda);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = LAMBDA;
       cells[retval].lambda = lambda;
     };
+    gc_pop(1);
   } else
     retval = NIL;
-  gc_pop(1);
   return retval;
 }
 
 int make_call(int fun, int arg)
 {
   int retval;
-  gc_push(fun);
-  gc_push(arg);
   if (!is_nil(fun) && !is_nil(arg)) {
+    gc_push(fun);
+    gc_push(arg);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = CALL;
       cells[retval].call.fun = fun;
       cells[retval].call.arg = arg;
     };
+    gc_pop(2);
   } else
     retval = NIL;
-  gc_pop(2);
   return retval;
 }
 
 int make_proc(int block, int env)
 {
   int retval;
-  gc_push(block);
-  gc_push(env);
   if (!is_nil(block) && !is_nil(env)) {
+    gc_push(block);
+    gc_push(env);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = PROC;
       cells[retval].proc.block = block;
       cells[retval].proc.env = env;
     };
+    gc_pop(2);
   } else
     retval = NIL;
-  gc_pop(2);
   return retval;
 }
 
 int make_wrap(int block, int env)
 {
   int retval;
-  gc_push(block);
-  gc_push(env);
   if (!is_nil(block) && !is_nil(env)) {
+    gc_push(block);
+    gc_push(env);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = WRAP;
       cells[retval].proc.block = block;
       cells[retval].proc.env = env;
     };
+    gc_pop(2);
   } else
     retval = NIL;
-  gc_pop(2);
   return retval;
 }
 
