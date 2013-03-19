@@ -137,10 +137,10 @@ int read_bit(FILE *stream)
   int c = fgetc(stream);
   switch (c) {
   case '0':
-    retval = 0;
+    retval = make_false();
     break;
   case '1':
-    retval = 1;
+    retval = make_true();
     break;
   case EOF:
     retval = NIL;
@@ -165,17 +165,22 @@ int make_var(int var)
   return retval;
 }
 
+int is_false(int expr);
+
+int is_true(int expr);
+
 int read_var(FILE *stream)
 {
   int retval;
-  int b = read_bit(stream);
-  if (b == 0)
+  int b = gc_push(read_bit(stream));
+  if (is_false(b))
     retval = make_var(0);
-  else if (b == 1) {
+  else if (is_true(b)) {
     retval = read_var(stream);
     if (!is_nil(retval)) cells[retval].var++;
   } else
     retval = NIL;
+  gc_pop(1);
   return retval;
 }
 
@@ -337,26 +342,52 @@ void print_eval(int eval, FILE *stream)
   fputs(">", stream);
 }
 
-int make_false(void) { return from_string("000010"); }
+int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
 
-int make_true(void) { return from_string("0000110"); }
+int is_false(int expr)
+{
+  int retval;
+  if (!is_lambda(expr) ||
+      !is_lambda(cells[expr].lambda) ||
+      !is_var(cells[cells[expr].lambda].lambda))
+    retval = 0;
+  else
+    retval = cells[cells[cells[expr].lambda].lambda].var == 0;
+  return retval;
+}
+
+int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
+
+int is_true(int expr)
+{
+  int retval;
+  if (!is_lambda(expr) ||
+      !is_lambda(cells[expr].lambda) ||
+      !is_var(cells[cells[expr].lambda].lambda))
+    retval = 0;
+  else
+    retval = cells[cells[cells[expr].lambda].lambda].var == 1;
+  return retval;
+}
 
 int read_expr(FILE *stream)
 {
   int retval;
-  int b1 = read_bit(stream);
-  if (b1 == 0) {
-    int b2 = read_bit(stream);
-    if (b2 == 0)
+  int b1 = gc_push(read_bit(stream));
+  if (is_false(b1)) {
+    int b2 = gc_push(read_bit(stream));
+    if (is_false(b2))
       retval = read_lambda(stream);
-    else if (b2 == 1)
+    else if (is_true(b2))
       retval = read_call(stream);
     else
       retval = NIL;
-  } else if (b1 == 1)
+    gc_pop(1);
+  } else if (is_true(b1))
     retval = read_var(stream);
   else
     retval = NIL;
+  gc_pop(1);
   return retval;
 }
 
@@ -489,10 +520,8 @@ int eval_expr(int expr, int env)
       retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
       break;
     case INPUT:
-      retval = make_proc(make_call(make_call(make_var(0),
-                                             gc_push(read_bit(cells[expr].input) ?
-                                                     make_true() :
-                                                     make_false())), expr), env);
+      retval = make_proc(make_call(make_call(gc_push(make_var(0)),
+                                             gc_push(read_bit(cells[expr].input))), expr), env);
       gc_pop(2);
       break;
     case EVAL:
