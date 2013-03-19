@@ -38,7 +38,6 @@ typedef struct {
     int lambda;
     call_t call;
     proc_t proc;
-    wrap_t wrap;
     FILE *input;
     int eval;
   };
@@ -66,6 +65,8 @@ int is_eval(int cell) { return is_type(cell, EVAL); }
 
 int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
 int lambda(int cell) { return is_lambda(cell) ? cells[cell].lambda : NIL; }
+int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : NIL; }
+int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
 
 void clear_marks(void) {
   int i;
@@ -95,16 +96,13 @@ void mark(int expr)
       mark(lambda(expr));
       break;
     case CALL:
-      mark(cells[expr].call.fun);
-      mark(cells[expr].call.arg);
+      mark(fun(expr));
+      mark(arg(expr));
       break;
     case PROC:
+    case WRAP:
       mark(cells[expr].proc.block);
       mark(cells[expr].proc.env);
-      break;
-    case WRAP:
-      mark(cells[expr].wrap.block);
-      mark(cells[expr].wrap.env);
       break;
     case INPUT:
       break;
@@ -288,7 +286,7 @@ int length(int list)
   if (!is_call(lambda(list)))
     retval = 0;
   else
-    retval = 1 + length(cells[lambda(list)].call.arg);
+    retval = 1 + length(arg(lambda(list)));
   return retval;
 }
 
@@ -308,8 +306,8 @@ int make_wrap(int block, int env)
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = WRAP;
-      cells[retval].wrap.block = block;
-      cells[retval].wrap.env = env;
+      cells[retval].proc.block = block;
+      cells[retval].proc.env = env;
     };
   } else
     retval = NIL;
@@ -343,31 +341,11 @@ void print_eval(int eval, FILE *stream)
 
 int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
 
-int is_false(int expr)
-{
-  int retval;
-  if (!is_lambda(expr) ||
-      !is_lambda(cells[expr].lambda) ||
-      !is_var(cells[cells[expr].lambda].lambda))
-    retval = 0;
-  else
-    retval = var(lambda(lambda(expr))) == 0;
-  return retval;
-}
+int is_false(int expr) { return var(lambda(lambda(expr))) == 0; }
 
 int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
 
-int is_true(int expr)
-{
-  int retval;
-  if (!is_lambda(expr) ||
-      !is_lambda(cells[expr].lambda) ||
-      !is_var(cells[cells[expr].lambda].lambda))
-    retval = 0;
-  else
-    retval = var(lambda(lambda(expr))) == 1;
-  return retval;
-}
+int is_true(int expr) { return var(lambda(lambda(expr))) == 1; }
 
 int read_expr(FILE *stream)
 {
@@ -409,13 +387,13 @@ void print_expr(int expr, FILE *stream)
       print_lambda(lambda(expr), stream);
       break;
     case CALL:
-      print_call(cells[expr].call.fun, cells[expr].call.arg, stream);
+      print_call(fun(expr), arg(expr), stream);
       break;
     case PROC:
       print_proc(cells[expr].proc.block, cells[expr].proc.env, stream);
       break;
     case WRAP:
-      print_wrap(cells[expr].wrap.block, cells[expr].wrap.env, stream);
+      print_wrap(cells[expr].proc.block, cells[expr].proc.env, stream);
       break;
     case INPUT:
       fputs("#<input>", stream);
@@ -456,7 +434,7 @@ int car(int list)
       !is_call(cells[cells[list].lambda].call.fun))
     retval = NIL;
   else
-    retval = cells[cells[lambda(list)].call.fun].call.arg;
+    retval = arg(fun(lambda(list)));
   return retval;
 }
 
@@ -467,7 +445,7 @@ int cdr(int list)
       !is_call(cells[list].lambda))
     retval = NIL;
   else
-    retval = cells[lambda(list)].call.arg;
+    retval = arg(lambda(list));
   return retval;
 }
 
@@ -484,8 +462,8 @@ int lookup(int var, int env)
 int eval_expr(int expr, int env)
 {
   int retval;
-  int fun;
-  int arg;
+  int _fun;
+  int _arg;
   int local_env;
   gc_push(expr);
   gc_push(env);
@@ -502,21 +480,21 @@ int eval_expr(int expr, int env)
       retval = make_proc(lambda(expr), env);
       break;
     case CALL:
-      fun = gc_push(eval_expr(cells[expr].call.fun, env));
-      arg = gc_push(make_wrap(cells[expr].call.arg, env));
-      if (is_proc(fun)) {
-        local_env = gc_push(cons(arg, cells[fun].proc.env));
-        retval = eval_expr(cells[fun].proc.block, local_env);
+      _fun = gc_push(eval_expr(fun(expr), env));
+      _arg = gc_push(make_wrap(arg(expr), env));
+      if (is_proc(_fun)) {
+        local_env = gc_push(cons(_arg, cells[_fun].proc.env));
+        retval = eval_expr(cells[_fun].proc.block, local_env);
         gc_pop(1);
       } else
-        retval = eval_expr(fun, env);
+        retval = eval_expr(_fun, env);
       gc_pop(2);
       break;
     case PROC:
       retval = expr;
       break;
     case WRAP:
-      retval = eval_expr(cells[expr].wrap.block, cells[expr].wrap.env);
+      retval = eval_expr(cells[expr].proc.block, cells[expr].proc.env);
       break;
     case INPUT:
       retval = make_proc(make_call(make_call(gc_push(make_var(0)),
