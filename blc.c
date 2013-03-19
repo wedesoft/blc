@@ -37,7 +37,6 @@ typedef struct {
     call_t call;
     proc_t proc;
     FILE *input;
-    int eval;
   };
   char mark;
 } cell_t;
@@ -66,6 +65,7 @@ int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : NIL; }
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
 int block(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.block : NIL; }
 int env(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.env : NIL; }
+FILE *input(int cell) { return is_input(cell) ? cells[cell].input : NULL; }
 
 void clear_marks(void) {
   int i;
@@ -484,7 +484,7 @@ int eval_expr(int expr, int _env)
       break;
     case INPUT:
       retval = make_proc(make_call(make_call(gc_push(make_var(0)),
-                                             gc_push(read_bit(cells[expr].input))), expr), _env);
+                                             gc_push(read_bit(input(expr)))), expr), _env);
       gc_pop(2);
       break;
     default:
