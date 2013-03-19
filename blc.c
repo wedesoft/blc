@@ -64,6 +64,8 @@ int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
 int is_eval(int cell) { return is_type(cell, EVAL); }
 
+int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
+
 void clear_marks(void) {
   int i;
   for (i=0; i<MAX_CELLS; i++)
@@ -348,7 +350,7 @@ int is_false(int expr)
       !is_var(cells[cells[expr].lambda].lambda))
     retval = 0;
   else
-    retval = cells[cells[cells[expr].lambda].lambda].var == 0;
+    retval = var(cells[cells[expr].lambda].lambda) == 0;
   return retval;
 }
 
@@ -362,7 +364,7 @@ int is_true(int expr)
       !is_var(cells[cells[expr].lambda].lambda))
     retval = 0;
   else
-    retval = cells[cells[cells[expr].lambda].lambda].var == 1;
+    retval = var(cells[cells[expr].lambda].lambda) == 1;
   return retval;
 }
 
@@ -400,7 +402,7 @@ void print_expr(int expr, FILE *stream)
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
-      print_var(cells[expr].var, stream);
+      print_var(var(expr), stream);
       break;
     case LAMBDA:
       print_lambda(cells[expr].lambda, stream);
@@ -489,11 +491,11 @@ int eval_expr(int expr, int env)
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
-      retval = lookup(cells[expr].var, env);
+      retval = lookup(var(expr), env);
       if (!is_nil(retval))
         retval = eval_expr(retval, env);
       else
-        retval = make_var(cells[expr].var - length(env));
+        retval = make_var(var(expr) - length(env));
       break;
     case LAMBDA:
       retval = make_proc(cells[expr].lambda, env);
