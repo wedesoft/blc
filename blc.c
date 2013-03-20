@@ -427,7 +427,7 @@ int eval_expr(int expr, int local_env)
         retval = eval_expr(block(eval_fun), call_env);
         gc_pop(1);
       } else
-        retval = eval_expr(eval_fun, local_env);
+        retval = eval_fun;
       gc_pop(2);
       break;
     case PROC:
@@ -437,9 +437,7 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      retval = make_proc(make_call(make_call(gc_push(make_var(0)),
-                                             gc_push(read_bit(input(expr)))), expr), local_env);
-      gc_pop(2);
+      retval = eval_expr(cons(read_bit(input(expr)), expr), local_env);
       break;
     default:
       retval = NIL;
