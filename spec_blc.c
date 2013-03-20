@@ -138,8 +138,10 @@ int main(void)
   retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc:1110;#env=0>");
   retval = retval | test_eval("01 00110 0010", "10");
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
+  retval = retval | test_input("01 10 0000110", "#<proc:10;#env=2>");
   retval = retval | test_input("01 10 0000110 0", "#<proc:0010;#env=2>");
   retval = retval | test_input("01 10 0000110 1", "#<proc:00110;#env=2>");
+  retval = retval | test_input("01 01 10 000010 0000110 0", "#<proc:10;#env=3>");
   retval = retval | test_input("01 01 10 000010 0000110 00", "#<proc:0010;#env=3>");
   retval = retval | test_input("01 01 10 000010 0000110 01", "#<proc:00110;#env=3>");
   retval = retval | test_input("01 01 01 10 0000110 1110 110 0", "10");

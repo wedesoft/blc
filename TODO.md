@@ -1,3 +1,4 @@
+* implement, length, car, cdr using interpreter
 * implement *read_expr* using input object / make *read_expr* work on list of booleans
 * add *quote* and *eval* to environment
 * add input, eval, and quote without introducing new types?

@@ -405,6 +405,7 @@ int eval_expr(int expr, int local_env)
   int eval_fun;
   int wrap_arg;
   int call_env;
+  int bit;
   gc_push(expr);
   gc_push(local_env);
   if (!is_nil(expr)) {
@@ -437,7 +438,11 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      retval = eval_expr(cons(read_bit(input(expr)), expr), local_env);
+      bit = read_bit(input(expr));
+      if (!is_nil(bit))
+        retval = eval_expr(cons(bit, expr), local_env);
+      else
+        retval = eval_expr(make_false(), local_env);
       break;
     default:
       retval = NIL;
