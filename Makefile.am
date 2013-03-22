@@ -22,9 +22,11 @@ lambda_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
+noinst_DATA = README.html TODO.html
+
 BUILT_SOURCES =
 
-EXTRA_DIST = Makefile.dist configure.ac README.md COPYING TODO run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING TODO run.sh
 
 test: spec_blc.tmp spec_lambda.tmp
 
@@ -33,6 +35,9 @@ spec_blc.tmp: spec_blc$(EXEEXT)
 
 spec_lambda.tmp: spec_lambda$(EXEEXT)
 	./spec_lambda$(EXEEXT) && $(TOUCH) $@
+
+.md.html:
+	$(PANDOC) -o $@ $<
 
 CLEANFILES = *~ *.tmp
 
