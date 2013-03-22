@@ -44,6 +44,7 @@ External Links
 * [Binary lambda calculus interpreter by John Tromp](http://homepages.cwi.nl/~tromp/cl/cl.html)
 * [De Bruijn index](http://en.wikipedia.org/wiki/De\_Bruijn\_index)
 * [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
+* [Nile Programming Language: Declarative Stream Processing for Media Applications](https://github.com/damelang/nile)
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
 * [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
 * [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
