@@ -41,9 +41,5 @@ int make_true(void);
 
 int cons(int car, int cdr);
 
-int car(int list);
-
-int cdr(int list);
-
 #endif
 
