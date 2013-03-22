@@ -1,5 +1,5 @@
 /* Bracket - Binary Lambda Calculus VM and DSL on top of it
- * Copyright (C) 2012  Jan Wedekind
+ * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,15 +25,15 @@ int gc_push(int expr);
 
 void gc_pop(int n);
 
-int read_expr(FILE *stream);
+int read_expr(int input);
 
 int eval_expr(int expr, int local_env);
 
-void print_expr(int expr, FILE *stream);
+void print_expr(int expr, FILE *file);
 
-void print_var(int var, FILE *stream);
+void print_var(int var, FILE *file);
 
-int make_input(FILE *input);
+int make_input(FILE *file);
 
 int make_false(void);
 

@@ -1,5 +1,5 @@
 /* Bracket - Binary Lambda Calculus VM and DSL on top of it
- * Copyright (C) 2012  Jan Wedekind
+ * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 
 int from_string(char *str)
 {
-  FILE *f = fmemopen(str, strlen(str), "r");
-  int retval = read_expr(f);
-  fclose(f);
+  FILE *file = fmemopen(str, strlen(str), "r");
+  int retval = read_expr(make_input(file));
+  fclose(file);
   return retval;
 }
 
@@ -88,11 +88,12 @@ int test_input(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  FILE *f = fmemopen(cmd, strlen(cmd), "r");
-  int env = gc_push(cons(gc_push(make_input(f)), gc_push(make_false())));
-  char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(f), env));
+  FILE *file = fmemopen(cmd, strlen(cmd), "r");
+  int input = gc_push(make_input(file));
+  int env = gc_push(cons(input, gc_push(make_false())));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(input), env));
   gc_pop(3);
-  fclose(f);
+  fclose(file);
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
     retval = 1;

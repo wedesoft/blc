@@ -1,5 +1,5 @@
 /* Bracket - Binary Lambda Calculus VM and DSL on top of it
- * Copyright (C) 2012  Jan Wedekind
+ * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ typedef struct {
     int lambda;
     call_t call;
     proc_t proc;
-    FILE *input;
+    FILE *file;
   };
   char mark;
 } cell_t;
@@ -65,7 +65,7 @@ int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : NIL; }
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
 int block(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.block : NIL; }
 int env(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.env : NIL; }
-FILE *input(int cell) { return is_input(cell) ? cells[cell].input : NULL; }
+FILE *file(int cell) { return is_input(cell) ? cells[cell].file : NULL; }
 
 void clear_marks(void) {
   int i;
@@ -220,12 +220,12 @@ int make_wrap(int block, int env)
   return retval;
 }
 
-int make_input(FILE *input)
+int make_input(FILE *file)
 {
   int retval = cell();
   if (!is_nil(retval)) {
     cells[retval].type = INPUT;
-    cells[retval].input = input;
+    cells[retval].file = file;
   };
   return retval;
 }
@@ -238,10 +238,10 @@ int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
 
 int is_true(int expr) { return var(lambda(lambda(expr))) == 1; }
 
-int read_bit(FILE *stream)
+int read_bit(int input)
 {
   int retval;
-  int c = fgetc(stream);
+  int c = fgetc(file(input));
   switch (c) {
   case '0':
     retval = make_false();
@@ -253,57 +253,60 @@ int read_bit(FILE *stream)
     retval = NIL;
     break;
   default:
-    retval = read_bit(stream);
+    retval = read_bit(input);
   };
   return retval;
 }
 
-int read_var(FILE *stream)
+int read_var(int input)
 {
   int retval;
-  int b = gc_push(read_bit(stream));
+  int b = gc_push(read_bit(gc_push(input)));
   if (is_false(b))
     retval = make_var(0);
   else if (is_true(b)) {
-    retval = read_var(stream);
+    retval = read_var(input);
     if (!is_nil(retval)) cells[retval].var++;
   } else
     retval = NIL;
+  gc_pop(2);
+  return retval;
+}
+
+int read_lambda(int input)
+{
+  int retval = make_lambda(read_expr(gc_push(input)));
   gc_pop(1);
   return retval;
 }
 
-int read_lambda(FILE *stream)
+int read_call(int input)
 {
-  return make_lambda(read_expr(stream));
+  int fun = gc_push(read_expr(gc_push(input)));
+  int arg = gc_push(read_expr(input));
+  int retval = make_call(fun, arg);
+  gc_pop(3);
+  return retval;
 }
 
-int read_call(FILE *stream)
-{
-  int fun = gc_push(read_expr(stream));
-  int arg = gc_push(read_expr(stream));
-  gc_pop(2);
-  return make_call(fun, arg);
-}
-
-int read_expr(FILE *stream)
+int read_expr(int input)
 {
   int retval;
-  int b1 = gc_push(read_bit(stream));
+  int b1 = gc_push(read_bit(gc_push(input)));
   if (is_false(b1)) {
-    int b2 = gc_push(read_bit(stream));
+    int b2 = gc_push(read_bit(input));
     if (is_false(b2))
-      retval = read_lambda(stream);
+      retval = read_lambda(input);
     else if (is_true(b2))
-      retval = read_call(stream);
+      retval = read_call(input);
     else
       retval = NIL;
     gc_pop(1);
   } else if (is_true(b1))
-    retval = read_var(stream);
+    retval = read_var(input);
   else
     retval = NIL;
-  gc_pop(1);
+  gc_pop(2);
   return retval;
 }
 
@@ -317,67 +320,67 @@ int length(int list)
   return retval;
 }
 
-void print_var(int var, FILE *stream)
+void print_var(int var, FILE *file)
 {
-  fputc('1', stream);
+  fputc('1', file);
   if (var > 0)
-    print_var(var - 1, stream);
+    print_var(var - 1, file);
   else
-    fputc('0', stream);
+    fputc('0', file);
 }
 
-void print_lambda(int lambda, FILE *stream)
+void print_lambda(int lambda, FILE *file)
 {
-  fputs("00", stream);
-  print_expr(lambda, stream);
+  fputs("00", file);
+  print_expr(lambda, file);
 }
 
-void print_call(int fun, int arg, FILE *stream)
+void print_call(int fun, int arg, FILE *file)
 {
-  fputs("01", stream);
-  print_expr(fun, stream);
-  print_expr(arg, stream);
+  fputs("01", file);
+  print_expr(fun, file);
+  print_expr(arg, file);
 }
 
-void print_proc(int block, int env, FILE *stream)
+void print_proc(int block, int env, FILE *file)
 {
-  fputs("#<proc:", stream);
-  print_expr(block, stream);
-  fprintf(stream, ";#env=%d>", length(env));
+  fputs("#<proc:", file);
+  print_expr(block, file);
+  fprintf(file, ";#env=%d>", length(env));
 }
 
-void print_wrap(int block, int env, FILE *stream)
+void print_wrap(int block, int env, FILE *file)
 {
-  fputs("#<wrap:", stream);
-  print_expr(block, stream);
-  fprintf(stream, ";#env=%d>", length(env));
+  fputs("#<wrap:", file);
+  print_expr(block, file);
+  fprintf(file, ";#env=%d>", length(env));
 }
 
-void print_expr(int expr, FILE *stream)
+void print_expr(int expr, FILE *file)
 {
   if (!is_nil(expr)) {
     switch (type(expr)) {
     case VAR:
-      print_var(var(expr), stream);
+      print_var(var(expr), file);
       break;
     case LAMBDA:
-      print_lambda(lambda(expr), stream);
+      print_lambda(lambda(expr), file);
       break;
     case CALL:
-      print_call(fun(expr), arg(expr), stream);
+      print_call(fun(expr), arg(expr), file);
       break;
     case PROC:
-      print_proc(block(expr), env(expr), stream);
+      print_proc(block(expr), env(expr), file);
       break;
     case WRAP:
-      print_wrap(block(expr), env(expr), stream);
+      print_wrap(block(expr), env(expr), file);
       break;
     case INPUT:
-      fputs("#<input>", stream);
+      fputs("#<input>", file);
       break;
     }
   } else
-    fputs("#<err>", stream);
+    fputs("#<err>", file);
 }
 
 int cons(int car, int cdr)
@@ -438,7 +441,7 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      bit = read_bit(input(expr));
+      bit = read_bit(expr);
       if (!is_nil(bit))
         retval = eval_expr(cons(bit, expr), local_env);
       else
