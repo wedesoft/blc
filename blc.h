@@ -25,15 +25,15 @@ int gc_push(int expr);
 
 void gc_pop(int n);
 
-int read_expr(int list);
+int read_expr(int input);
 
 int eval_expr(int expr, int local_env);
 
-void print_expr(int expr, FILE *stream);
+void print_expr(int expr, FILE *file);
 
-void print_var(int var, FILE *stream);
+void print_var(int var, FILE *file);
 
-int make_input(FILE *input);
+int make_input(FILE *file);
 
 int make_false(void);
 
