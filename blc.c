@@ -258,52 +258,57 @@ int read_bit(FILE *stream)
   return retval;
 }
 
-int read_var(FILE *stream)
+int read_var(int list)
 {
   int retval;
+  FILE *stream = input(gc_push(list));
   int b = gc_push(read_bit(stream));
   if (is_false(b))
     retval = make_var(0);
   else if (is_true(b)) {
-    retval = read_var(stream);
+    retval = read_var(list);
     if (!is_nil(retval)) cells[retval].var++;
   } else
     retval = NIL;
+  gc_pop(2);
+  return retval;
+}
+
+int read_lambda(int list)
+{
+  int retval = make_lambda(read_expr(gc_push(list)));
   gc_pop(1);
   return retval;
 }
 
-int read_lambda(FILE *stream)
+int read_call(int list)
 {
-  return make_lambda(read_expr(stream));
+  int fun = gc_push(read_expr(gc_push(list)));
+  int arg = gc_push(read_expr(list));
+  int retval = make_call(fun, arg);
+  gc_pop(3);
+  return retval;
 }
 
-int read_call(FILE *stream)
-{
-  int fun = gc_push(read_expr(stream));
-  int arg = gc_push(read_expr(stream));
-  gc_pop(2);
-  return make_call(fun, arg);
-}
-
-int read_expr(FILE *stream)
+int read_expr(int list)
 {
   int retval;
+  FILE *stream = input(gc_push(list));
   int b1 = gc_push(read_bit(stream));
   if (is_false(b1)) {
     int b2 = gc_push(read_bit(stream));
     if (is_false(b2))
-      retval = read_lambda(stream);
+      retval = read_lambda(list);
     else if (is_true(b2))
-      retval = read_call(stream);
+      retval = read_call(list);
     else
       retval = NIL;
     gc_pop(1);
   } else if (is_true(b1))
-    retval = read_var(stream);
+    retval = read_var(list);
   else
     retval = NIL;
-  gc_pop(1);
+  gc_pop(2);
   return retval;
 }
 

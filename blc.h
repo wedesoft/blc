@@ -25,7 +25,7 @@ int gc_push(int expr);
 
 void gc_pop(int n);
 
-int read_expr(FILE *stream);
+int read_expr(int list);
 
 int eval_expr(int expr, int local_env);
 
