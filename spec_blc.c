@@ -118,38 +118,38 @@ int main(void)
   retval = retval | test_io("00", "#<err>");
   retval = retval | test_io("01", "#<err>");
   retval = retval | test_io("1", "#<err>");
-  retval = retval | test_eval("10", "10");
-  retval = retval | test_eval("110", "110");
-  retval = retval | test_eval("0010", "#<proc:10;#env=0>");
-  retval = retval | test_eval("00 00 10", "#<proc:0010;#env=0>");
-  retval = retval | test_eval("00 00 110", "#<proc:00110;#env=0>");
-  retval = retval | test_eval("01 10 110", "10");
-  retval = retval | test_eval("01 110 10", "110");
-  retval = retval | test_eval("01 0010 1110", "1110");
-  retval = retval | test_eval("01 000010 0010", "#<proc:10;#env=1>");
-  retval = retval | test_eval("01 0000110 0010", "#<proc:110;#env=1>");
-  retval = retval | test_eval("01 01 000010 0000110 000010", "#<proc:0010;#env=0>");
-  retval = retval | test_eval("01 01 0000110 0000110 000010", "#<proc:00110;#env=0>");
-  retval = retval | test_eval("01 01 000010 110 10", "10");
+  retval = retval | test_eval("10", "10");// first variable
+  retval = retval | test_eval("110", "110");// second variable
+  retval = retval | test_eval("0010", "#<proc:10;#env=0>");// identity function
+  retval = retval | test_eval("00 00 10", "#<proc:0010;#env=0>");// false
+  retval = retval | test_eval("00 00 110", "#<proc:00110;#env=0>");// true
+  retval = retval | test_eval("01 10 110", "10");// ignore argument
+  retval = retval | test_eval("01 110 10", "110");// ignore argument
+  retval = retval | test_eval("01 0010 1110", "1110");// apply identity function
+  retval = retval | test_eval("01 000010 0010", "#<proc:10;#env=1>");// pass one argument to false
+  retval = retval | test_eval("01 0000110 0010", "#<proc:110;#env=1>");// pass one argument to true
+  retval = retval | test_eval("01 01 000010 0000110 000010", "#<proc:0010;#env=0>");// pass two arguments to false
+  retval = retval | test_eval("01 01 0000110 0000110 000010", "#<proc:00110;#env=0>");// pass two arguments to true
+  retval = retval | test_eval("01 01 000010 110 10", "10");// select variable with false
   retval = retval | test_eval("01 00 01 01 10 1110 110 000010", "10");
-  retval = retval | test_eval("01 01 0000110 110 10", "110");
+  retval = retval | test_eval("01 01 0000110 110 10", "110");// select variable with true
   retval = retval | test_eval("01 00 01 01 10 1110 110 0000110", "110");
   retval = retval | test_eval("01 01 000010 001110 00110", "#<proc:110;#env=0>");
   retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc:1110;#env=0>");
   retval = retval | test_eval("01 00110 0010", "10");
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
-  retval = retval | test_input("01 10 0000110", "#<proc:10;#env=2>");
-  retval = retval | test_input("01 10 0000110 0", "#<proc:0010;#env=2>");
-  retval = retval | test_input("01 10 0000110 1", "#<proc:00110;#env=2>");
-  retval = retval | test_input("01 01 10 000000000010 0000110 0", "#<proc:0010;#env=4>");
-  retval = retval | test_input("01 01 10 000000000010 0000110 1", "#<proc:0010;#env=4>");
-  retval = retval | test_input("01 01 10 000000000010 0000110", "#<proc:00110;#env=1>");
+  retval = retval | test_input("01 10 0000110", "#<proc:10;#env=2>");// end of string
+  retval = retval | test_input("01 10 0000110 0", "#<proc:0010;#env=2>");// read '0'
+  retval = retval | test_input("01 10 0000110 1", "#<proc:00110;#env=2>");// read '1'
+  retval = retval | test_input("01 01 10 000000000010 0000110 0", "#<proc:0010;#env=4>");// no EOS
+  retval = retval | test_input("01 01 10 000000000010 0000110 1", "#<proc:0010;#env=4>");// no EOS
+  retval = retval | test_input("01 01 10 000000000010 0000110", "#<proc:00110;#env=1>");// EOS
   retval = retval | test_input("01 01 10 000010 0000110 00", "#<proc:0010;#env=3>");
   retval = retval | test_input("01 01 10 000010 0000110 01", "#<proc:00110;#env=3>");
-  retval = retval | test_input("01 01 01 10 0000110 1110 110 0", "10");
-  retval = retval | test_input("01 01 01 10 0000110 1110 110 1", "110");
-  retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 00", "10");
-  retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 01", "110");
+  retval = retval | test_input("01 01 01 10 0000110 1110 110 0", "10");// select variable using input bit
+  retval = retval | test_input("01 01 01 10 0000110 1110 110 1", "110");// select variable using input bit
+  retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 00", "10");// select variable using second input bit
+  retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 01", "110");// select variable using second input bit
   return retval;
 }
 
