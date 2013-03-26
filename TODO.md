@@ -1,7 +1,7 @@
 TODO
 ====
 
-* implement *read_expr* using input object / make *read_expr* work on list of booleans
+* make *read_expr* work on list of booleans
 * implement, *length*, *car*, and *cdr* using interpreter
 * add *quote* and *eval* to environment
 * add input, eval, and quote without introducing new types?
