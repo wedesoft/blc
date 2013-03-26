@@ -39,7 +39,7 @@ spec_lambda.tmp: spec_lambda$(EXEEXT)
 .md.html:
 	$(PANDOC) -o $@ $<
 
-CLEANFILES = *~ *.tmp
+CLEANFILES = *~ *.tmp *.html
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \
