@@ -21,8 +21,9 @@ int main(void)
   int env = gc_push(cons(input, gc_push(make_false())));
   while (1) {
     int expr = read_expr(input);
+    input = car(expr);
     if (feof(stdin)) break;
-    print_expr(eval_expr(expr, env), stdout);
+    print_expr(eval_expr(cdr(expr), env), stdout);
     fputc('\n', stdout);
   };
   gc_pop(3);

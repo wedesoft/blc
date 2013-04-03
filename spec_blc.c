@@ -22,7 +22,7 @@
 int from_string(char *str)
 {
   FILE *file = fmemopen(str, strlen(str), "r");
-  int retval = read_expr(make_input(file));
+  int retval = cdr(read_expr(make_input(file)));
   fclose(file);
   return retval;
 }
@@ -90,9 +90,10 @@ int test_input(char *cmd, char *spec)
   char buffer[BUFSIZE];
   FILE *file = fmemopen(cmd, strlen(cmd), "r");
   int input = gc_push(make_input(file));
-  int env = gc_push(cons(input, gc_push(make_false())));
-  char *result = to_string(buffer, BUFSIZE, eval_expr(read_expr(input), env));
-  gc_pop(3);
+  int expr = gc_push(read_expr(input));
+  int env = gc_push(cons(car(expr), gc_push(make_false())));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(cdr(expr), env));
+  gc_pop(4);
   fclose(file);
   if (strcmp(spec, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);

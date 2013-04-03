@@ -1,8 +1,6 @@
 TODO
 ====
 
-* *read_expr* should return input object/rest of list
-* implement, *length*, *car*, and *cdr* using interpreter
 * add *quote* and *eval* to environment
 * add input, eval, and quote without introducing new types?
 * implement *define*: place *eval* reading from input into lambda expression?

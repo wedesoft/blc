@@ -290,11 +290,12 @@ int read_var(int input)
 {
   int retval;
   int b = gc_push(car(gc_push(input)));
-  if (is_false(b))
-    retval = make_var(0);
-  else if (is_true(b)) {
+  if (is_false(b)) {
+    retval = cons(cdr(input), gc_push(make_var(0)));
+    gc_pop(1);
+  } else if (is_true(b)) {
     retval = read_var(cdr(input));
-    if (!is_nil(retval)) cells[retval].var++;
+    if (!is_nil(retval)) cells[cdr(retval)].var++;
   } else
     retval = NIL;
   gc_pop(2);
@@ -303,17 +304,18 @@ int read_var(int input)
 
 int read_lambda(int input)
 {
-  int retval = make_lambda(read_expr(gc_push(input)));
-  gc_pop(1);
+  int term = gc_push(read_expr(gc_push(input)));
+  int retval = cons(car(term), gc_push(make_lambda(cdr(term))));
+  gc_pop(3);
   return retval;
 }
 
 int read_call(int input)
 {
   int fun = gc_push(read_expr(gc_push(input)));
-  int arg = gc_push(read_expr(input)); // read_expr should return input object
-  int retval = make_call(fun, arg);
-  gc_pop(3);
+  int arg = gc_push(read_expr(car(fun))); // read_expr should return input object
+  int retval = cons(car(arg), gc_push(make_call(cdr(fun), cdr(arg))));
+  gc_pop(4);
   return retval;
 }
 
