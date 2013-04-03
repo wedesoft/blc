@@ -29,6 +29,8 @@ typedef struct { int fun; int arg; } call_t;
 
 typedef struct { int fun; int env; } proc_t;
 
+typedef struct { int block; int env; } wrap_t;
+
 typedef struct {
   type_t type;
   union {
@@ -36,6 +38,7 @@ typedef struct {
     int lambda;
     call_t call;
     proc_t proc;
+    wrap_t wrap;
     FILE *file;
   };
   char mark;
@@ -60,10 +63,10 @@ int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
 
 int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
-int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : is_proc(cell) ? cells[cell].proc.fun : NIL; }
+int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : is_proc(cell) ? cells[cell].proc.fun : is_lambda(cell) ? cells[cell].lambda : NIL; }
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
-int block(int cell) { return is_wrap(cell) ? cells[cell].proc.fun : is_lambda(cell) ? cells[cell].lambda : NIL; }
-int env(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.env : NIL; }
+int block(int cell) { return is_wrap(cell) ? cells[cell].wrap.block : NIL; }
+int env(int cell) { return is_proc(cell) ? cells[cell].proc.env : is_wrap(cell) ? cells[cell].wrap.env : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].file : NULL; }
 
 void clear_marks(void) {
@@ -91,15 +94,18 @@ void mark(int expr)
     case VAR:
       break;
     case LAMBDA:
-      mark(block(expr));
+      mark(fun(expr));
       break;
     case CALL:
       mark(fun(expr));
       mark(arg(expr));
       break;
     case PROC:
-    case WRAP:
       mark(fun(expr));
+      mark(env(expr));
+      break;
+    case WRAP:
+      mark(block(expr));
       mark(env(expr));
       break;
     case INPUT:
@@ -210,8 +216,8 @@ int make_wrap(int block, int env)
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = WRAP;
-      cells[retval].proc.fun = block;
-      cells[retval].proc.env = env;
+      cells[retval].wrap.block = block;
+      cells[retval].wrap.env = env;
     };
     gc_pop(2);
   } else
@@ -231,11 +237,11 @@ int make_input(FILE *file)
 
 int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
 
-int is_false(int expr) { return var(block(block(expr))) == 0; }
+int is_false(int expr) { return var(fun(fun(expr))) == 0; }
 
 int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
 
-int is_true(int expr) { return var(block(block(expr))) == 1; }
+int is_true(int expr) { return var(fun(fun(expr))) == 1; }
 
 int read_bit(int input)
 {
@@ -270,21 +276,21 @@ int make_pair(int first, int second)
   return retval;
 }
 
-int is_pair(int expr) { return var(fun(fun(block(expr)))) == 0; }
+int is_pair(int expr) { return var(fun(fun(fun(expr)))) == 0; }
 
 int first(int list)
 {
   if (is_input(list))
     return read_bit(list);
   else
-    return arg(fun(block(list)));
+    return arg(fun(fun(list)));
 }
 
 int second(int list) {
   if (is_input(list))
     return list;
   else
-    return arg(block(list));
+    return arg(fun(list));
 }
 
 int read_var(int input)
@@ -397,7 +403,7 @@ void print_expr(int expr, FILE *file)
       print_var(var(expr), file);
       break;
     case LAMBDA:
-      print_lambda(block(expr), file);
+      print_lambda(fun(expr), file);
       break;
     case CALL:
       print_call(fun(expr), arg(expr), file);
@@ -437,7 +443,7 @@ int eval_expr(int expr, int local_env)
         retval = make_var(var(expr) - length(local_env));
       break;
     case LAMBDA:
-      retval = make_proc(block(expr), local_env);
+      retval = make_proc(fun(expr), local_env);
       break;
     case CALL:
       eval_fun = gc_push(eval_expr(fun(expr), local_env));
