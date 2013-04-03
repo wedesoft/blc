@@ -60,10 +60,19 @@ int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
 
 int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
-int lambda(int cell) { return is_lambda(cell) ? cells[cell].lambda : NIL; }
 int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : NIL; }
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
-int block(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.block : is_lambda(cell) ? lambda(cell) : NIL; }
+int block(int cell)
+{
+  int retval;
+  if (is_proc(cell) || is_wrap(cell))
+    retval = cells[cell].proc.block;
+  else if (is_lambda(cell))
+    retval = cells[cell].lambda;
+  else
+    retval = NIL;
+  return retval;
+}
 int env(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.env : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].file : NULL; }
 
@@ -271,6 +280,8 @@ int make_pair(int first, int second)
   return retval;
 }
 
+int is_pair(int expr) { return var(fun(fun(block(expr)))) == 0; }
+
 int first(int list)
 {
   if (is_input(list))
@@ -345,10 +356,10 @@ int read_expr(int input)
 int length(int list)
 {
   int retval;
-  if (!is_call(block(list)))
+  if (!is_pair(list))
     retval = 0;
   else
-    retval = 1 + length(arg(block(list)));
+    retval = 1 + length(second(list));
   return retval;
 }
 
