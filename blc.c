@@ -258,20 +258,20 @@ int read_bit(int input)
   return retval;
 }
 
-int cons(int car, int cdr)
+int make_pair(int first, int second)
 {
   int retval;
-  if (!is_nil(car) && !is_nil(cdr)) {
-    gc_push(car);
-    gc_push(cdr);
-    retval = make_lambda(make_call(make_call(make_var(0), car), cdr));
+  if (!is_nil(first) && !is_nil(second)) {
+    gc_push(first);
+    gc_push(second);
+    retval = make_lambda(make_call(make_call(make_var(0), first), second));
     gc_pop(2);
   } else
     retval = NIL;
   return retval;
 }
 
-int car(int list)
+int first(int list)
 {
   if (is_input(list))
     return read_bit(list);
@@ -279,7 +279,7 @@ int car(int list)
     return arg(fun(block(list)));
 }
 
-int cdr(int list) {
+int second(int list) {
   if (is_input(list))
     return list;
   else
@@ -289,13 +289,13 @@ int cdr(int list) {
 int read_var(int input)
 {
   int retval;
-  int b = gc_push(car(gc_push(input)));
+  int b = gc_push(first(gc_push(input)));
   if (is_false(b)) {
-    retval = cons(cdr(input), gc_push(make_var(0)));
+    retval = make_pair(second(input), gc_push(make_var(0)));
     gc_pop(1);
   } else if (is_true(b)) {
-    retval = read_var(cdr(input));
-    if (!is_nil(retval)) cells[cdr(retval)].var++;
+    retval = read_var(second(input));
+    if (!is_nil(retval)) cells[second(retval)].var++;
   } else
     retval = NIL;
   gc_pop(2);
@@ -305,7 +305,7 @@ int read_var(int input)
 int read_lambda(int input)
 {
   int term = gc_push(read_expr(gc_push(input)));
-  int retval = cons(car(term), gc_push(make_lambda(cdr(term))));
+  int retval = make_pair(first(term), gc_push(make_lambda(second(term))));
   gc_pop(3);
   return retval;
 }
@@ -313,8 +313,8 @@ int read_lambda(int input)
 int read_call(int input)
 {
   int fun = gc_push(read_expr(gc_push(input)));
-  int arg = gc_push(read_expr(car(fun))); // read_expr should return input object
-  int retval = cons(car(arg), gc_push(make_call(cdr(fun), cdr(arg))));
+  int arg = gc_push(read_expr(first(fun))); // read_expr should return input object
+  int retval = make_pair(first(arg), gc_push(make_call(second(fun), second(arg))));
   gc_pop(4);
   return retval;
 }
@@ -322,11 +322,11 @@ int read_call(int input)
 int read_expr(int input)
 {
   int retval;
-  int b1 = gc_push(car(gc_push(input)));
-  input = cdr(input);
+  int b1 = gc_push(first(gc_push(input)));
+  input = second(input);
   if (is_false(b1)) {
-    int b2 = gc_push(car(input));
-    input = cdr(input);
+    int b2 = gc_push(first(input));
+    input = second(input);
     if (is_false(b2))
       retval = read_lambda(input);
     else if (is_true(b2))
@@ -415,7 +415,7 @@ void print_expr(int expr, FILE *file)
     fputs("#<err>", file);
 }
 
-int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(env); }
+int lookup(int var, int env) { return var > 0 ? lookup(var - 1, second(env)) : first(env); }
 
 int eval_expr(int expr, int local_env)
 {
@@ -442,7 +442,7 @@ int eval_expr(int expr, int local_env)
       eval_fun = gc_push(eval_expr(fun(expr), local_env));
       wrap_arg = gc_push(make_wrap(arg(expr), local_env));
       if (is_proc(eval_fun)) {
-        call_env = gc_push(cons(wrap_arg, env(eval_fun)));
+        call_env = gc_push(make_pair(wrap_arg, env(eval_fun)));
         retval = eval_expr(block(eval_fun), call_env);
         gc_pop(1);
       } else
@@ -456,9 +456,9 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      bit = car(expr);
+      bit = first(expr);
       if (!is_nil(bit))
-        retval = eval_expr(cons(bit, expr), local_env);
+        retval = eval_expr(make_pair(bit, expr), local_env);
       else
         retval = eval_expr(make_false(), local_env);
       break;

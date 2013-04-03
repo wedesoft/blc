@@ -39,7 +39,7 @@ int make_false(void);
 
 int make_true(void);
 
-int cons(int car, int cdr);
+int make_pair(int first, int second);
 
 #endif
 

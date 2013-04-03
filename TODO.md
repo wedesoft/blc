@@ -1,6 +1,7 @@
 TODO
 ====
 
+* guard input monad
 * add *quote* and *eval* to environment
 * add input, eval, and quote without introducing new types?
 * implement *define*: place *eval* reading from input into lambda expression?
