@@ -258,14 +258,42 @@ int read_bit(int input)
   return retval;
 }
 
+int cons(int car, int cdr)
+{
+  int retval;
+  if (!is_nil(car) && !is_nil(cdr)) {
+    gc_push(car);
+    gc_push(cdr);
+    retval = make_lambda(make_call(make_call(make_var(0), car), cdr));
+    gc_pop(2);
+  } else
+    retval = NIL;
+  return retval;
+}
+
+int car(int list)
+{
+  if (is_input(list))
+    return read_bit(list);
+  else
+    return arg(fun(block(list)));
+}
+
+int cdr(int list) {
+  if (is_input(list))
+    return list;
+  else
+    return arg(block(list));
+}
+
 int read_var(int input)
 {
   int retval;
-  int b = gc_push(read_bit(gc_push(input)));
+  int b = gc_push(car(gc_push(input)));
   if (is_false(b))
     retval = make_var(0);
   else if (is_true(b)) {
-    retval = read_var(input);
+    retval = read_var(cdr(input));
     if (!is_nil(retval)) cells[retval].var++;
   } else
     retval = NIL;
@@ -283,7 +311,7 @@ int read_lambda(int input)
 int read_call(int input)
 {
   int fun = gc_push(read_expr(gc_push(input)));
-  int arg = gc_push(read_expr(input));
+  int arg = gc_push(read_expr(input)); // read_expr should return input object
   int retval = make_call(fun, arg);
   gc_pop(3);
   return retval;
@@ -292,9 +320,11 @@ int read_call(int input)
 int read_expr(int input)
 {
   int retval;
-  int b1 = gc_push(read_bit(gc_push(input)));
+  int b1 = gc_push(car(gc_push(input)));
+  input = cdr(input);
   if (is_false(b1)) {
-    int b2 = gc_push(read_bit(input));
+    int b2 = gc_push(car(input));
+    input = cdr(input);
     if (is_false(b2))
       retval = read_lambda(input);
     else if (is_true(b2))
@@ -383,23 +413,6 @@ void print_expr(int expr, FILE *file)
     fputs("#<err>", file);
 }
 
-int cons(int car, int cdr)
-{
-  int retval;
-  if (!is_nil(car) && !is_nil(cdr)) {
-    gc_push(car);
-    gc_push(cdr);
-    retval = make_lambda(make_call(make_call(make_var(0), car), cdr));
-    gc_pop(2);
-  } else
-    retval = NIL;
-  return retval;
-}
-
-int car(int list) { return arg(fun(block(list))); }
-
-int cdr(int list) { return arg(block(list)); }
-
 int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(env); }
 
 int eval_expr(int expr, int local_env)
@@ -441,7 +454,7 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      bit = read_bit(expr);
+      bit = car(expr);
       if (!is_nil(bit))
         retval = eval_expr(cons(bit, expr), local_env);
       else
