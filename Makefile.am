@@ -37,7 +37,7 @@ spec_lambda.tmp: spec_lambda$(EXEEXT)
 	./spec_lambda$(EXEEXT) && $(TOUCH) $@
 
 .md.html:
-	$(PANDOC) -o $@ $<
+	$(PANDOC) -o $@ $< || echo "Install Pandoc to compile Markdown to HTML"
 
 CLEANFILES = *~ *.tmp *.html
 
