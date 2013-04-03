@@ -63,7 +63,7 @@ int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
 int lambda(int cell) { return is_lambda(cell) ? cells[cell].lambda : NIL; }
 int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : NIL; }
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
-int block(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.block : NIL; }
+int block(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.block : is_lambda(cell) ? lambda(cell) : NIL; }
 int env(int cell) { return is_proc(cell) || is_wrap(cell) ? cells[cell].proc.env : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].file : NULL; }
 
@@ -92,7 +92,7 @@ void mark(int expr)
     case VAR:
       break;
     case LAMBDA:
-      mark(lambda(expr));
+      mark(block(expr));
       break;
     case CALL:
       mark(fun(expr));
@@ -232,11 +232,11 @@ int make_input(FILE *file)
 
 int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
 
-int is_false(int expr) { return var(lambda(lambda(expr))) == 0; }
+int is_false(int expr) { return var(block(block(expr))) == 0; }
 
 int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
 
-int is_true(int expr) { return var(lambda(lambda(expr))) == 1; }
+int is_true(int expr) { return var(block(block(expr))) == 1; }
 
 int read_bit(int input)
 {
@@ -313,10 +313,10 @@ int read_expr(int input)
 int length(int list)
 {
   int retval;
-  if (!is_call(lambda(list)))
+  if (!is_call(block(list)))
     retval = 0;
   else
-    retval = 1 + length(arg(lambda(list)));
+    retval = 1 + length(arg(block(list)));
   return retval;
 }
 
@@ -364,7 +364,7 @@ void print_expr(int expr, FILE *file)
       print_var(var(expr), file);
       break;
     case LAMBDA:
-      print_lambda(lambda(expr), file);
+      print_lambda(block(expr), file);
       break;
     case CALL:
       print_call(fun(expr), arg(expr), file);
@@ -396,9 +396,9 @@ int cons(int car, int cdr)
   return retval;
 }
 
-int car(int list) { return arg(fun(lambda(list))); }
+int car(int list) { return arg(fun(block(list))); }
 
-int cdr(int list) { return arg(lambda(list)); }
+int cdr(int list) { return arg(block(list)); }
 
 int lookup(int var, int env) { return var > 0 ? lookup(var - 1, cdr(env)) : car(env); }
 
@@ -421,7 +421,7 @@ int eval_expr(int expr, int local_env)
         retval = make_var(var(expr) - length(local_env));
       break;
     case LAMBDA:
-      retval = make_proc(lambda(expr), local_env);
+      retval = make_proc(block(expr), local_env);
       break;
     case CALL:
       eval_fun = gc_push(eval_expr(fun(expr), local_env));
