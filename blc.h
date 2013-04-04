@@ -31,7 +31,7 @@ int eval_expr(int expr, int local_env);
 
 void print_expr(int expr, FILE *file);
 
-void print_var(int var, FILE *file);
+void print_variable(int variable, FILE *file);
 
 int make_input(FILE *file);
 
@@ -40,6 +40,10 @@ int make_false(void);
 int make_true(void);
 
 int make_pair(int first, int second);
+
+int first(int list);
+
+int second(int list);
 
 #endif
 

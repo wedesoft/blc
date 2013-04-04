@@ -35,68 +35,68 @@ char *to_string(char *buffer, int bufsize, int expr)
   return buffer;
 }
 
-int test_false(char *spec)
+int test_false(char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
   char *result = to_string(buffer, BUFSIZE, make_false());
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of creating \"false\" is \"%s\" but should be \"%s\"\n", result, spec);
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Result of creating \"false\" is \"%s\" but should be \"%s\"\n", result, specification);
     retval = 1;
   };
   return retval;
 }
 
-int test_true(char *spec)
+int test_true(char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
   char *result = to_string(buffer, BUFSIZE, make_true());
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of creating \"true\" is \"%s\" but should be \"%s\"\n", result, spec);
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Result of creating \"true\" is \"%s\" but should be \"%s\"\n", result, specification);
     retval = 1;
   };
   return retval;
 }
 
-int test_io(char *cmd, char *spec)
+int test_io(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  char *result = to_string(buffer, BUFSIZE, from_string(cmd));
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of parsing \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
+  char *result = to_string(buffer, BUFSIZE, from_string(command));
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Result of parsing \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
   return retval;
 }
 
-int test_eval(char *cmd, char *spec)
+int test_eval(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  int env = make_false();
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(cmd), env));
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
+  int environment = make_false();
+  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(command), environment));
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
   return retval;
 }
 
-int test_input(char *cmd, char *spec)
+int test_input(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  FILE *file = fmemopen(cmd, strlen(cmd), "r");
+  FILE *file = fmemopen(command, strlen(command), "r");
   int input = gc_push(make_input(file));
   int expr = gc_push(read_expr(input));
-  int env = gc_push(make_pair(first(expr), gc_push(make_false())));
-  char *result = to_string(buffer, BUFSIZE, eval_expr(second(expr), env));
+  int environment = gc_push(make_pair(first(expr), gc_push(make_false())));
+  char *result = to_string(buffer, BUFSIZE, eval_expr(second(expr), environment));
   gc_pop(4);
   fclose(file);
-  if (strcmp(spec, result)) {
-    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", cmd, result, spec);
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
   return retval;

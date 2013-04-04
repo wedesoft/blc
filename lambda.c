@@ -299,7 +299,7 @@ int compile_lambda(FILE *f_in, FILE *f_out)
         if (var == -1)
           fputs(token, f_out);
         else
-          print_var(var, f_out);
+          print_variable(var, f_out);
         pop();
         switch (c) {
         case EOF:

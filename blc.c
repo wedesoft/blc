@@ -23,20 +23,20 @@
 
 #define NIL -1
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
-typedef struct { int fun; int arg; } call_t;
+typedef struct { int function; int argument; } call_t;
 
-typedef struct { int fun; int env; } proc_t;
+typedef struct { int function; int environment; } proc_t;
 
-typedef struct { int block; int env; } wrap_t;
+typedef struct { int block; int environment; } wrap_t;
 
 typedef struct { FILE *file; int used; } input_t;
 
 typedef struct {
   type_t type;
   union {
-    int var;
+    int variable;
     int lambda;
     call_t call;
     proc_t proc;
@@ -57,18 +57,18 @@ int type(int cell) { return cells[cell].type; }
 
 int is_type(int cell, int t) { return is_nil(cell) ? 0 : type(cell) == t; }
 
-int is_var(int cell) { return is_type(cell, VAR); }
+int is_variable(int cell) { return is_type(cell, VARIABLE); }
 int is_lambda(int cell) { return is_type(cell, LAMBDA); }
 int is_call(int cell) { return is_type(cell, CALL); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
 
-int var(int cell) { return is_var(cell) ? cells[cell].var : NIL; }
-int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : is_proc(cell) ? cells[cell].proc.fun : is_lambda(cell) ? cells[cell].lambda : NIL; }
-int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
+int variable(int cell) { return is_variable(cell) ? cells[cell].variable : NIL; }
+int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : is_lambda(cell) ? cells[cell].lambda : NIL; }
+int argument(int cell) { return is_call(cell) ? cells[cell].call.argument : NIL; }
 int block(int cell) { return is_wrap(cell) ? cells[cell].wrap.block : NIL; }
-int env(int cell) { return is_proc(cell) ? cells[cell].proc.env : is_wrap(cell) ? cells[cell].wrap.env : NIL; }
+int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
 
 void clear_marks(void) {
@@ -93,22 +93,22 @@ void mark(int expr)
   if (!cells[expr].mark) {
     cells[expr].mark = 1;
     switch (type(expr)) {
-    case VAR:
+    case VARIABLE:
       break;
     case LAMBDA:
-      mark(fun(expr));
+      mark(function(expr));
       break;
     case CALL:
-      mark(fun(expr));
-      mark(arg(expr));
+      mark(function(expr));
+      mark(argument(expr));
       break;
     case PROC:
-      mark(fun(expr));
-      mark(env(expr));
+      mark(function(expr));
+      mark(environment(expr));
       break;
     case WRAP:
       mark(block(expr));
-      mark(env(expr));
+      mark(environment(expr));
       break;
     case INPUT:
       break;
@@ -143,14 +143,14 @@ int cell(void)
   return retval;
 }
 
-int make_var(int var)
+int make_variable(int variable)
 {
   int retval;
-  if (var >= 0) {
+  if (variable >= 0) {
     retval = cell();
     if (!is_nil(retval)) {
-      cells[retval].type = VAR;
-      cells[retval].var = var;
+      cells[retval].type = VARIABLE;
+      cells[retval].variable = variable;
     };
   } else
     retval = NIL;
@@ -173,17 +173,17 @@ int make_lambda(int lambda)
   return retval;
 }
 
-int make_call(int fun, int arg)
+int make_call(int function, int argument)
 {
   int retval;
-  if (!is_nil(fun) && !is_nil(arg)) {
-    gc_push(fun);
-    gc_push(arg);
+  if (!is_nil(function) && !is_nil(argument)) {
+    gc_push(function);
+    gc_push(argument);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = CALL;
-      cells[retval].call.fun = fun;
-      cells[retval].call.arg = arg;
+      cells[retval].call.function = function;
+      cells[retval].call.argument = argument;
     };
     gc_pop(2);
   } else
@@ -191,17 +191,17 @@ int make_call(int fun, int arg)
   return retval;
 }
 
-int make_proc(int fun, int env)
+int make_proc(int function, int environment)
 {
   int retval;
-  if (!is_nil(fun) && !is_nil(env)) {
-    gc_push(fun);
-    gc_push(env);
+  if (!is_nil(function) && !is_nil(environment)) {
+    gc_push(function);
+    gc_push(environment);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = PROC;
-      cells[retval].proc.fun = fun;
-      cells[retval].proc.env = env;
+      cells[retval].proc.function = function;
+      cells[retval].proc.environment = environment;
     };
     gc_pop(2);
   } else
@@ -209,17 +209,17 @@ int make_proc(int fun, int env)
   return retval;
 }
 
-int make_wrap(int block, int env)
+int make_wrap(int block, int environment)
 {
   int retval;
-  if (!is_nil(block) && !is_nil(env)) {
+  if (!is_nil(block) && !is_nil(environment)) {
     gc_push(block);
-    gc_push(env);
+    gc_push(environment);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = WRAP;
       cells[retval].wrap.block = block;
-      cells[retval].wrap.env = env;
+      cells[retval].wrap.environment = environment;
     };
     gc_pop(2);
   } else
@@ -238,13 +238,13 @@ int make_input(FILE *file)
   return retval;
 }
 
-int make_false(void) { return make_lambda(make_lambda(make_var(0))); }
+int make_false(void) { return make_lambda(make_lambda(make_variable(0))); }
 
-int is_false(int expr) { return var(fun(fun(expr))) == 0; }
+int is_false(int expr) { return variable(function(function(expr))) == 0; }
 
-int make_true(void) { return make_lambda(make_lambda(make_var(1))); }
+int make_true(void) { return make_lambda(make_lambda(make_variable(1))); }
 
-int is_true(int expr) { return var(fun(fun(expr))) == 1; }
+int is_true(int expr) { return variable(function(function(expr))) == 1; }
 
 int read_bit(int input)
 {
@@ -277,21 +277,21 @@ int make_pair(int first, int second)
   if (!is_nil(first) && !is_nil(second)) {
     gc_push(first);
     gc_push(second);
-    retval = make_lambda(make_call(make_call(make_var(0), first), second));
+    retval = make_lambda(make_call(make_call(make_variable(0), first), second));
     gc_pop(2);
   } else
     retval = NIL;
   return retval;
 }
 
-int is_pair(int expr) { return var(fun(fun(fun(expr)))) == 0; }
+int is_pair(int expr) { return variable(function(function(function(expr)))) == 0; }
 
 int first(int list)
 {
   if (is_input(list))
     return read_bit(list);
   else
-    return arg(fun(fun(list)));
+    return argument(function(function(list)));
 }
 
 int second(int list) {
@@ -300,21 +300,21 @@ int second(int list) {
   if (is_input(list))
     retval = make_input(file(list));
   else
-    retval = arg(fun(list));
+    retval = argument(function(list));
   gc_pop(1);
   return retval;
 }
 
-int read_var(int input)
+int read_variable(int input)
 {
   int retval;
   int b = gc_push(first(gc_push(input)));
   if (is_false(b)) {
-    retval = make_pair(gc_push(second(input)), gc_push(make_var(0)));
+    retval = make_pair(gc_push(second(input)), gc_push(make_variable(0)));
     gc_pop(2);
   } else if (is_true(b)) {
-    retval = read_var(gc_push(second(input)));
-    if (!is_nil(retval)) cells[second(retval)].var++;
+    retval = read_variable(gc_push(second(input)));
+    if (!is_nil(retval)) cells[second(retval)].variable++;
     gc_pop(1);
   } else
     retval = NIL;
@@ -332,9 +332,9 @@ int read_lambda(int input)
 
 int read_call(int input)
 {
-  int fun = gc_push(read_expr(input));
-  int arg = gc_push(read_expr(gc_push(first(fun))));
-  int retval = make_pair(first(arg), gc_push(make_call(second(fun), second(arg))));
+  int function = gc_push(read_expr(input));
+  int argument = gc_push(read_expr(gc_push(first(function))));
+  int retval = make_pair(first(argument), gc_push(make_call(second(function), second(argument))));
   gc_pop(4);
   return retval;
 }
@@ -355,7 +355,7 @@ int read_expr(int input)
       retval = NIL;
     gc_pop(1);
   } else if (is_true(b1))
-    retval = read_var(input);
+    retval = read_variable(input);
   else
     retval = NIL;
   gc_pop(3);
@@ -372,11 +372,11 @@ int length(int list)
   return retval;
 }
 
-void print_var(int var, FILE *file)
+void print_variable(int variable, FILE *file)
 {
   fputc('1', file);
-  if (var > 0)
-    print_var(var - 1, file);
+  if (variable > 0)
+    print_variable(variable - 1, file);
   else
     fputc('0', file);
 }
@@ -387,45 +387,45 @@ void print_lambda(int lambda, FILE *file)
   print_expr(lambda, file);
 }
 
-void print_call(int fun, int arg, FILE *file)
+void print_call(int function, int argument, FILE *file)
 {
   fputs("01", file);
-  print_expr(fun, file);
-  print_expr(arg, file);
+  print_expr(function, file);
+  print_expr(argument, file);
 }
 
-void print_proc(int block, int env, FILE *file)
+void print_proc(int block, int environment, FILE *file)
 {
   fputs("#<proc:", file);
   print_expr(block, file);
-  fprintf(file, ";#env=%d>", length(env));
+  fprintf(file, ";#env=%d>", length(environment));
 }
 
-void print_wrap(int block, int env, FILE *file)
+void print_wrap(int block, int environment, FILE *file)
 {
   fputs("#<wrap:", file);
   print_expr(block, file);
-  fprintf(file, ";#env=%d>", length(env));
+  fprintf(file, ";#env=%d>", length(environment));
 }
 
 void print_expr(int expr, FILE *file)
 {
   if (!is_nil(expr)) {
     switch (type(expr)) {
-    case VAR:
-      print_var(var(expr), file);
+    case VARIABLE:
+      print_variable(variable(expr), file);
       break;
     case LAMBDA:
-      print_lambda(fun(expr), file);
+      print_lambda(function(expr), file);
       break;
     case CALL:
-      print_call(fun(expr), arg(expr), file);
+      print_call(function(expr), argument(expr), file);
       break;
     case PROC:
-      print_proc(fun(expr), env(expr), file);
+      print_proc(function(expr), environment(expr), file);
       break;
     case WRAP:
-      print_wrap(block(expr), env(expr), file);
+      print_wrap(block(expr), environment(expr), file);
       break;
     case INPUT:
       fputs("#<input>", file);
@@ -435,35 +435,35 @@ void print_expr(int expr, FILE *file)
     fputs("#<err>", file);
 }
 
-int lookup(int var, int env) { return var > 0 ? lookup(var - 1, second(env)) : first(env); }
+int lookup(int variable, int environment) { return variable > 0 ? lookup(variable - 1, second(environment)) : first(environment); }
 
-int eval_expr(int expr, int local_env)
+int eval_expr(int expr, int local_environment)
 {
   int retval;
   int eval_fun;
-  int wrap_arg;
-  int call_env;
+  int wrap_argument;
+  int call_environment;
   int bit;
   gc_push(expr);
-  gc_push(local_env);
+  gc_push(local_environment);
   if (!is_nil(expr)) {
     switch (type(expr)) {
-    case VAR:
-      retval = lookup(var(expr), local_env);
+    case VARIABLE:
+      retval = lookup(variable(expr), local_environment);
       if (!is_nil(retval))
-        retval = eval_expr(retval, local_env);
+        retval = eval_expr(retval, local_environment);
       else
-        retval = make_var(var(expr) - length(local_env));
+        retval = make_variable(variable(expr) - length(local_environment));
       break;
     case LAMBDA:
-      retval = make_proc(fun(expr), local_env);
+      retval = make_proc(function(expr), local_environment);
       break;
     case CALL:
-      eval_fun = gc_push(eval_expr(fun(expr), local_env));
-      wrap_arg = gc_push(make_wrap(arg(expr), local_env));
+      eval_fun = gc_push(eval_expr(function(expr), local_environment));
+      wrap_argument = gc_push(make_wrap(argument(expr), local_environment));
       if (is_proc(eval_fun)) {
-        call_env = gc_push(make_pair(wrap_arg, env(eval_fun)));
-        retval = eval_expr(fun(eval_fun), call_env);
+        call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
+        retval = eval_expr(function(eval_fun), call_environment);
         gc_pop(1);
       } else
         retval = eval_fun;
@@ -473,15 +473,15 @@ int eval_expr(int expr, int local_env)
       retval = expr;
       break;
     case WRAP:
-      retval = eval_expr(block(expr), env(expr));
+      retval = eval_expr(block(expr), environment(expr));
       break;
     case INPUT:
       bit = gc_push(first(expr));
       if (!is_nil(bit)) {
-        retval = eval_expr(make_pair(bit, gc_push(second(expr))), local_env);
+        retval = eval_expr(make_pair(bit, gc_push(second(expr))), local_environment);
         gc_pop(1);
       } else
-        retval = eval_expr(make_false(), local_env);
+        retval = eval_expr(make_false(), local_environment);
       gc_pop(1);
       break;
     default:
