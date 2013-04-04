@@ -31,6 +31,8 @@ typedef struct { int fun; int env; } proc_t;
 
 typedef struct { int block; int env; } wrap_t;
 
+typedef struct { FILE *file; int used; } input_t;
+
 typedef struct {
   type_t type;
   union {
@@ -39,7 +41,7 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
-    FILE *file;
+    input_t input;
   };
   char mark;
 } cell_t;
@@ -67,7 +69,7 @@ int fun(int cell) { return is_call(cell) ? cells[cell].call.fun : is_proc(cell) 
 int arg(int cell) { return is_call(cell) ? cells[cell].call.arg : NIL; }
 int block(int cell) { return is_wrap(cell) ? cells[cell].wrap.block : NIL; }
 int env(int cell) { return is_proc(cell) ? cells[cell].proc.env : is_wrap(cell) ? cells[cell].wrap.env : NIL; }
-FILE *file(int cell) { return is_input(cell) ? cells[cell].file : NULL; }
+FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
 
 void clear_marks(void) {
   int i;
@@ -230,7 +232,8 @@ int make_input(FILE *file)
   int retval = cell();
   if (!is_nil(retval)) {
     cells[retval].type = INPUT;
-    cells[retval].file = file;
+    cells[retval].input.file = file;
+    cells[retval].input.used = 0;
   };
   return retval;
 }
@@ -246,19 +249,24 @@ int is_true(int expr) { return var(fun(fun(expr))) == 1; }
 int read_bit(int input)
 {
   int retval;
-  int c = fgetc(file(input));
-  switch (c) {
-  case '0':
-    retval = make_false();
-    break;
-  case '1':
-    retval = make_true();
-    break;
-  case EOF:
+  if (cells[input].input.used)
     retval = NIL;
-    break;
-  default:
-    retval = read_bit(input);
+  else {
+    int c = fgetc(file(input));
+    switch (c) {
+    case '0':
+      retval = make_false();
+      break;
+    case '1':
+      retval = make_true();
+      break;
+    case EOF:
+      retval = NIL;
+      break;
+    default:
+      retval = read_bit(input);
+    };
+    cells[input].input.used = 1;
   };
   return retval;
 }
@@ -287,10 +295,14 @@ int first(int list)
 }
 
 int second(int list) {
+  int retval;
+  gc_push(list);
   if (is_input(list))
-    return list;
+    retval = make_input(file(list));
   else
-    return arg(fun(list));
+    retval = arg(fun(list));
+  gc_pop(1);
+  return retval;
 }
 
 int read_var(int input)
@@ -298,11 +310,12 @@ int read_var(int input)
   int retval;
   int b = gc_push(first(gc_push(input)));
   if (is_false(b)) {
-    retval = make_pair(second(input), gc_push(make_var(0)));
-    gc_pop(1);
+    retval = make_pair(gc_push(second(input)), gc_push(make_var(0)));
+    gc_pop(2);
   } else if (is_true(b)) {
-    retval = read_var(second(input));
+    retval = read_var(gc_push(second(input)));
     if (!is_nil(retval)) cells[second(retval)].var++;
+    gc_pop(1);
   } else
     retval = NIL;
   gc_pop(2);
@@ -312,15 +325,15 @@ int read_var(int input)
 int read_lambda(int input)
 {
   int term = gc_push(read_expr(gc_push(input)));
-  int retval = make_pair(first(term), gc_push(make_lambda(second(term))));
-  gc_pop(3);
+  int retval = make_pair(first(term), gc_push(make_lambda(gc_push(second(term)))));
+  gc_pop(4);
   return retval;
 }
 
 int read_call(int input)
 {
-  int fun = gc_push(read_expr(gc_push(input)));
-  int arg = gc_push(read_expr(first(fun))); // read_expr should return input object
+  int fun = gc_push(read_expr(input));
+  int arg = gc_push(read_expr(gc_push(first(fun))));
   int retval = make_pair(first(arg), gc_push(make_call(second(fun), second(arg))));
   gc_pop(4);
   return retval;
@@ -330,7 +343,7 @@ int read_expr(int input)
 {
   int retval;
   int b1 = gc_push(first(gc_push(input)));
-  input = second(input);
+  input = gc_push(second(input));
   if (is_false(b1)) {
     int b2 = gc_push(first(input));
     input = second(input);
@@ -345,7 +358,7 @@ int read_expr(int input)
     retval = read_var(input);
   else
     retval = NIL;
-  gc_pop(2);
+  gc_pop(3);
   return retval;
 }
 
@@ -463,11 +476,13 @@ int eval_expr(int expr, int local_env)
       retval = eval_expr(block(expr), env(expr));
       break;
     case INPUT:
-      bit = first(expr);
-      if (!is_nil(bit))
-        retval = eval_expr(make_pair(bit, expr), local_env);
-      else
+      bit = gc_push(first(expr));
+      if (!is_nil(bit)) {
+        retval = eval_expr(make_pair(bit, gc_push(second(expr))), local_env);
+        gc_pop(1);
+      } else
         retval = eval_expr(make_false(), local_env);
+      gc_pop(1);
       break;
     default:
       retval = NIL;
