@@ -29,7 +29,7 @@ typedef struct { int function; int argument; } call_t;
 
 typedef struct { int function; int environment; } proc_t;
 
-typedef struct { int block; int environment; } wrap_t;
+typedef struct { int unwrap; int environment; } wrap_t;
 
 typedef struct { FILE *file; int used; } input_t;
 
@@ -67,7 +67,7 @@ int is_input(int cell) { return is_type(cell, INPUT); }
 int variable(int cell) { return is_variable(cell) ? cells[cell].variable : NIL; }
 int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : is_lambda(cell) ? cells[cell].lambda : NIL; }
 int argument(int cell) { return is_call(cell) ? cells[cell].call.argument : NIL; }
-int block(int cell) { return is_wrap(cell) ? cells[cell].wrap.block : NIL; }
+int unwrap(int cell) { return is_wrap(cell) ? cells[cell].wrap.unwrap : NIL; }
 int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
 
@@ -107,7 +107,7 @@ void mark(int expr)
       mark(environment(expr));
       break;
     case WRAP:
-      mark(block(expr));
+      mark(unwrap(expr));
       mark(environment(expr));
       break;
     case INPUT:
@@ -209,16 +209,16 @@ int make_proc(int function, int environment)
   return retval;
 }
 
-int make_wrap(int block, int environment)
+int make_wrap(int unwrap, int environment)
 {
   int retval;
-  if (!is_nil(block) && !is_nil(environment)) {
-    gc_push(block);
+  if (!is_nil(unwrap) && !is_nil(environment)) {
+    gc_push(unwrap);
     gc_push(environment);
     retval = cell();
     if (!is_nil(retval)) {
       cells[retval].type = WRAP;
-      cells[retval].wrap.block = block;
+      cells[retval].wrap.unwrap = unwrap;
       cells[retval].wrap.environment = environment;
     };
     gc_pop(2);
@@ -394,17 +394,17 @@ void print_call(int function, int argument, FILE *file)
   print_expr(argument, file);
 }
 
-void print_proc(int block, int environment, FILE *file)
+void print_proc(int function, int environment, FILE *file)
 {
   fputs("#<proc:", file);
-  print_expr(block, file);
+  print_expr(function, file);
   fprintf(file, ";#env=%d>", length(environment));
 }
 
-void print_wrap(int block, int environment, FILE *file)
+void print_wrap(int unwrap, int environment, FILE *file)
 {
   fputs("#<wrap:", file);
-  print_expr(block, file);
+  print_expr(unwrap, file);
   fprintf(file, ";#env=%d>", length(environment));
 }
 
@@ -425,7 +425,7 @@ void print_expr(int expr, FILE *file)
       print_proc(function(expr), environment(expr), file);
       break;
     case WRAP:
-      print_wrap(block(expr), environment(expr), file);
+      print_wrap(unwrap(expr), environment(expr), file);
       break;
     case INPUT:
       fputs("#<input>", file);
@@ -473,7 +473,7 @@ int eval_expr(int expr, int local_environment)
       retval = expr;
       break;
     case WRAP:
-      retval = eval_expr(block(expr), environment(expr));
+      retval = eval_expr(unwrap(expr), environment(expr));
       break;
     case INPUT:
       bit = gc_push(first(expr));
