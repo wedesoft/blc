@@ -2,6 +2,7 @@ TODO
 ====
 
 * implement monadic *read\_bit*
+* implement stack contexts (*gc\_begin* and *gc\_end*)
 * read from list
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
