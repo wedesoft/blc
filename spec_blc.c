@@ -22,15 +22,15 @@
 int from_string(char *str)
 {
   FILE *file = fmemopen(str, strlen(str), "r");
-  int retval = second(read_expr(make_input(file)));
+  int retval = second(read_expression(make_input(file)));
   fclose(file);
   return retval;
 }
 
-char *to_string(char *buffer, int bufsize, int expr)
+char *to_string(char *buffer, int bufsize, int expression)
 {
   FILE *f = fmemopen(buffer, bufsize, "w");
-  print_expr(expr, f);
+  print_expression(expression, f);
   fclose(f);
   return buffer;
 }
@@ -76,7 +76,7 @@ int test_eval(char *command, char *specification)
   int retval = 0;
   char buffer[BUFSIZE];
   int environment = make_false();
-  char *result = to_string(buffer, BUFSIZE, eval_expr(from_string(command), environment));
+  char *result = to_string(buffer, BUFSIZE, eval_expression(from_string(command), environment));
   if (strcmp(specification, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
@@ -90,9 +90,9 @@ int test_input(char *command, char *specification)
   char buffer[BUFSIZE];
   FILE *file = fmemopen(command, strlen(command), "r");
   int input = gc_push(make_input(file));
-  int expr = gc_push(read_expr(input));
-  int environment = gc_push(make_pair(first(expr), gc_push(make_false())));
-  char *result = to_string(buffer, BUFSIZE, eval_expr(second(expr), environment));
+  int expression = gc_push(read_expression(input));
+  int environment = gc_push(make_pair(first(expression), gc_push(make_false())));
+  char *result = to_string(buffer, BUFSIZE, eval_expression(second(expression), environment));
   gc_pop(4);
   fclose(file);
   if (strcmp(specification, result)) {

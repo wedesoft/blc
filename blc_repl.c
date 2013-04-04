@@ -20,10 +20,10 @@ int main(void)
   int input = gc_push(make_input(stdin));
   int env = gc_push(make_pair(input, gc_push(make_false())));
   while (1) {
-    int expr = read_expr(input);
-    input = first(expr);
+    int expression = read_expression(input);
+    input = first(expression);
     if (feof(stdin)) break;
-    print_expr(eval_expr(second(expr), env), stdout);
+    print_expression(eval_expression(second(expression), env), stdout);
     fputc('\n', stdout);
   };
   gc_pop(3);

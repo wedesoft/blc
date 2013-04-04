@@ -21,15 +21,15 @@
 #endif
 #include <stdio.h>
 
-int gc_push(int expr);
+int gc_push(int expression);
 
 void gc_pop(int n);
 
-int read_expr(int input);
+int read_expression(int input);
 
-int eval_expr(int expr, int local_env);
+int eval_expression(int expression, int local_env);
 
-void print_expr(int expr, FILE *file);
+void print_expression(int expression, FILE *file);
 
 void print_variable(int variable, FILE *file);
 
