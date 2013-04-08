@@ -17,15 +17,14 @@
 
 int main(void)
 {
-  int input = gc_push(make_input(stdin));
-  int env = gc_push(make_pair(input, gc_push(make_false())));
   while (1) {
+    int input = gc_push(make_input(stdin));
     int expression = read_expression(input);
-    input = first(expression);
     if (feof(stdin)) break;
+    int env = gc_push(make_pair(first(expression), gc_push(make_false())));
     print_expression(eval_expression(second(expression), env), stdout);
     fputc('\n', stdout);
+    gc_pop(3);
   };
-  gc_pop(3);
   return 0;
 }
