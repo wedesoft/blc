@@ -22,7 +22,7 @@
 int from_string(char *str)
 {
   FILE *file = fmemopen(str, strlen(str), "r");
-  int retval = second(read_expression(make_input(file)));
+  int retval = first(read_expression(make_input(file)));
   fclose(file);
   return retval;
 }
@@ -91,8 +91,8 @@ int test_input(char *command, char *specification)
   FILE *file = fmemopen(command, strlen(command), "r");
   int input = gc_push(make_input(file));
   int expression = gc_push(read_expression(input));
-  int environment = gc_push(make_pair(first(expression), gc_push(make_false())));
-  char *result = to_string(buffer, BUFSIZE, eval_expression(second(expression), environment));
+  int environment = gc_push(make_pair(second(expression), gc_push(make_false())));
+  char *result = to_string(buffer, BUFSIZE, eval_expression(first(expression), environment));
   gc_pop(4);
   fclose(file);
   if (strcmp(specification, result)) {

@@ -255,11 +255,11 @@ int read_bit(int input)
     int c = fgetc(file(gc_push(input)));
     switch (c) {
     case '0':
-      retval = make_pair(gc_push(make_input(file(input))), gc_push(make_false()));
+      retval = make_pair(gc_push(make_false()), gc_push(make_input(file(input))));
       gc_pop(2);
       break;
     case '1':
-      retval = make_pair(gc_push(make_input(file(input))), gc_push(make_true()));
+      retval = make_pair(gc_push(make_true()), gc_push(make_input(file(input))));
       gc_pop(2);
       break;
     case EOF:
@@ -305,12 +305,12 @@ int read_variable(int input)
 {
   int retval;
   int b = gc_push(read_bit(gc_push(input)));
-  if (is_false(second(b))) {
-    retval = make_pair(first(b), gc_push(make_variable(0)));
+  if (is_false(first(b))) {
+    retval = make_pair(gc_push(make_variable(0)), second (b));
     gc_pop(1);
-  } else if (is_true(second(b))) {
-    retval = read_variable(first(b));
-    if (!is_nil(retval)) cells[second(retval)].variable++;
+  } else if (is_true(first(b))) {
+    retval = read_variable(second(b));
+    if (!is_nil(retval)) cells[first(retval)].variable++;
   } else
     retval = NIL;
   gc_pop(2);
@@ -322,7 +322,7 @@ int read_lambda(int input)
   int retval;
   int term = gc_push(read_expression(input));
   if (!is_nil(term)) {
-    retval = make_pair(first(term), gc_push(make_lambda(second(term))));
+    retval = make_pair(gc_push(make_lambda(first(term))), second(term));
     gc_pop(1);
   } else
     retval = NIL;
@@ -335,9 +335,9 @@ int read_call(int input)
   int retval;
   int function = gc_push(read_expression(input));
   if (!is_nil(function)) {
-    int argument = gc_push(read_expression(first(function)));
+    int argument = gc_push(read_expression(second(function)));
     if (!is_nil(argument)) {
-      retval = make_pair(first(argument), gc_push(make_call(second(function), second(argument))));
+      retval = make_pair(gc_push(make_call(first(function), first(argument))), second(argument));
       gc_pop(1);
     } else
       retval = NIL;
@@ -352,17 +352,17 @@ int read_expression(int input)
 {
   int retval;
   int b1 = gc_push(read_bit(gc_push(input)));
-  if (is_false(second(b1))) {
-    int b2 = gc_push(read_bit(first(b1)));
-    if (is_false(second(b2)))
-      retval = read_lambda(first(b2));
-    else if (is_true(second(b2)))
-      retval = read_call(first(b2));
+  if (is_false(first(b1))) {
+    int b2 = gc_push(read_bit(second(b1)));
+    if (is_false(first(b2)))
+      retval = read_lambda(second(b2));
+    else if (is_true(first(b2)))
+      retval = read_call(second(b2));
     else
       retval = NIL;
     gc_pop(1);
-  } else if (is_true(second(b1)))
-    retval = read_variable(first(b1));
+  } else if (is_true(first(b1)))
+    retval = read_variable(second(b1));
   else
     retval = NIL;
   gc_pop(2);
@@ -485,10 +485,12 @@ int eval_expression(int expression, int local_environment)
     case INPUT:
       bit = gc_push(read_bit(expression));
       if (!is_nil(bit))
-        retval = eval_expression(gc_push(make_pair(second(bit), first(bit))), local_environment);
-      else
+        retval = eval_expression(bit, local_environment);
+      else {
         retval = eval_expression(gc_push(make_false()), local_environment);
-      gc_pop(2);
+        gc_pop(1);
+      };
+      gc_pop(1);
       break;
     default:
       retval = NIL;

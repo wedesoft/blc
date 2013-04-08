@@ -21,8 +21,8 @@ int main(void)
     int input = gc_push(make_input(stdin));
     int expression = read_expression(input);
     if (feof(stdin)) break;
-    int env = gc_push(make_pair(first(expression), gc_push(make_false())));
-    print_expression(eval_expression(second(expression), env), stdout);
+    int env = gc_push(make_pair(second(expression), gc_push(make_false())));
+    print_expression(eval_expression(first(expression), env), stdout);
     fputc('\n', stdout);
     gc_pop(3);
   };

@@ -1,7 +1,6 @@
 TODO
 ====
 
-* swap return value of *read\_bit*
 * read from list
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
