@@ -298,7 +298,7 @@ int read_variable(int input)
   int retval;
   int b = gc_push(read_bit(gc_push(input)));
   if (is_false(first(b)))
-    retval = make_pair(make_variable(0), second (b));
+    retval = make_pair(make_variable(0), second(b));
   else if (is_true(first(b))) {
     retval = read_variable(second(b));
     if (!is_nil(retval)) cells[first(retval)].variable++;

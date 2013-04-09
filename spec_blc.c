@@ -75,12 +75,13 @@ int test_eval(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  int environment = make_false();
+  int environment = gc_push(make_false());
   char *result = to_string(buffer, BUFSIZE, eval_expression(from_string(command), environment));
   if (strcmp(specification, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
+  gc_pop(1);
   return retval;
 }
 
