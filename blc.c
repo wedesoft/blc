@@ -437,8 +437,6 @@ int eval_expression(int expression, int local_environment)
   int retval;
   int eval_fun;
   int wrap_argument;
-  int call_environment;
-  int bit;
   gc_push(expression);
   gc_push(local_environment);
   if (!is_nil(expression)) {
@@ -457,8 +455,11 @@ int eval_expression(int expression, int local_environment)
       eval_fun = gc_push(eval_expression(function(expression), local_environment));
       wrap_argument = gc_push(make_wrap(argument(expression), local_environment));
       if (is_proc(eval_fun)) {
-        call_environment = make_pair(wrap_argument, environment(eval_fun));
+        int call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
         retval = eval_expression(function(eval_fun), call_environment);
+      } else if (is_input(eval_fun)) {
+        int bit = eval_expression(read_bit(eval_fun), local_environment);
+        retval = eval_expression(make_call(bit, argument(expression)), local_environment);
       } else
         retval = eval_fun;
       gc_pop(2);
@@ -470,11 +471,7 @@ int eval_expression(int expression, int local_environment)
       retval = eval_expression(unwrap(expression), environment(expression));
       break;
     case INPUT:
-      bit = read_bit(expression);
-      if (!is_nil(bit))
-        retval = eval_expression(bit, local_environment);
-      else
-        retval = NIL;
+      retval = expression;
       break;
     default:
       retval = NIL;

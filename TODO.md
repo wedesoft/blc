@@ -1,7 +1,6 @@
 TODO
 ====
 
-* late reading of input
 * read from list
 * implement output
 * use BLC list as stack for garbage collector?
