@@ -263,7 +263,7 @@ int read_bit(int input)
       gc_pop(2);
       break;
     case EOF:
-      retval = NIL;
+      retval = make_false();
       break;
     default:
       retval = read_bit(input);
@@ -474,7 +474,7 @@ int eval_expression(int expression, int local_environment)
       if (!is_nil(bit))
         retval = eval_expression(bit, local_environment);
       else
-        retval = eval_expression(gc_push(make_false()), local_environment);
+        retval = NIL;
       break;
     default:
       retval = NIL;
