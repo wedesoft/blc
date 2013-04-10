@@ -59,7 +59,7 @@ int test_true(char *specification)
   return retval;
 }
 
-int test_io(char *command, char *specification)
+int test_read_write(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
@@ -89,13 +89,13 @@ int test_input(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  FILE *file = fmemopen(command, strlen(command), "r");
-  int input = gc_push(make_input(file));
+  FILE *input_file = fmemopen(command, strlen(command), "r");
+  int input = gc_push(make_input(input_file));
   int expression = gc_push(read_expression(input));
   int environment = gc_push(make_pair(second(expression), gc_push(make_false())));
   char *result = to_string(buffer, BUFSIZE, eval_expression(first(expression), environment));
   gc_pop(4);
-  fclose(file);
+  fclose(input_file);
   if (strcmp(specification, result)) {
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
@@ -107,12 +107,34 @@ int test_output(char *command, char *specification)
 {
   int retval = 0;
   char buffer[BUFSIZE];
-  FILE *file = fmemopen(buffer, BUFSIZE, "w");
-  int environment = gc_push(make_pair(make_output(file), make_false()));
+  FILE *output_file = fmemopen(buffer, BUFSIZE, "w");
+  int environment = gc_push(make_pair(make_output(output_file), make_false()));
   eval_expression(from_string(command), environment);
-  fputc('\0', file);
+  fputc('\0', output_file);
   gc_pop(1);
-  fclose(file);
+  fclose(output_file);
+  char *result = buffer;
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Output of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
+    retval = 1;
+  };
+  return retval;
+}
+
+int test_input_output(char *command, char *specification)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  FILE *input_file = fmemopen(command, strlen(command), "r");
+  int input = gc_push(make_input(input_file));
+  int expression = gc_push(read_expression(input));
+  FILE *output_file = fmemopen(buffer, BUFSIZE, "w");
+  int environment = gc_push(make_pair(second(expression), make_pair(gc_push(make_output(output_file)), gc_push(make_false()))));
+  eval_expression(from_string(command), environment);
+  fputc('\0', output_file);
+  gc_pop(5);
+  fclose(output_file);
+  fclose(input_file);
   char *result = buffer;
   if (strcmp(specification, result)) {
     fprintf(stderr, "Output of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
@@ -126,19 +148,19 @@ int main(void)
   int retval = 0;
   retval = retval | test_false("000010");
   retval = retval | test_true("0000110");
-  retval = retval | test_io("10", "10");
-  retval = retval | test_io("  10 ", "10");
-  retval = retval | test_io("110", "110");
-  retval = retval | test_io("1110", "1110");
-  retval = retval | test_io("  1110 ", "1110");
-  retval = retval | test_io("0010", "0010");
-  retval = retval | test_io("00 10", "0010");
-  retval = retval | test_io("0100100010", "0100100010");
-  retval = retval | test_io(" 01 0010 0010", "0100100010");
-  retval = retval | test_io("0", "#<err>");
-  retval = retval | test_io("00", "#<err>");
-  retval = retval | test_io("01", "#<err>");
-  retval = retval | test_io("1", "#<err>");
+  retval = retval | test_read_write("10", "10");
+  retval = retval | test_read_write("  10 ", "10");
+  retval = retval | test_read_write("110", "110");
+  retval = retval | test_read_write("1110", "1110");
+  retval = retval | test_read_write("  1110 ", "1110");
+  retval = retval | test_read_write("0010", "0010");
+  retval = retval | test_read_write("00 10", "0010");
+  retval = retval | test_read_write("0100100010", "0100100010");
+  retval = retval | test_read_write(" 01 0010 0010", "0100100010");
+  retval = retval | test_read_write("0", "#<err>");
+  retval = retval | test_read_write("00", "#<err>");
+  retval = retval | test_read_write("01", "#<err>");
+  retval = retval | test_read_write("1", "#<err>");
   retval = retval | test_eval("10", "10");// first variable
   retval = retval | test_eval("110", "110");// second variable
   retval = retval | test_eval("0010", "#<proc:10;#env=0>");// identity function
@@ -175,6 +197,10 @@ int main(void)
   retval = retval | test_output("10", "");// no output
   retval = retval | test_output("01 10 000010", "0");// write '0'
   retval = retval | test_output("01 10 0000110", "1");// write '1'
+  retval = retval | test_input_output("01 110 01 10 0000110 0", "0");// print out bit from input
+  retval = retval | test_input_output("01 110 01 10 0000110 1", "1");// print out bit from input
+  retval = retval | test_input_output("01 110 01 01 10 000010 0000110 00", "0");// print out second bit from input
+  retval = retval | test_input_output("01 110 01 01 10 000010 0000110 01", "1");// print out second bit from input
   return retval;
 }
 
