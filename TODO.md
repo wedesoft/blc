@@ -1,9 +1,6 @@
 TODO
 ====
 
-* read from list
-* implement output
-* use BLC list as stack for garbage collector?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
 * implement *define*: place *eval* reading from input into lambda expression?
@@ -19,3 +16,5 @@ TODO
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
 * macros
+* use BLC list as stack for garbage collector?
+* read from list

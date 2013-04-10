@@ -35,6 +35,8 @@ void print_variable(int variable, FILE *file);
 
 int make_input(FILE *file);
 
+int make_output(FILE *file);
+
 int make_false(void);
 
 int make_true(void);

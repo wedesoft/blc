@@ -19,12 +19,13 @@ int main(void)
 {
   while (1) {
     int input = gc_push(make_input(stdin));
+    int output = gc_push(make_output(stdout));
     int expression = gc_push(read_expression(input));
     if (feof(stdin)) break;
-    int env = gc_push(make_pair(second(expression), gc_push(make_false())));
+    int env = gc_push(make_pair(second(expression), make_pair(output, gc_push(make_false()))));
     print_expression(eval_expression(first(expression), env), stdout);
     fputc('\n', stdout);
-    gc_pop(4);
+    gc_pop(5);
   };
   return 0;
 }

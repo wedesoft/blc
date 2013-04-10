@@ -23,7 +23,7 @@
 
 #define NIL -1
 
-typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT, OUTPUT } type_t;
 
 typedef struct { int function; int argument; } call_t;
 
@@ -32,6 +32,8 @@ typedef struct { int function; int environment; } proc_t;
 typedef struct { int unwrap; int environment; } wrap_t;
 
 typedef struct { FILE *file; int used; } input_t;
+
+typedef struct { FILE *file; int used; } output_t;
 
 typedef struct {
   type_t type;
@@ -42,6 +44,7 @@ typedef struct {
     proc_t proc;
     wrap_t wrap;
     input_t input;
+    output_t output;
   };
   char mark;
 } cell_t;
@@ -63,13 +66,14 @@ int is_call(int cell) { return is_type(cell, CALL); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
+int is_output(int cell) { return is_type(cell, OUTPUT); }
 
 int variable(int cell) { return is_variable(cell) ? cells[cell].variable : NIL; }
 int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : is_lambda(cell) ? cells[cell].lambda : NIL; }
 int argument(int cell) { return is_call(cell) ? cells[cell].call.argument : NIL; }
 int unwrap(int cell) { return is_wrap(cell) ? cells[cell].wrap.unwrap : NIL; }
 int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
-FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
+FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : is_output(cell) ? cells[cell].output.file : NULL; }
 
 void clear_marks(void) {
   int i;
@@ -111,6 +115,7 @@ void mark(int expression)
       mark(environment(expression));
       break;
     case INPUT:
+    case OUTPUT:
       break;
     }
   };
@@ -238,6 +243,17 @@ int make_input(FILE *file)
   return retval;
 }
 
+int make_output(FILE *file)
+{
+  int retval = cell();
+  if (!is_nil(retval)) {
+    cells[retval].type = OUTPUT;
+    cells[retval].output.file = file;
+    cells[retval].output.used = 0;
+  };
+  return retval;
+}
+
 int make_false(void) { return make_lambda(make_lambda(make_variable(0))); }
 
 int is_false(int expression) { return variable(function(function(expression))) == 0; }
@@ -271,6 +287,28 @@ int read_bit(int input)
     cells[input].input.used = 1;
     gc_pop(1);
   };
+  return retval;
+}
+
+int write_bit(int output, int bit)
+{
+  int retval;
+  if (cells[output].output.used)
+    retval = NIL;
+  else if (!is_nil(bit)) {
+    gc_push(output);
+    if (is_false(bit)) {
+      fputc('0', file(output));
+      retval = make_output(file(output));
+    } else if (is_true(bit)) {
+      fputc('1', file(output));
+      retval = make_output(file(output));
+    } else
+      retval = NIL;
+    cells[output].output.used = 1;
+    gc_pop(1);
+  } else
+    retval = NIL;
   return retval;
 }
 
@@ -425,6 +463,9 @@ void print_expression(int expression, FILE *file)
     case INPUT:
       fputs("#<input>", file);
       break;
+    case OUTPUT:
+      fputs("#<output>", file);
+      break;
     }
   } else
     fputs("#<err>", file);
@@ -436,7 +477,6 @@ int eval_expression(int expression, int local_environment)
 {
   int retval;
   int eval_fun;
-  int wrap_argument;
   gc_push(expression);
   gc_push(local_environment);
   if (!is_nil(expression)) {
@@ -453,24 +493,26 @@ int eval_expression(int expression, int local_environment)
       break;
     case CALL:
       eval_fun = gc_push(eval_expression(function(expression), local_environment));
-      wrap_argument = gc_push(make_wrap(argument(expression), local_environment));
       if (is_proc(eval_fun)) {
+        int wrap_argument = gc_push(make_wrap(argument(expression), local_environment));
         int call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
         retval = eval_expression(function(eval_fun), call_environment);
+        gc_pop(1);
       } else if (is_input(eval_fun)) {
         int bit = eval_expression(read_bit(eval_fun), local_environment);
         retval = eval_expression(make_call(bit, argument(expression)), local_environment);
-      } else
+      } else if (is_output(eval_fun))
+        retval = write_bit(eval_fun, eval_expression(argument(expression), local_environment));
+      else
         retval = eval_fun;
-      gc_pop(2);
-      break;
-    case PROC:
-      retval = expression;
+      gc_pop(1);
       break;
     case WRAP:
       retval = eval_expression(unwrap(expression), environment(expression));
       break;
+    case PROC:
     case INPUT:
+    case OUTPUT:
       retval = expression;
       break;
     default:

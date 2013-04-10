@@ -103,6 +103,24 @@ int test_input(char *command, char *specification)
   return retval;
 }
 
+int test_output(char *command, char *specification)
+{
+  int retval = 0;
+  char buffer[BUFSIZE];
+  FILE *file = fmemopen(buffer, BUFSIZE, "w");
+  int environment = gc_push(make_pair(make_output(file), make_false()));
+  eval_expression(from_string(command), environment);
+  fputc('\0', file);
+  gc_pop(1);
+  fclose(file);
+  char *result = buffer;
+  if (strcmp(specification, result)) {
+    fprintf(stderr, "Output of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
+    retval = 1;
+  };
+  return retval;
+}
+
 int main(void)
 {
   int retval = 0;
@@ -136,10 +154,10 @@ int main(void)
   retval = retval | test_eval("01 01 000010 110 10", "10");// select variable with false
   retval = retval | test_eval("01 00 01 01 10 1110 110 000010", "10");
   retval = retval | test_eval("01 01 0000110 110 10", "110");// select variable with true
-  retval = retval | test_eval("01 00 01 01 10 1110 110 0000110", "110");
+  retval = retval | test_eval("01 00 01 01 10 1110 110 0000110", "110");// function selecting a global variable
   retval = retval | test_eval("01 01 000010 001110 00110", "#<proc:110;#env=0>");
   retval = retval | test_eval("01 01 0000110 001110 00110", "#<proc:1110;#env=0>");
-  retval = retval | test_eval("01 00110 0010", "10");
+  retval = retval | test_eval("01 00110 0010", "10");// return global variable
   retval = retval | test_eval("0100100010", "#<proc:10;#env=0>");
   retval = retval | test_input("10", "#<input>");// end of string
   retval = retval | test_input("01 10 0000110", "#<proc:10;#env=2>");// end of string
@@ -154,6 +172,9 @@ int main(void)
   retval = retval | test_input("01 01 01 10 0000110 1110 110 1", "110");// select variable using input bit
   retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 00", "10");// select variable using second input bit
   retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 01", "110");// select variable using second input bit
+  retval = retval | test_output("10", "");// no output
+  retval = retval | test_output("01 10 000010", "0");// write '0'
+  retval = retval | test_output("01 10 0000110", "1");// write '1'
   return retval;
 }
 
