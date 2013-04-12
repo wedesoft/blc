@@ -146,9 +146,6 @@ int cell(void)
     retval = find_cell();
   };
   if (!is_nil(retval)) cells[retval].mark = 1;
-  if (is_nil(retval)) {
-    fprintf(stderr, "%d\n", retval);
-  };
   return retval;
 }
 
@@ -475,7 +472,7 @@ int eval_expression(int expression, int local_environment)
   int eval_fun;
   gc_push(expression);
   gc_push(local_environment);
-  if (!is_nil(expression)) {
+  if (!is_nil(expression) && !is_nil(local_environment)) {
     switch (type(expression)) {
     case VARIABLE:
       retval = lookup(variable(expression), local_environment);
