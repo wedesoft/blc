@@ -18,8 +18,8 @@
 #include <string.h>
 #include "blc.h"
 
-#define MAX_CELLS 1024
-#define MAX_REGISTERS 1024
+#define MAX_CELLS 4096
+#define MAX_REGISTERS 16384
 
 #define NIL -1
 
@@ -94,31 +94,32 @@ int find_cell(void)
 
 void mark(int expression)
 {
-  if (!cells[expression].mark) {
-    cells[expression].mark = 1;
-    switch (type(expression)) {
-    case VARIABLE:
-      break;
-    case LAMBDA:
-      mark(function(expression));
-      break;
-    case CALL:
-      mark(function(expression));
-      mark(argument(expression));
-      break;
-    case PROC:
-      mark(function(expression));
-      mark(environment(expression));
-      break;
-    case WRAP:
-      mark(unwrap(expression));
-      mark(environment(expression));
-      break;
-    case INPUT:
-    case OUTPUT:
-      break;
-    }
-  };
+  if (!is_nil(expression))
+    if (!cells[expression].mark) {
+      cells[expression].mark = 1;
+      switch (type(expression)) {
+        case VARIABLE:
+          break;
+        case LAMBDA:
+          mark(function(expression));
+          break;
+        case CALL:
+          mark(function(expression));
+          mark(argument(expression));
+          break;
+        case PROC:
+          mark(function(expression));
+          mark(environment(expression));
+          break;
+        case WRAP:
+          mark(unwrap(expression));
+          mark(environment(expression));
+          break;
+        case INPUT:
+        case OUTPUT:
+          break;
+      }
+    };
 }
 
 void mark_registers(void)
@@ -145,6 +146,9 @@ int cell(void)
     retval = find_cell();
   };
   if (!is_nil(retval)) cells[retval].mark = 1;
+  if (is_nil(retval)) {
+    fprintf(stderr, "%d\n", retval);
+  };
   return retval;
 }
 
@@ -265,7 +269,9 @@ int is_true(int expression) { return variable(function(function(expression))) ==
 int read_bit(int input)
 {
   int retval;
-  if (cells[input].input.used)
+  if (is_nil(input))
+    retval = NIL;
+  else if (cells[input].input.used)
     retval = NIL;
   else {
     int c = fgetc(file(gc_push(input)));
@@ -350,10 +356,7 @@ int read_lambda(int input)
 {
   int retval;
   int term = gc_push(read_expression(input));
-  if (!is_nil(term))
-    retval = make_pair(make_lambda(first(term)), second(term));
-  else
-    retval = NIL;
+  retval = make_pair(make_lambda(first(term)), second(term));
   gc_pop(1);
   return retval;
 }
@@ -362,16 +365,9 @@ int read_call(int input)
 {
   int retval;
   int function = gc_push(read_expression(input));
-  if (!is_nil(function)) {
-    int argument = gc_push(read_expression(second(function)));
-    if (!is_nil(argument))
-      retval = make_pair(make_call(first(function), first(argument)), second(argument));
-    else
-      retval = NIL;
-    gc_pop(1);
-  } else
-    retval = NIL;
-  gc_pop(1);
+  int argument = gc_push(read_expression(second(function)));
+  retval = make_pair(make_call(first(function), first(argument)), second(argument));
+  gc_pop(2);
   return retval;
 }
 
