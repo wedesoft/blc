@@ -464,7 +464,10 @@ void print_expression(int expression, FILE *file)
     fputs("#<err>", file);
 }
 
-int lookup(int variable, int environment) { return variable > 0 ? lookup(variable - 1, second(environment)) : first(environment); }
+int lookup(int variable, int environment)
+{
+  return variable > 0 ? lookup(variable - 1, second(environment)) : first(environment);
+}
 
 int eval_expression(int expression, int local_environment)
 {
