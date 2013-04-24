@@ -8,7 +8,7 @@ blc
 Synopsis
 --------
 
-Binary Lambda Calculus virtual machine with DSL on top of it.
+Binary Lambda Calculus virtual machine
 
 Installation
 ------------

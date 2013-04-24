@@ -1,4 +1,4 @@
-/* BLC - Binary Lambda Calculus VM and DSL on top of it
+/* BLC - Binary Lambda Calculus VM
  * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
