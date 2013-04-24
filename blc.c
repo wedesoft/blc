@@ -18,8 +18,8 @@
 #include <string.h>
 #include "blc.h"
 
-#define MAX_CELLS 4096
-#define MAX_REGISTERS 16384
+#define MAX_CELLS 16384
+#define MAX_REGISTERS 65536
 
 #define NIL -1
 
@@ -74,6 +74,7 @@ int argument(int cell) { return is_call(cell) ? cells[cell].call.argument : NIL;
 int unwrap(int cell) { return is_wrap(cell) ? cells[cell].wrap.unwrap : NIL; }
 int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : is_output(cell) ? cells[cell].output.file : NULL; }
+int used(int cell) { return is_input(cell) ? cells[cell].input.used : is_output(cell) ? cells[cell].output.used : NIL; }
 
 void clear_marks(void) {
   int i;
@@ -117,6 +118,7 @@ void mark(int expression)
           break;
         case INPUT:
         case OUTPUT:
+          mark(used(expression));
           break;
       }
     };
@@ -239,7 +241,7 @@ int make_input(FILE *file)
   if (!is_nil(retval)) {
     cells[retval].type = INPUT;
     cells[retval].input.file = file;
-    cells[retval].input.used = 0;
+    cells[retval].input.used = NIL;
   };
   return retval;
 }
@@ -250,7 +252,7 @@ int make_output(FILE *file)
   if (!is_nil(retval)) {
     cells[retval].type = OUTPUT;
     cells[retval].output.file = file;
-    cells[retval].output.used = 0;
+    cells[retval].output.used = NIL;
   };
   return retval;
 }
@@ -268,8 +270,8 @@ int read_bit(int input)
   int retval;
   if (is_nil(input))
     retval = NIL;
-  else if (cells[input].input.used)
-    retval = NIL;
+  else if (!is_nil(cells[input].input.used))
+    retval = cells[input].input.used;
   else {
     int c = fgetc(file(gc_push(input)));
     switch (c) {
@@ -287,7 +289,7 @@ int read_bit(int input)
     default:
       retval = read_bit(input);
     };
-    cells[input].input.used = 1;
+    cells[input].input.used = retval;
     gc_pop(1);
   };
   return retval;
@@ -296,7 +298,7 @@ int read_bit(int input)
 int write_bit(int output, int bit)
 {
   int retval;
-  if (cells[output].output.used)
+  if (!is_nil(cells[output].output.used))
     retval = NIL;
   else if (!is_nil(bit)) {
     gc_push(output);
@@ -308,7 +310,7 @@ int write_bit(int output, int bit)
       retval = make_output(file(output));
     } else
       retval = NIL;
-    cells[output].output.used = 1;
+    cells[output].output.used = retval;
     gc_pop(1);
   } else
     retval = NIL;
