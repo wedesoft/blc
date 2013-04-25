@@ -4,8 +4,6 @@
 *.o
 *.tmp
 *.html
-Makefile
-Makefile.in
 aclocal.m4
 autom4te.cache
 blc
@@ -21,11 +19,16 @@ configure
 depcomp
 install-sh
 lambda
+lambda_bison.c
+lambda_bison.h
+lambda_flex.c
 libtool
 ltmain.sh
+Makefile
+Makefile.in
 m4
 missing
 spec_blc
 spec_lambda
 stamp-h1
-
+ylwrap

@@ -1,14 +1,16 @@
-SUFFIXES = .c .h .tmp
+SUFFIXES = .c .h .tmp .y .l
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = spec_blc spec_lambda blc lambda
+AM_YFLAGS = -d
+
+bin_PROGRAMS = spec_blc blc lambda spec_lambda
 
 spec_blc_SOURCES = spec_blc.c blc.c
 spec_blc_LDFLAGS =
 spec_blc_LDADD =
 
-spec_lambda_SOURCES = spec_lambda.c lambda.c blc.c
+spec_lambda_SOURCES = lambda_bison.y lambda_flex.l lambda.c spec_lambda.c
 spec_lambda_LDFLAGS =
 spec_lambda_LDADD =
 
@@ -16,15 +18,15 @@ blc_SOURCES = blc_repl.c blc.c
 blc_LDFLAGS = 
 blc_LDADD =
 
-lambda_SOURCES = lambda_repl.c lambda.c blc.c
-lambda_LDFLAGS = 
+lambda_SOURCES = lambda_bison.y lambda_flex.l lambda.c lambda_repl.c
+lambda_LDFLAGS =
 lambda_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
 noinst_DATA = README.html TODO.html
 
-BUILT_SOURCES =
+BUILT_SOURCES = lambda_bison.h
 
 EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING TODO run.sh
 
@@ -43,7 +45,8 @@ CLEANFILES = *~ *.tmp *.html
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \
-	libtool config.cache config.h config.h.in acinclude.m4 depcomp
+	libtool config.cache config.h config.h.in acinclude.m4 depcomp \
+	ylwrap
 
 maintainer-clean-local:
 	-rm -rf m4
