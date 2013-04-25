@@ -436,6 +436,22 @@ void print_wrap(int unwrap, int environment, FILE *file)
   fprintf(file, ";#env=%d>", length(environment));
 }
 
+void print_input(int input, FILE *file)
+{
+  if (is_nil(used(input)))
+    fputs("#<input>", file);
+  else
+    print_expression(used(input), file);
+}
+
+void print_output(int output, FILE *file)
+{
+  if (is_nil(used(output)))
+    fputs("#<output>", file);
+  else
+    fputs("#<output(used)>", file);
+}
+
 void print_expression(int expression, FILE *file)
 {
   if (!is_nil(expression)) {
@@ -456,10 +472,10 @@ void print_expression(int expression, FILE *file)
       print_wrap(unwrap(expression), environment(expression), file);
       break;
     case INPUT:
-      fputs("#<input>", file);
+      print_input(expression, file);
       break;
     case OUTPUT:
-      fputs("#<output>", file);
+      print_output(expression, file);
       break;
     }
   } else
