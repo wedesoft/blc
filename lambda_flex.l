@@ -8,10 +8,14 @@ extern int yyretval;
 
 %%
 
+"0"           { return ZERO; }
+"1"           { return ONE; }
 "->"|"λ"      { return LAMBDA; }
+"("           { return LP; }
+")"           { return RP; }
 [a-z][a-z0-9] { yylval.sym = 0; return SYM; }
 <<EOF>>       { return 0; }
 [ \t\n]+      {}
-.             { fprintf(stderr, "Unrecognized token: \"%s\"\n", yytext); yyretval = 1; }
+.             {}
 %%
 

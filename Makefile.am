@@ -6,21 +6,21 @@ AM_YFLAGS = -d
 
 bin_PROGRAMS = spec_blc blc lambda spec_lambda
 
-spec_blc_SOURCES = spec_blc.c blc.c
-spec_blc_LDFLAGS =
-spec_blc_LDADD =
-
-spec_lambda_SOURCES = lambda_bison.y lambda_flex.l lambda.c spec_lambda.c
-spec_lambda_LDFLAGS =
-spec_lambda_LDADD =
-
 blc_SOURCES = blc_repl.c blc.c
 blc_LDFLAGS = 
 blc_LDADD =
 
+spec_blc_SOURCES = spec_blc.c blc.c
+spec_blc_LDFLAGS =
+spec_blc_LDADD =
+
 lambda_SOURCES = lambda_bison.y lambda_flex.l lambda.c lambda_repl.c
 lambda_LDFLAGS =
 lambda_LDADD =
+
+spec_lambda_SOURCES = lambda_bison.y lambda_flex.l lambda.c spec_lambda.c
+spec_lambda_LDFLAGS =
+spec_lambda_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
