@@ -1,7 +1,11 @@
 %{
 #include <stdio.h>
+#include "blc.h"
+
 extern int yyretval;
 extern FILE *yyout;
+extern int n_registers;
+
 int yylex();
 int yyerror(const char *p)
 {
@@ -11,32 +15,34 @@ int yyerror(const char *p)
 %}
 
 %union {
+  int expr;
   int var;
-  char c;
 };
 
+%type <expr> expr lambda call
+%type <var> variable
 %token ZERO ONE LAMBDA LP RP
 %token <var> VAR
 
 %%
 run: /* empty */
-   | expr run
+   | expr run { print_expression($1, yyout); gc_pop(n_registers); }
    ;
 
-expr: variable
+expr: variable { $$ = gc_push(make_variable($1)); }
     | lambda
     | call
     ;
    
-variable: ONE ZERO     { fprintf(yyout, "10"); }
-        | ONE variable { fprintf(yyout, "1"); }
+variable: ONE ZERO     { $$ = 0; }
+        | ONE variable { $$ = $2 + 1; }
         ;
 
-lambda: ZERO ZERO expr { fprintf(yyout, "00"); }
-      | LAMBDA expr    { fprintf(yyout, "00"); }
+lambda: ZERO ZERO expr { $$ = gc_push(make_lambda($3)); }
+      | LAMBDA expr    { $$ = gc_push(make_lambda($2)); }
       ;
 
-call: ZERO ONE expr expr { fprintf(yyout, "01"); }
-    | LP expr expr RP    { fprintf(yyout, "01"); }
+call: ZERO ONE expr expr { $$ = gc_push(make_call($3, $4)); }
+    | LP expr expr RP    { $$ = gc_push(make_call($2, $3)); }
 
 %%

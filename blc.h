@@ -33,6 +33,10 @@ void print_expression(int expression, FILE *file);
 
 void print_variable(int variable, FILE *file);
 
+int make_variable(int variable);
+
+int make_lambda(int lambda);
+
 int make_input(FILE *file);
 
 int make_output(FILE *file);
