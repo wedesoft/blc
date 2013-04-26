@@ -3,19 +3,25 @@
 extern int yyretval;
 extern FILE *yyout;
 int yylex();
-int yyerror(const char *p) { fprintf(stderr, "Error: %s\n", p); yyretval = 1; }
+int yyerror(const char *p)
+{
+  fprintf(stderr, "Error: %s\n", p);
+  yyretval = 1;
+}
 %}
 
 %union {
-  int sym;
+  int var;
   char c;
 };
 
 %token ZERO ONE LAMBDA LP RP
-%token <sym> SYM
+%token <var> VAR
 
 %%
-run: expr
+run: /* empty */
+   | expr run
+   ;
 
 expr: variable
     | lambda

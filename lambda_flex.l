@@ -13,7 +13,7 @@ extern int yyretval;
 "->"|"λ"      { return LAMBDA; }
 "("           { return LP; }
 ")"           { return RP; }
-[a-z][a-z0-9] { yylval.sym = 0; return SYM; }
+[a-z][a-z0-9] { yylval.var = 0; return VAR; }
 <<EOF>>       { return 0; }
 [ \t\n]+      {}
 .             {}
