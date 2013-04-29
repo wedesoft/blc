@@ -8,14 +8,16 @@ extern int yyretval;
 
 %%
 
-"0"           { return ZERO; }
-"1"           { return ONE; }
-"->"|"λ"      { return LAMBDA; }
-"("           { return LP; }
-")"           { return RP; }
-[a-z][a-z0-9] { yylval.var = 0; return VAR; }
-<<EOF>>       { return 0; }
-[ \t\n]+      {}
-.             {}
+"0"            { return ZERO; }
+"1"            { return ONE; }
+"->"|"λ"       { return LAMBDA; }
+"("            { return LP; }
+")"            { return RP; }
+"."            { return DOT; }
+[a-z]+         { strcpy(yylval.sym, yytext); return VAR; }
+<<EOF>>        { return 0; }
+[ \t\n]+       {}
+.              {}
+
 %%
 

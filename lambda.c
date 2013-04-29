@@ -16,6 +16,12 @@
 #include "lambda.h"
 #include "lambda_bison.h"
 
+#define NAMEBUFSIZE 65536
+
+extern int stack_n;
+extern char names[NAMEBUFSIZE];
+extern char *name_p;
+
 extern void yyrestart(FILE *input_file);
 extern void yyset_out(FILE *out_str);
 
@@ -23,6 +29,8 @@ int yyretval;
 
 int compile_lambda(FILE *f_in, FILE *f_out)
 {
+  stack_n = 0;
+  name_p = names;
   yyretval = 0;
   yyrestart(f_in);
   yyset_out(f_out);

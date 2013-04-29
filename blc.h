@@ -37,6 +37,8 @@ int make_variable(int variable);
 
 int make_lambda(int lambda);
 
+int make_call(int function, int argument);
+
 int make_input(FILE *file);
 
 int make_output(FILE *file);
