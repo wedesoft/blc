@@ -24,9 +24,11 @@ int stack_n;
 char names[NAMEBUFSIZE];
 char *name_p;
 
-void push(void)
+void push(const char *token)
 {
   stack[stack_n++] = name_p;
+  strcpy(name_p, token);
+  name_p += strlen(token) + 1;
 }
 
 void pop(void)
@@ -79,12 +81,12 @@ variable: ONE ZERO     { $$ = 0; }
         | ONE variable { $$ = $2 + 1; }
         ;
 
-lambda: ZERO ZERO      { push(); *name_p = '\0'; name_p += 1; }
-      | ZERO ZERO DOT  { push(); *name_p = '\0'; name_p += 1; }
-      | LAMBDA VAR     { push(); strcpy(name_p, $2); name_p += strlen($2) + 1; }
-      | LAMBDA VAR DOT { push(); strcpy(name_p, $2); name_p += strlen($2) + 1; }
-      | LAMBDA         { push(); *name_p = '\0'; name_p += 1; }
-      | LAMBDA DOT     { push(); *name_p = '\0'; name_p += 1; }
+lambda: ZERO ZERO      { push(""); }
+      | ZERO ZERO DOT  { push(""); }
+      | LAMBDA         { push(""); }
+      | LAMBDA DOT     { push(""); }
+      | LAMBDA VAR     { push($2); }
+      | LAMBDA VAR DOT { push($2); }
       ;
 
 call: ZERO ONE expr { $$ = $3; }
