@@ -61,7 +61,7 @@ int find_var(const char *token)
   char sym[16];
 };
 
-%type <expr> expr lambda call
+%type <expr> expr lambda
 %type <var> variable
 %token <sym> VAR
 %token ZERO ONE LAMBDA LP RP DOT
@@ -71,10 +71,11 @@ run: /* empty */
    | expr { print_expression($1, yyout); fflush(yyout); gc_pop(n_registers); } run
    ;
 
-expr: variable    { $$ = gc_push(make_variable($1)); }
-    | VAR         { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda expr { $$ = gc_push(make_lambda($2)); pop(); }
-    | call expr   { $$ = gc_push(make_call($1, $2)); }
+expr: variable              { $$ = gc_push(make_variable($1)); }
+    | VAR                   { $$ = gc_push(make_variable(find_var($1))); }
+    | lambda expr           { $$ = gc_push(make_lambda($2)); pop(); }
+    | ZERO ONE expr {} expr { $$ = gc_push(make_call($3, $5)); }
+    | LP expr {} expr RP    { $$ = gc_push(make_call($2, $4)); }
     ;
    
 variable: ONE ZERO     { $$ = 0; }
@@ -88,8 +89,5 @@ lambda: ZERO ZERO      { push(""); }
       | LAMBDA VAR     { push($2); }
       | LAMBDA VAR DOT { push($2); }
       ;
-
-call: ZERO ONE expr { $$ = $3; }
-    | LP expr RP    { $$ = $2; }
 
 %%
