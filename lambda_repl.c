@@ -17,6 +17,5 @@
 
 int main(void)
 {
-  compile_lambda(stdin, stdout);
-  return 0;
+  return compile_lambda(stdin, stdout);
 }
