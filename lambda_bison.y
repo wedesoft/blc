@@ -66,7 +66,7 @@ int find_var(const char *token)
 
 %%
 run: /* empty */
-   | expr run { print_expression($1, yyout); gc_pop(n_registers); }
+   | expr { print_expression($1, yyout); gc_pop(n_registers); } run
    ;
 
 expr: variable    { $$ = gc_push(make_variable($1)); }
