@@ -1,10 +1,13 @@
 TODO
 ====
 
+* interpreter for output
+* test I/O with unlimited length
+* use BLC list as stack for garbage collector?
+* Earley parser for bits?
 * implement *define*
     * define *true*, *false*, *cons*, *empty*, ...
     * place *eval* reading from input into lambda expression?
-* test I/O with unlimited length
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
 * implement meta-circular interpreter
@@ -15,9 +18,7 @@ TODO
     * eval, quasiquote, quote
     * sublis (substitution)
 * ffi
-* Earley parser for bits?
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
 * macros
-* use BLC list as stack for garbage collector?
 * read from list
