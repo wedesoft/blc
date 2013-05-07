@@ -23,16 +23,16 @@ extern int yyretval;
 
 %%
 
-"0"            { return ZERO; }
-"1"            { return ONE; }
-"->"|"λ"       { return LAMBDA; }
-"("            { return LP; }
-")"            { return RP; }
-"."            { return DOT; }
-[a-z]+         { strcpy(yylval.sym, yytext); return VAR; }
-<<EOF>>        { return 0; }
-[ \t\n]+       {}
-.              {}
+"0"                  { return ZERO; }
+"1"                  { return ONE; }
+"->"|"λ"             { return LAMBDA; }
+"("                  { return LP; }
+")"                  { return RP; }
+"."                  { return DOT; }
+[a-zA-Z][a-zA-Z0-9]* { strcpy(yylval.sym, yytext); return VAR; }
+<<EOF>>              { return 0; }
+[ \t\n]+             {}
+.                    {}
 
 %%
 
