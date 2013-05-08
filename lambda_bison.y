@@ -89,9 +89,10 @@ run: /* empty */
    | DOT  {} run
    ;
 
-expr: VAR                { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda subexpr        { $$ = gc_push(make_lambda($2)); pop(); }
+expr: VAR                      { $$ = gc_push(make_variable(find_var($1))); }
+    | lambda subexpr           { $$ = gc_push(make_lambda($2)); pop(); }
     | LP subexpr {} subexpr RP { $$ = gc_push(make_call($2, $4)); }
+    | LP subexpr RP            { $$ = $2; }
     ;
 
 subexpr: expr

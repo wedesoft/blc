@@ -76,6 +76,7 @@ int main(void)
   retval = retval | test_compile("(->x.x ->y.y)", "0100100010");
   retval = retval | test_compile("(->x.x ->x.x)", "0100100010");
   retval = retval | test_compile("(10 ->x->y.x) 0", "011000001100");
+  retval = retval | test_compile("(10)", "10");
   return retval;
 }
 
