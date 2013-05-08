@@ -6,7 +6,7 @@
 -> false
 ->     Y
 
-(output (input true))
+((Y ->f->in.(((in true) true) (f (in false)))) input)
 
 10)
 110)
@@ -15,4 +15,4 @@
 ->x->y.y)
 ->f.(->x.(f (x x)) ->x.(f (x x))))
 
-1
+001
