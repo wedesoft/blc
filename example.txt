@@ -6,7 +6,7 @@
 -> false
 ->     Y
 
-output
+(output (input true))
 
 10)
 110)
@@ -14,3 +14,5 @@ output
 ->x->y.x)
 ->x->y.y)
 ->f.(->x.(f (x x)) ->x.(f (x x))))
+
+1

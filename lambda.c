@@ -24,6 +24,7 @@ extern char *name_p;
 
 extern void yyrestart(FILE *input_file);
 extern void yyset_out(FILE *out_str);
+extern int yyparse(void);
 
 int yyretval;
 

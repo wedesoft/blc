@@ -2,6 +2,8 @@ AC_INIT(aclocal.m4)
 AM_INIT_AUTOMAKE([blc], [0.3.0])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
 AC_PROG_YACC
 AC_PROG_LEX
 AM_PROG_LIBTOOL
@@ -10,6 +12,9 @@ AC_CHECK_PROG(CAT,cat,cat)
 AC_CHECK_PROG(TOUCH,touch,touch)
 AC_CHECK_PROG(DIFF,diff,diff)
 AC_CHECK_PROG(PANDOC,pandoc,pandoc)
+AC_CHECK_HEADERS([assert.h stdio.h stdlib.h string.h])
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([fmemopen strcpy])
 
 dnl Switch for debug or release mode.
 AC_ARG_ENABLE(debug,
@@ -30,4 +35,3 @@ debug mode                           : $enable_debug"
 AC_OUTPUT(Makefile,
   echo "$info",
   info="$info")
-
