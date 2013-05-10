@@ -1,7 +1,6 @@
 TODO
 ====
 
-* local variables should shadow global variables
 * interpreter for output
 * test I/O with unlimited length
 * use BLC list as stack for garbage collector?

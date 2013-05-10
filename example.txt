@@ -6,7 +6,7 @@
 -> false
 ->     Y
 
-((Y ->f->in.(((in true) true) (f (in false)))) input)
+((Y ->f->input.(((input true) true) (f (input false)))) input)
 
 10)
 110)

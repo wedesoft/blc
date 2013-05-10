@@ -60,10 +60,8 @@ int find_var(const char *token)
   int retval = -1;
   char *p = names;
   while (p < name_p) {
-    if (retval >= 0)
-      retval++;
-    else if (!strcmp(p, token))
-      retval = 0;
+    if (retval >= 0) retval++;
+    if (!strcmp(p, token)) retval = 0;
     p += strlen(p) + 1;
   }
   return retval;
