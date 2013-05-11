@@ -201,6 +201,18 @@ int main(void)
   retval = retval | test_input_output("01 110 01 10 0000110 1", "1");// print out bit from input
   retval = retval | test_input_output("01 110 01 01 10 000010 0000110 00", "0");// print out second bit from input
   retval = retval | test_input_output("01 110 01 01 10 000010 0000110 01", "1");// print out second bit from input
+  retval = retval | test_input("010101010101000000000000010110000001010110111110"
+                               "111110011100110111101111110101100010000011000001"
+                               "0000100011100110100001110011010",
+                               "#<proc:110;#env=2>"); // recursive function reading until '1' or EOF
+  retval = retval | test_input("010101010101000000000000010110000001010110111110"
+                               "111110011100110111101111110101100010000011000001"
+                               "0000100011100110100001110011010 1",
+                               "#<proc:00110;#env=1>"); // recursive function reading until '1' or EOF
+  retval = retval | test_input("010101010101000000000000010110000001010110111110"
+                               "111110011100110111101111110101100010000011000001"
+                               "0000100011100110100001110011010 00001",
+                               "#<proc:00110;#env=1>"); // recursive function reading until '1' or EOF
   return retval;
 }
 
