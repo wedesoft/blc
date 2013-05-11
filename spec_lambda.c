@@ -78,8 +78,11 @@ int main(void)
   retval = retval | test_compile("(->x.x ->x.x)", "0100100010");
   retval = retval | test_compile("(10 ->x->y.x) 0", "011000001100");
   retval = retval | test_compile("(10)", "10");
-  retval = retval | test_compile("((((((->input->output->I->true->false->Y((Y->f->input.(((input true)true)(f(input false))))input)10)110)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
-  "0101010101010000000000000101100000010101101111101111100111001101111011111101011000100000110000010000100011100110100001110011010");
+  retval = retval | test_compile("((((((->input->output->I->true->false->Y."
+                                 "((Y->f->input.(((input true)true)(f(input false))))input)"
+                                 "10)110)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
+                                 "0101010101010000000000000101100000010101101111101111100111001101"
+                                 "111011111101011000100000110000010000100011100110100001110011010");
   return retval;
 }
 
