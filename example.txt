@@ -9,6 +9,7 @@
 ->   car
 ->   cdr
 ->     Y
+.
 
 ((Y ->f->input.(((input true) true) (f (input false)))) input)
 
