@@ -74,7 +74,7 @@ int find_var(const char *token)
   char sym[16];
 };
 
-%type <expr> expr subexpr lambda call
+%type <expr> expr subexpr lambda call abstraction
 %type <var> variable
 %token <sym> VAR
 %token ZERO ONE LAMBDA LP RP DOT
@@ -87,9 +87,9 @@ run: /* empty */
    | DOT  {} run
    ;
 
-expr: VAR                      { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda subexpr           { $$ = gc_push(make_lambda($2)); pop(); }
-    | LP call RP               { $$ = $2; }
+expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
+    | lambda     { $$ = $1; }
+    | LP call RP { $$ = $2; }
     ;
 
 call: subexpr      { $$ = $1; }
@@ -97,17 +97,21 @@ call: subexpr      { $$ = $1; }
     ;
 
 subexpr: expr
-       | variable           { $$ = gc_push(make_variable($1)); }
+       | variable { $$ = gc_push(make_variable($1)); }
        ;
 
 variable: ONE ZERO     { $$ = 0; }
         | ONE variable { $$ = $2 + 1; }
         ;
 
-lambda: LAMBDA         { push(""); }
-       | LAMBDA DOT     { push(""); }
-       | LAMBDA VAR     { push($2); }
-       | LAMBDA VAR DOT { push($2); }
-       ;
+lambda: LAMBDA DOT         { push(""); } subexpr { $$ = gc_push(make_lambda($4)); pop(); }
+      | LAMBDA abstraction { $$ = $2; }
+      | LAMBDA             { push(""); } lambda  { $$ = gc_push(make_lambda($3)); pop(); }
+      | LAMBDA VAR         { push($2); } lambda  { $$ = gc_push(make_lambda($4)); pop(); }
+      ;
+
+abstraction: VAR { push($1); } DOT subexpr { $$ = gc_push(make_lambda($4)); pop(); }
+           | VAR { push($1); } abstraction { $$ = gc_push(make_lambda($3)); pop(); }
+           ;
 
 %%

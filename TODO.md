@@ -1,7 +1,6 @@
 TODO
 ====
 
-* use BLC list as stack for garbage collector?
 * interpreter for output
 * Earley parser for bits?
 * implement *define*
