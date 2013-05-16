@@ -1,7 +1,6 @@
 (->input output.
 (->I.
-(->true.
-(->false.
+(->true false.
 (->if.
 (->null.
 (->pair.
@@ -14,12 +13,11 @@
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
 ->pair.(pair false))
 ->pair.(pair true))
-->first->second->bool.(bool first second))
+->first second bool.(bool first second))
 false)
-->bool->first->second.(bool first second))
-->x->y.y)
-->x->y.x)
-->x.x)
+->bool first second.(bool first second))
+->first second.first ->first second.second)
+->self.self)
 10 110)
 
 001
