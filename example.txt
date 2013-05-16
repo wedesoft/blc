@@ -2,19 +2,21 @@
 (->I.
 (->true.
 (->false.
+(->if.
 (->null.
 (->pair.
 (->first.
 (->second.
 (->Y.
 
-((Y ->f->input.(((first input) true) (f (second input)))) input)
+((Y ->f input.(if (first input) true (f (second input)))) input)
 
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
 ->pair.(pair false))
 ->pair.(pair true))
 ->first->second->bool.(bool first second))
 false)
+->bool->first->second.(bool first second))
 ->x->y.y)
 ->x->y.x)
 ->x.x)
