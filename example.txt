@@ -1,4 +1,4 @@
-((->input->output.
+(->input output.
 (->I.
 (->true.
 (->false.
@@ -18,6 +18,6 @@ false)
 ->x->y.y)
 ->x->y.x)
 ->x.x)
-10)110)
+10 110)
 
 001
