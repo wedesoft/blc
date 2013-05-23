@@ -1,8 +1,9 @@
 TODO
 ====
 
-* read from list
+* operator precedence for "."?
 * meta-circular interpreter
+* read from list
 * interpreter for output
 * Earley parser for bits?
 * implement *define*

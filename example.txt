@@ -9,11 +9,7 @@
 (->empty.
 (->Y.
 
-((Y ->f input.
-  (if (first input)
-   true
-   (f (second input))))
- input)
+(input (->first tail.(tail ->second rest.rest)))
 
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
 ->list.(list ->first->second->bool.false true))
@@ -26,4 +22,4 @@ false)
 ->self.self)
 10 110)
 
-001
+10
