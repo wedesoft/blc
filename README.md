@@ -26,6 +26,41 @@ The [REPL](http://en.wikipedia.org/wiki/Read-eval-print\_loop) can be started as
 
     ./run.sh
 
+Example
+-------
+
+Here's an example program consuming zeros until it encounters '1' or the end of input.
+
+    (->input output.
+    (->I.
+    (->true false.
+    (->if.
+    (->null.
+    (->pair.
+    (->first.
+    (->second.
+    (->empty.
+    (->Y.
+
+    ((Y ->f input.
+      (if (first input)
+       true
+       (f (second input))))
+     input)
+
+    ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
+    ->list.(list ->first->second->bool.false true))
+    ->pair.(pair false))
+    ->pair.(pair true))
+    ->first second bool.(bool first second))
+    false)
+    ->bool first second.(bool first second))
+    ->first second.first ->first second.second)
+    ->self.self)
+    10 110)
+
+    001
+
 Testing
 -------
 

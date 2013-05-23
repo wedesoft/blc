@@ -1,6 +1,8 @@
 TODO
 ====
 
+* read from list
+* meta-circular interpreter
 * interpreter for output
 * Earley parser for bits?
 * implement *define*
@@ -19,4 +21,3 @@ TODO
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
 * macros
-* read from list

@@ -9,7 +9,11 @@
 (->empty.
 (->Y.
 
-((Y ->f input.(if (first input) true (f (second input)))) input)
+((Y ->f input.
+  (if (first input)
+   true
+   (f (second input))))
+ input)
 
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
 ->list.(list ->first->second->bool.false true))
