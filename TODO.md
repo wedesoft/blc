@@ -1,7 +1,7 @@
 TODO
 ====
 
-* operator precedence for "."?
+* problem with reading input in meta-circular evaluator
 * meta-circular interpreter
 * read from list
 * interpreter for output

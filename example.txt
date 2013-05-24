@@ -5,19 +5,27 @@
 (->null.
 (->pair.
 (->first.
-(->second.
+(->rest.
 (->empty.
 (->Y.
 
-(input (->first tail.(tail ->second rest.rest)))
+(
+  (Y
+    ->self input environment.
+    (input (->head1 tail1.(tail1 ->head2 tail2.(head1
+      (head2 (self tail1 (rest environment)) (first environment))
+      true))))
+  )
+  input (pair input (pair output null))
+)
 
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
-->list.(list ->first->second->bool.false true))
+->list.(list ->first->rest->bool.false true))
 ->pair.(pair false))
 ->pair.(pair true))
-->first second bool.(bool first second))
+->first rest. ->select.(select first rest))
 false)
-->bool first second.(bool first second))
+->condition consequent alternative.(condition consequent alternative))
 ->first second.first ->first second.second)
 ->self.self)
 10 110)

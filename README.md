@@ -80,6 +80,7 @@ External Links
 * [De Bruijn index](http://en.wikipedia.org/wiki/De\_Bruijn\_index)
 * [Maru: a metacircular s-expression evaluator and compiler](http://piumarta.com/software/maru/) (also see [here](https://github.com/kstephens/maru))
 * [Nile Programming Language: Declarative Stream Processing for Media Applications](https://github.com/damelang/nile)
+* [Jitblt: Efficient Run-time Code Generation for Digital Compositing](http://www.vpri.org/pdf/tr2008002\_jitblt.pdf)
 * [Church encoding](http://en.wikipedia.org/wiki/Church\_encoding)
 * [Nokolisp](http://koti.welho.com/tnoko/Nokolisp.htm)
 * [LYSP: a tiny lightweight Lisp interpreter](http://piumarta.com/software/lysp/)
@@ -90,5 +91,4 @@ External Links
 * [Lisp as the Maxwell’s equations of software](http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/) (also see [here](http://gliese1337.blogspot.co.uk/2012/04/schrodingers-equation-of-software.html))
 * [STEPS Toward Espressive Programming Systems, 2011 Progress Report](http://www.vpri.org/pdf/tr2011004\_steps11.pdf)
 * [Kivy cross platform UI](http://kivy.org/)
-* [openFrameworks toolkit for creative coding](http://www.openframeworks.cc)
 * [Qemu open source processor emulator](http://qemu.org/Manual)
