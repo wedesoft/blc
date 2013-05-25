@@ -1,14 +1,15 @@
 TODO
 ====
 
-* problem with reading input in meta-circular evaluator
 * meta-circular interpreter
+    * implement read_expression
+    * problem with reading input in meta-circular evaluator
+    * implement *define*
+        * define *true*, *false*, *cons*, *empty*, ...
+        * place *eval* reading from input into lambda expression?
 * read from list
 * interpreter for output
 * Earley parser for bits?
-* implement *define*
-    * define *true*, *false*, *cons*, *empty*, ...
-    * place *eval* reading from input into lambda expression?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
 * implement meta-circular interpreter
