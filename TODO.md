@@ -2,11 +2,12 @@ TODO
 ====
 
 * meta-circular interpreter
-    * implement read_expression
+    * implement read_expression: input -> expression x input
     * problem with reading input in meta-circular evaluator
     * implement *define*
         * define *true*, *false*, *cons*, *empty*, ...
         * place *eval* reading from input into lambda expression?
+* error handling
 * read from list
 * interpreter for output
 * Earley parser for bits?
