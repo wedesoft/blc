@@ -4,16 +4,17 @@ TODO
 * meta-circular interpreter
     * implement read_expression: input -> expression x input
     * problem with reading input in meta-circular evaluator
-    * implement *define*
+    * implement *define/let*
         * define *true*, *false*, *cons*, *empty*, ...
         * place *eval* reading from input into lambda expression?
 * error handling
+* named parameters, structures
+* namespaces, contexts, objects and polymorphism
 * read from list
 * interpreter for output
 * Earley parser for bits?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
-* implement meta-circular interpreter
 * primitives (implement using quote and eval?)
     * quote, null, true, false, cons, (1 . ()), first, rest
     * define, list, eq?, not, null?, pair?, and, or, xor, if

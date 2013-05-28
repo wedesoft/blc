@@ -8,18 +8,25 @@
 (->rest.
 (->empty.
 (->Y.
+(->parse.
+(->eval.
 
-(
-  (Y
-    ->parse input.
-    (input (->head1 tail1.(tail1 ->head2 tail2.
-      (if head1
-        (if head2 (parse tail1) tail2)
-        (if head2 (parse (parse tail2)) (parse tail2))))))
-  )
-  input
-)
+(eval input (pair (parse input) (pair output null)))
 
+(Y
+  ->eval input environment.
+  (input (->head1 tail1.(tail1 ->head2 tail2.
+    (if head1
+      (if head2 (eval tail1 (rest environment)) (first environment))
+      (if head2 (eval (eval tail2 environment) environment) (eval tail2 environment))))))
+))
+(Y
+  ->parse input.
+  (input (->head1 tail1.(tail1 ->head2 tail2.
+    (if head1
+      (if head2 (parse tail1) tail2)
+      (if head2 (parse (parse tail2)) (parse tail2))))))
+))
 ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
 ->list.(list ->first->rest->bool.false true))
 ->pair.(pair false))
@@ -31,4 +38,4 @@ false)
 ->self.self)
 10 110)
 
-01 0010 10
+10
