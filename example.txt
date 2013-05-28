@@ -35,7 +35,11 @@
         (->var.(pair (pair head1 (first var)) (rest var)) (parse tail1))
         (pair (pair head1 (pair head2 null)) tail2))
       (if head2
-        (->fun.(pair (pair head1 (pair head2 (first fun))) (rest fun)) (parse tail2))
+        (->fun.
+          (->arg.
+            (pair (pair head1 (pair head2 (append (first fun) (first arg)))) (rest fun))
+            (parse (rest fun)))
+          (parse tail2))
         (->term.(pair (pair head1 (pair head2 (first term))) (rest term)) (parse tail2))
         )))))
 ))
