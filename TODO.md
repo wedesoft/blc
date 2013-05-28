@@ -10,6 +10,7 @@ TODO
 * error handling
 * named parameters, structures
 * namespaces, contexts, objects and polymorphism
+  (first list) -> list.first
 * read from list
 * interpreter for output
 * Earley parser for bits?
