@@ -378,9 +378,13 @@ int read_expression(int input)
     int b2 = read_bit(second(b1));
     if (is_false(first(b2)))
       retval = read_lambda(second(b2));
-    else if (is_true(first(b2)))
-      retval = read_call(second(b2));
-    else
+    else if (is_true(first(b2))) {
+      int b3 = read_bit(second(b2));
+      if (is_true(first(b3)))
+        retval = read_call(second(b3));
+      else
+        retval = NIL;
+    } else
       retval = NIL;
   } else if (is_true(first(b1)))
     retval = read_variable(second(b1));
@@ -417,7 +421,7 @@ void print_lambda(int lambda, FILE *file)
 
 void print_call(int function, int argument, FILE *file)
 {
-  fputs("01", file);
+  fputs("011", file);
   print_expression(function, file);
   print_expression(argument, file);
 }
