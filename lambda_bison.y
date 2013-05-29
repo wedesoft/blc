@@ -77,7 +77,7 @@ int find_var(const char *token)
 %type <expr> expr subexpr lambda call abstraction
 %type <var> variable
 %token <sym> VAR
-%token ZERO ONE LAMBDA LP RP DOT
+%token ZERO ONE LAMBDA LP RP DOT DEF
 
 %%
 run: /* empty */
@@ -87,9 +87,10 @@ run: /* empty */
    | DOT  {} run
    ;
 
-expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda     { $$ = $1; }
-    | LP call RP { $$ = $2; }
+expr: VAR             { $$ = gc_push(make_variable(find_var($1))); }
+    | lambda          { $$ = $1; }
+    | LP call RP      { $$ = $2; }
+    | DEF VAR subexpr { push($2); } subexpr { $$ = gc_push(make_call(gc_push(make_lambda($5)), $3)); pop(); }
     ;
 
 call: subexpr      { $$ = $1; }

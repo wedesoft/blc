@@ -1,6 +1,7 @@
 TODO
 ====
 
+* just modify lambda_bison.y (i.e. don't introduce 011)?
 * meta-circular interpreter
     * implement read_expression: input -> expression x input
     * problem with reading input in meta-circular evaluator

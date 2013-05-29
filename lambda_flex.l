@@ -29,6 +29,7 @@ extern int yyretval;
 "("                  { return LP; }
 ")"                  { return RP; }
 "."                  { return DOT; }
+":"                  { return DEF; }
 [a-zA-Z][a-zA-Z0-9]* { strcpy(yylval.sym, yytext); return VAR; }
 <<EOF>>              { return 0; }
 [ \t\n]+             {}
