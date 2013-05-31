@@ -23,9 +23,11 @@
 
 #define NIL -1
 
-typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT, OUTPUT } type_t;
+typedef enum { VARIABLE, LAMBDA, CALL, PROC, DEFINITION, WRAP, INPUT, OUTPUT } type_t;
 
 typedef struct { int function; int argument; } call_t;
+
+typedef struct { int term; int body; } definition_t;
 
 typedef struct { int function; int environment; } proc_t;
 
@@ -41,6 +43,7 @@ typedef struct {
     int variable;
     int lambda;
     call_t call;
+    definition_t definition;
     proc_t proc;
     wrap_t wrap;
     input_t input;
@@ -63,6 +66,7 @@ int is_type(int cell, int t) { return is_nil(cell) ? 0 : type(cell) == t; }
 int is_variable(int cell) { return is_type(cell, VARIABLE); }
 int is_lambda(int cell) { return is_type(cell, LAMBDA); }
 int is_call(int cell) { return is_type(cell, CALL); }
+int is_definition(int cell) { return is_type(cell, DEFINITION); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
@@ -71,6 +75,8 @@ int is_output(int cell) { return is_type(cell, OUTPUT); }
 int variable(int cell) { return is_variable(cell) ? cells[cell].variable : NIL; }
 int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : is_lambda(cell) ? cells[cell].lambda : NIL; }
 int argument(int cell) { return is_call(cell) ? cells[cell].call.argument : NIL; }
+int term(int cell) { return is_definition(cell) ? cells[cell].definition.term : NIL; }
+int body(int cell) { return is_definition(cell) ? cells[cell].definition.body : NIL; }
 int unwrap(int cell) { return is_wrap(cell) ? cells[cell].wrap.unwrap : NIL; }
 int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : is_output(cell) ? cells[cell].output.file : NULL; }
@@ -107,6 +113,10 @@ void mark(int expression)
         case CALL:
           mark(function(expression));
           mark(argument(expression));
+          break;
+        case DEFINITION:
+          mark(term(expression));
+          mark(body(expression));
           break;
         case PROC:
           mark(function(expression));
@@ -192,6 +202,24 @@ int make_call(int function, int argument)
       cells[retval].type = CALL;
       cells[retval].call.function = function;
       cells[retval].call.argument = argument;
+    };
+    gc_pop(2);
+  } else
+    retval = NIL;
+  return retval;
+}
+
+int make_definition(int term, int body)
+{
+  int retval;
+  if (!is_nil(term) && !is_nil(body)) {
+    gc_push(term);
+    gc_push(body);
+    retval = cell();
+    if (!is_nil(retval)) {
+      cells[retval].type = DEFINITION;
+      cells[retval].definition.term = term;
+      cells[retval].definition.body = body;
     };
     gc_pop(2);
   } else
@@ -370,6 +398,16 @@ int read_call(int input)
   return retval;
 }
 
+int read_definition(int input)
+{
+  int retval;
+  int term = gc_push(read_expression(input));
+  int body = gc_push(read_expression(second(term)));
+  retval = make_pair(make_definition(first(term), first(body)), second(body));
+  gc_pop(2);
+  return retval;
+}
+
 int read_expression(int input)
 {
   int retval;
@@ -383,7 +421,7 @@ int read_expression(int input)
       if (is_true(first(b3)))
         retval = read_call(second(b3));
       else
-        retval = NIL;
+        retval = read_definition(second(b3));
     } else
       retval = NIL;
   } else if (is_true(first(b1)))
@@ -424,6 +462,13 @@ void print_call(int function, int argument, FILE *file)
   fputs("011", file);
   print_expression(function, file);
   print_expression(argument, file);
+}
+
+void print_definition(int term, int body, FILE *file)
+{
+  fputs("010", file);
+  print_expression(term, file);
+  print_expression(body, file);
 }
 
 void print_proc(int function, int environment, FILE *file)
@@ -469,6 +514,9 @@ void print_expression(int expression, FILE *file)
     case CALL:
       print_call(function(expression), argument(expression), file);
       break;
+    case DEFINITION:
+      print_definition(term(expression), body(expression), file);
+      break;
     case PROC:
       print_proc(function(expression), environment(expression), file);
       break;
@@ -494,7 +542,6 @@ int lookup(int variable, int environment)
 int eval_expression(int expression, int local_environment)
 {
   int retval;
-  int eval_fun;
   gc_push(expression);
   gc_push(local_environment);
   if (!is_nil(expression) && !is_nil(local_environment)) {
@@ -509,8 +556,8 @@ int eval_expression(int expression, int local_environment)
     case LAMBDA:
       retval = make_proc(function(expression), local_environment);
       break;
-    case CALL:
-      eval_fun = gc_push(eval_expression(function(expression), local_environment));
+    case CALL: {
+      int eval_fun = gc_push(eval_expression(function(expression), local_environment));
       if (is_proc(eval_fun)) {
         int wrap_argument = gc_push(make_wrap(argument(expression), local_environment));
         int call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
@@ -524,7 +571,13 @@ int eval_expression(int expression, int local_environment)
       else
         retval = eval_fun;
       gc_pop(1);
-      break;
+      break; }
+    case DEFINITION: {
+      int wrap_term = gc_push(make_wrap(term(expression), local_environment));
+      int body_environment = gc_push(make_pair(wrap_term, local_environment));
+      retval = eval_expression(body(expression), body_environment);
+      gc_pop(2);
+      break; }
     case WRAP:
       retval = eval_expression(unwrap(expression), environment(expression));
       break;

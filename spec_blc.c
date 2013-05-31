@@ -170,12 +170,15 @@ int main(void)
   retval = retval | test_eval("011 10 110", "10");// ignore argument
   retval = retval | test_eval("011 110 10", "110");// ignore argument
   retval = retval | test_eval("011 0010 1110", "1110");// apply identity function
+  retval = retval | test_eval("010 1110 10", "1110");// make a definition
   retval = retval | test_eval("011 000010 0010", "#<proc:10;#env=1>");// pass one argument to false
   retval = retval | test_eval("011 0000110 0010", "#<proc:110;#env=1>");// pass one argument to true
   retval = retval | test_eval("011 011 000010 0000110 000010", "#<proc:0010;#env=0>");// pass two arguments to false
   retval = retval | test_eval("011 011 0000110 0000110 000010", "#<proc:00110;#env=0>");// pass two arguments to true
+  retval = retval | test_eval("010 0000110 010 000010 10", "#<proc:0010;#env=1>");// select last definition
+  retval = retval | test_eval("010 0000110 010 000010 110", "#<proc:00110;#env=0>");// select first definition
   retval = retval | test_eval("011 011 000010 110 10", "10");// select variable with false
-  retval = retval | test_eval("011 00 011 011 10 1110 110 000010", "10");
+  retval = retval | test_eval("011 00 011 011 10 1110 110 000010", "10");// function selecting a global variable
   retval = retval | test_eval("011 011 0000110 110 10", "110");// select variable with true
   retval = retval | test_eval("011 00 011 011 10 1110 110 0000110", "110");// function selecting a global variable
   retval = retval | test_eval("011 011 000010 001110 00110", "#<proc:110;#env=0>");
