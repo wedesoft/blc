@@ -21,9 +21,17 @@
 #endif
 #include <stdio.h>
 
+#define NIL -1
+
 int gc_push(int expression);
 
 void gc_pop(int n);
+
+int is_definition(int cell);
+
+int term(int cell);
+
+int body(int cell);
 
 int read_expression(int input);
 
@@ -38,6 +46,8 @@ int make_variable(int variable);
 int make_lambda(int lambda);
 
 int make_call(int function, int argument);
+
+int make_definition(int term, int body);
 
 int make_input(FILE *file);
 

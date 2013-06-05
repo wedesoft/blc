@@ -21,8 +21,6 @@
 #define MAX_CELLS 16384
 #define MAX_REGISTERS 65536
 
-#define NIL -1
-
 typedef enum { VARIABLE, LAMBDA, CALL, PROC, DEFINITION, WRAP, INPUT, OUTPUT } type_t;
 
 typedef struct { int function; int argument; } call_t;

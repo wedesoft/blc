@@ -90,7 +90,7 @@ run: /* empty */
 expr: VAR             { $$ = gc_push(make_variable(find_var($1))); }
     | lambda          { $$ = $1; }
     | LP call RP      { $$ = $2; }
-    | DEF VAR subexpr { push($2); } subexpr { $$ = gc_push(make_call(gc_push(make_lambda($5)), $3)); pop(); }
+    | DEF VAR subexpr { push($2); } expr { $$ = gc_push(make_call(gc_push(make_lambda($5)), $3)); pop(); }
     ;
 
 call: subexpr      { $$ = $1; }

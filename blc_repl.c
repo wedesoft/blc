@@ -15,17 +15,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 #include "blc.h"
 
+int copy_definitions(int previous_expr, int expression)
+{
+  int retval;
+  gc_push(previous_expr);
+  gc_push(expression);
+  if (is_definition(previous_expr)) {
+    int subexpr = gc_push(copy_definitions(body(previous_expr), expression));
+    retval = make_pair(make_definition(term(previous_expr), first(subexpr)), second(subexpr));
+    gc_pop(1);
+  } else
+    retval = expression;
+  gc_pop(2);
+  return retval;
+}
+
 int main(void)
 {
+  int previous_expr = NIL;
   while (1) {
+    gc_push(previous_expr);
     int input = gc_push(make_input(stdin));
     int output = gc_push(make_output(stdout));
-    int expression = gc_push(read_expression(input));
+    int expression = gc_push(copy_definitions(previous_expr,
+                                              read_expression(input)));
     if (feof(stdin)) break;
-    int environment = gc_push(make_pair(second(expression), make_pair(output, gc_push(make_false()))));
+    int environment = gc_push(make_pair(second(expression),
+                                        make_pair(output, gc_push(make_false()))));
     print_expression(eval_expression(first(expression), environment), stdout);
     fputc('\n', stdout);
-    gc_pop(5);
+    previous_expr = first(expression);
+    gc_pop(6);
   };
   return 0;
 }
