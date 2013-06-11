@@ -92,3 +92,6 @@ External Links
 * [STEPS Toward Espressive Programming Systems, 2011 Progress Report](http://www.vpri.org/pdf/tr2011004\_steps11.pdf)
 * [Kivy cross platform UI](http://kivy.org/)
 * [Qemu open source processor emulator](http://qemu.org/Manual)
+* [Archon: Directly Reflective Meta-Programming](http://homepage.divms.uiowa.edu/~astump/papers/archon.pdf)
+* [Wand: The Theory of Fexprs is Trivial](ftp://ftp.ccs.neu.edu/pub/people/wand/papers/fexprs.ps)
+* [Mogensen: Efficient Self-Interpretation in Lambda Calculus](http://repository.readscheme.org/ftp/papers/topps/D-128.pdf)

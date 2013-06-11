@@ -1,19 +1,21 @@
 TODO
 ====
 
-* just modify lambda_bison.y (i.e. don't introduce 011)?
-* meta-circular interpreter
-    * implement read_expression: input -> expression x input
-    * problem with reading input in meta-circular evaluator
-    * implement *define/let*
-        * define *true*, *false*, *cons*, *empty*, ...
-        * place *eval* reading from input into lambda expression?
+* interpreter for output
+  011 011 011 011 011 011 011 ->a.a           000000000010 1110 11110 111110 1111110 11111110 111111110
+  111110
+  011 011 011 011 011 011 011 ->a->b.a        000000000010 1110 11110 111110 1111110 11111110 111111110
+  1111110
+  011 011 011 011 011 011 011 ->a->b.b        000000000010 1110 11110 111110 1111110 11111110 111111110
+  10
+  011 011 011 011 011 011 011 ->a b c.(a b c) 000000000010 1110 11110 111110 1111110 11111110 111111110
+  111110
+* continuation passing style, make environment visible?
 * error handling
 * named parameters, structures
 * namespaces, contexts, objects and polymorphism
   (first list) -> list.first
 * read from list
-* interpreter for output
 * Earley parser for bits?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
