@@ -28,7 +28,7 @@ noinst_DATA = README.html TODO.html
 
 BUILT_SOURCES = lambda_bison.h
 
-EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING TODO run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
 
 test: spec_blc.tmp spec_lambda.tmp
 

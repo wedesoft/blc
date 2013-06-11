@@ -557,7 +557,7 @@ int eval_expression(int expression, int local_environment)
     case CALL: {
       int eval_fun = gc_push(eval_expression(function(expression), local_environment));
       if (is_proc(eval_fun)) {
-        int wrap_argument = gc_push(make_wrap(argument(expression), local_environment));
+        int wrap_argument = make_wrap(argument(expression), local_environment);
         int call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
         retval = eval_expression(function(eval_fun), call_environment);
         gc_pop(1);
