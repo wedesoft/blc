@@ -31,33 +31,20 @@ Example
 
 Here's an example program consuming zeros until it encounters '1' or the end of input.
 
-    (->input output.
-    (->I.
-    (->true false.
-    (->if.
-    (->null.
-    (->pair.
-    (->first.
-    (->second.
-    (->empty.
-    (->Y.
+    :input  10
+    :output 1110
+    :I      ->self.self
+    :true   ->first->second.first
+    :false  ->first->second.second
+    :if     ->condition consequent alternative.(condition consequent alternative)
+    :null   false
+    :pair   ->first rest. ->select.(select first rest)
+    :first  ->pair.(pair true)
+    :rest   ->pair.(pair false)
+    :empty  ->list.(list ->first->rest->bool.false true)
+    :Y      ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
 
-    ((Y ->f input.
-      (if (first input)
-       true
-       (f (second input))))
-     input)
-
-    ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg))))
-    ->list.(list ->first->second->bool.false true))
-    ->pair.(pair false))
-    ->pair.(pair true))
-    ->first second bool.(bool first second))
-    false)
-    ->bool first second.(bool first second))
-    ->first second.first ->first second.second)
-    ->self.self)
-    10 110)
+    ((Y ->f->input.((first input) true (f (rest input)))) input)
 
     001
 
