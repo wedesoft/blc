@@ -23,6 +23,8 @@
 
 #define NIL -1
 
+extern int n_registers;
+
 int gc_push(int expression);
 
 void gc_pop(int n);

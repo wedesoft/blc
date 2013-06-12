@@ -1,15 +1,9 @@
 TODO
 ====
 
-* interpreter for output
-  011 011 011 011 011 011 011 ->a.a           000000000010 1110 11110 111110 1111110 11111110 111111110
-  111110
-  011 011 011 011 011 011 011 ->a->b.a        000000000010 1110 11110 111110 1111110 11111110 111111110
-  1111110
-  011 011 011 011 011 011 011 ->a->b.b        000000000010 1110 11110 111110 1111110 11111110 111111110
-  10
-  011 011 011 011 011 011 011 ->a b c.(a b c) 000000000010 1110 11110 111110 1111110 11111110 111111110
-  111110
+* recursive *print\_expression* using local environments
+    * interpreter for output
+* direct integration of BLC (no need for definitions)?
 * continuation passing style, make environment visible?
 * error handling
 * named parameters, structures

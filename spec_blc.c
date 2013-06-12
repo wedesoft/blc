@@ -44,6 +44,7 @@ int test_false(char *specification)
     fprintf(stderr, "Result of creating \"false\" is \"%s\" but should be \"%s\"\n", result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -56,6 +57,7 @@ int test_true(char *specification)
     fprintf(stderr, "Result of creating \"true\" is \"%s\" but should be \"%s\"\n", result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -68,6 +70,7 @@ int test_read_write(char *command, char *specification)
     fprintf(stderr, "Result of parsing \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -82,6 +85,7 @@ int test_eval(char *command, char *specification)
     retval = 1;
   };
   gc_pop(1);
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -100,6 +104,7 @@ int test_input(char *command, char *specification)
     fprintf(stderr, "Result of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -118,6 +123,7 @@ int test_output(char *command, char *specification)
     fprintf(stderr, "Output of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
@@ -140,6 +146,7 @@ int test_input_output(char *command, char *specification)
     fprintf(stderr, "Output of evaluating \"%s\" is \"%s\" but should be \"%s\"\n", command, result, specification);
     retval = 1;
   };
+  assert(n_registers == 0);
   return retval;
 }
 
