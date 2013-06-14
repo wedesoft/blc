@@ -81,7 +81,7 @@ int find_var(const char *token)
 
 %%
 run: /* empty */
-   | expr { print_expression($1, yyout); fflush(yyout); gc_pop(n_registers); } run
+   | expr { print_expression(normalise($1, NIL, 0, 0), yyout); fflush(yyout); gc_pop(n_registers); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run
    | ONE  { fputc('1', yyout); fflush(yyout); } run
    | DOT  {} run

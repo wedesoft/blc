@@ -22,7 +22,7 @@ int copy_definitions(int previous_expr, int expression)
   gc_push(expression);
   if (is_definition(previous_expr)) {
     int subexpr = gc_push(copy_definitions(body(previous_expr), expression));
-    retval = make_pair(make_definition(term(previous_expr), first(subexpr)), second(subexpr));
+    retval = make_pair(make_definition(term(previous_expr), first(subexpr)), rest(subexpr));
     gc_pop(1);
   } else
     retval = expression;
@@ -40,9 +40,10 @@ int main(void)
     int expression = gc_push(copy_definitions(previous_expr,
                                               read_expression(input)));
     if (feof(stdin)) break;
-    int environment = gc_push(make_pair(second(expression),
+    int environment = gc_push(make_pair(rest(expression),
                                         make_pair(output, gc_push(make_false()))));
-    print_expression(eval_expression(first(expression), environment), stdout);
+    print_expression(normalise(eval_expression(first(expression), environment),
+                               environment, 0, 0), stdout);
     fputc('\n', stdout);
     previous_expr = first(expression);
     gc_pop(6);

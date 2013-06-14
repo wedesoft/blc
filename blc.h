@@ -39,9 +39,9 @@ int read_expression(int input);
 
 int eval_expression(int expression, int local_env);
 
-void print_expression(int expression, FILE *file);
+int normalise(int expression, int local_environment, int local_depth, int depth);
 
-void print_variable(int variable, FILE *file);
+void print_expression(int expression, FILE *file);
 
 int make_variable(int variable);
 
@@ -59,11 +59,11 @@ int make_false(void);
 
 int make_true(void);
 
-int make_pair(int first, int second);
+int make_pair(int first, int rest);
 
 int first(int list);
 
-int second(int list);
+int rest(int list);
 
 #endif
 

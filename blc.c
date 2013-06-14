@@ -343,13 +343,13 @@ int write_bit(int output, int bit)
   return retval;
 }
 
-int make_pair(int first, int second)
+int make_pair(int first, int rest)
 {
   int retval;
-  if (!is_nil(first) && !is_nil(second)) {
+  if (!is_nil(first) && !is_nil(rest)) {
     gc_push(first);
-    gc_push(second);
-    retval = make_lambda(make_call(make_call(make_variable(0), first), second));
+    gc_push(rest);
+    retval = make_lambda(make_call(make_call(make_variable(0), first), rest));
     gc_pop(2);
   } else
     retval = NIL;
@@ -360,16 +360,16 @@ int is_pair(int expression) { return variable(function(function(function(express
 
 int first(int list) { return argument(function(function(list))); }
 
-int second(int list) { return argument(function(list)); }
+int rest(int list) { return argument(function(list)); }
 
 int read_variable(int input)
 {
   int retval;
   int b = gc_push(read_bit(gc_push(input)));
   if (is_false(first(b)))
-    retval = make_pair(make_variable(0), second(b));
+    retval = make_pair(make_variable(0), rest(b));
   else if (is_true(first(b))) {
-    retval = read_variable(second(b));
+    retval = read_variable(rest(b));
     if (!is_nil(retval)) cells[first(retval)].variable++;
   } else
     retval = NIL;
@@ -381,7 +381,7 @@ int read_lambda(int input)
 {
   int retval;
   int term = gc_push(read_expression(input));
-  retval = make_pair(make_lambda(first(term)), second(term));
+  retval = make_pair(make_lambda(first(term)), rest(term));
   gc_pop(1);
   return retval;
 }
@@ -390,8 +390,8 @@ int read_call(int input)
 {
   int retval;
   int function = gc_push(read_expression(input));
-  int argument = gc_push(read_expression(second(function)));
-  retval = make_pair(make_call(first(function), first(argument)), second(argument));
+  int argument = gc_push(read_expression(rest(function)));
+  retval = make_pair(make_call(first(function), first(argument)), rest(argument));
   gc_pop(2);
   return retval;
 }
@@ -400,8 +400,8 @@ int read_definition(int input)
 {
   int retval;
   int term = gc_push(read_expression(input));
-  int body = gc_push(read_expression(second(term)));
-  retval = make_pair(make_definition(first(term), first(body)), second(body));
+  int body = gc_push(read_expression(rest(term)));
+  retval = make_pair(make_definition(first(term), first(body)), rest(body));
   gc_pop(2);
   return retval;
 }
@@ -411,19 +411,19 @@ int read_expression(int input)
   int retval;
   int b1 = read_bit(gc_push(input));
   if (is_false(first(b1))) {
-    int b2 = read_bit(second(b1));
+    int b2 = read_bit(rest(b1));
     if (is_false(first(b2)))
-      retval = read_lambda(second(b2));
+      retval = read_lambda(rest(b2));
     else if (is_true(first(b2))) {
-      int b3 = read_bit(second(b2));
+      int b3 = read_bit(rest(b2));
       if (is_true(first(b3)))
-        retval = read_call(second(b3));
+        retval = read_call(rest(b3));
       else
-        retval = read_definition(second(b3));
+        retval = read_definition(rest(b3));
     } else
       retval = NIL;
   } else if (is_true(first(b1)))
-    retval = read_variable(second(b1));
+    retval = read_variable(rest(b1));
   else
     retval = NIL;
   gc_pop(1);
@@ -436,8 +436,13 @@ int length(int list)
   if (!is_pair(list))
     retval = 0;
   else
-    retval = 1 + length(second(list));
+    retval = 1 + length(rest(list));
   return retval;
+}
+
+int lookup(int variable, int environment)
+{
+  return variable > 0 ? lookup(variable - 1, rest(environment)) : first(environment);
 }
 
 void print_variable(int variable, FILE *file)
@@ -449,54 +454,58 @@ void print_variable(int variable, FILE *file)
     fputc('0', file);
 }
 
-void print_lambda(int lambda, FILE *file)
+int normalise(int expression, int local_environment, int local_depth, int depth)
 {
-  fputs("00", file);
-  print_expression(lambda, file);
-}
-
-void print_call(int function, int argument, FILE *file)
-{
-  fputs("011", file);
-  print_expression(function, file);
-  print_expression(argument, file);
-}
-
-void print_definition(int term, int body, FILE *file)
-{
-  fputs("010", file);
-  print_expression(term, file);
-  print_expression(body, file);
-}
-
-void print_proc(int function, int environment, FILE *file)
-{
-  fputs("#<proc:", file);
-  print_expression(function, file);
-  fprintf(file, ";#env=%d>", length(environment));
-}
-
-void print_wrap(int unwrap, int environment, FILE *file)
-{
-  fputs("#<wrap:", file);
-  print_expression(unwrap, file);
-  fprintf(file, ";#env=%d>", length(environment));
-}
-
-void print_input(int input, FILE *file)
-{
-  if (is_nil(used(input)))
-    fputs("#<input>", file);
-  else
-    print_expression(used(input), file);
-}
-
-void print_output(int output, FILE *file)
-{
-  if (is_nil(used(output)))
-    fputs("#<output>", file);
-  else
-    fputs("#<output(used)>", file);
+  int retval;
+  gc_push(expression);
+  gc_push(local_environment);
+  if (!is_nil(expression)) {
+    switch (type(expression)) {
+    case VARIABLE:
+      if (variable(expression) < local_depth)
+        retval = expression;
+      else {
+        int value = lookup(variable(expression) - local_depth, local_environment);
+        if (!is_nil(value))
+          retval = normalise(value, local_environment, local_depth, depth);
+        else
+          retval = make_variable(variable(expression) + depth - local_depth);
+      };
+      break;
+    case LAMBDA:
+      retval = make_lambda(normalise(function(expression), local_environment, local_depth + 1, depth + 1));
+      break;
+    case CALL: {
+      int fun = gc_push(normalise(function(expression), local_environment, local_depth, depth));
+      int arg = gc_push(normalise(argument(expression), local_environment, local_depth, depth));
+      retval = make_call(fun, arg);
+      gc_pop(2);
+      break; }
+    case DEFINITION: {
+      int def = gc_push(normalise(term(expression), local_environment, local_depth, depth));
+      int expr = gc_push(normalise(body(expression), local_environment, local_depth + 1, depth + 1));
+      retval = make_definition(def, expr);
+      gc_pop(2);
+      break; }
+    case PROC:
+      retval = make_lambda(normalise(function(expression), environment(expression), 1, depth + 1));
+      break;
+    case WRAP:
+      retval = normalise(unwrap(expression), environment(expression), 0, depth);
+      break;
+    case INPUT:
+      retval = expression;
+      break;
+    case OUTPUT:
+      retval = expression;
+      break;
+    default:
+      retval = NIL;
+    }
+  } else
+    retval = NIL;
+  gc_pop(2);
+  return retval;
 }
 
 void print_expression(int expression, FILE *file)
@@ -507,34 +516,34 @@ void print_expression(int expression, FILE *file)
       print_variable(variable(expression), file);
       break;
     case LAMBDA:
-      print_lambda(function(expression), file);
+      fputs("00", file);
+      print_expression(function(expression), file);
       break;
     case CALL:
-      print_call(function(expression), argument(expression), file);
+      fputs("011", file);
+      print_expression(function(expression), file);
+      print_expression(argument(expression), file);
       break;
     case DEFINITION:
-      print_definition(term(expression), body(expression), file);
-      break;
-    case PROC:
-      print_proc(function(expression), environment(expression), file);
-      break;
-    case WRAP:
-      print_wrap(unwrap(expression), environment(expression), file);
+      fputs("010", file);
+      print_expression(term(expression), file);
+      print_expression(body(expression), file); // test?
       break;
     case INPUT:
-      print_input(expression, file);
+      if (is_nil(used(expression)))
+        fputs("#<input>", file);
+      else
+        fputs("#<input(used)>", file);
       break;
     case OUTPUT:
-      print_output(expression, file);
+      if (is_nil(used(expression)))
+        fputs("#<output>", file);
+      else
+        fputs("#<output(used)>", file);
       break;
     }
   } else
     fputs("#<err>", file);
-}
-
-int lookup(int variable, int environment)
-{
-  return variable > 0 ? lookup(variable - 1, second(environment)) : first(environment);
 }
 
 int eval_expression(int expression, int local_environment)

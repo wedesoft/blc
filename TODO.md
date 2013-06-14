@@ -1,7 +1,7 @@
 TODO
 ====
 
-* recursive *print\_expression* using local environments
+* resolve procs and wraps before printing (normalise)
     * interpreter for output
 * direct integration of BLC (no need for definitions)?
 * continuation passing style, make environment visible?
