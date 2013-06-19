@@ -82,3 +82,4 @@ External Links
 * [Archon: Directly Reflective Meta-Programming](http://homepage.divms.uiowa.edu/~astump/papers/archon.pdf)
 * [Wand: The Theory of Fexprs is Trivial](ftp://ftp.ccs.neu.edu/pub/people/wand/papers/fexprs.ps)
 * [Mogensen: Efficient Self-Interpretation in Lambda Calculus](http://repository.readscheme.org/ftp/papers/topps/D-128.pdf)
+* [Peck: Theory Time - A pure lambda-calculus foundation for prototype-based OOP](http://blog.suspended-chord.info/2012/10/19/theory-time-a-pure-lambda-calculus-foundation-for-prototype-based-oop/)
