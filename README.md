@@ -33,18 +33,18 @@ Here's an example program consuming zeros until it encounters '1' or the end of 
 
     :input  10
     :output 1110
-    :I      ->self.self
-    :true   ->first->second.first
-    :false  ->first->second.second
-    :if     ->condition consequent alternative.(condition consequent alternative)
+    :I      λself.self
+    :true   λfirst second.first
+    :false  λfirst second.second
+    :if     λcondition consequent alternative.(condition consequent alternative)
     :null   false
-    :pair   ->first rest. ->select.(select first rest)
-    :first  ->pair.(pair true)
-    :rest   ->pair.(pair false)
-    :empty  ->list.(list ->first->rest->bool.false true)
-    :Y      ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
+    :pair   λfirst rest. λselect.(select first rest)
+    :first  λpair.(pair true)
+    :rest   λpair.(pair false)
+    :empty  λlist.(list λfirst rest bool.false true)
+    :Y      λself.(λarg.(self (arg arg)) λarg.(self (arg arg)))
 
-    ((Y ->f->input.((first input) true (f (rest input)))) input)
+    ((Y λf input.((first input) true (f (rest input)))) input)
 
     001
 
