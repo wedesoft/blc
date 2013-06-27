@@ -2,8 +2,9 @@ TODO
 ====
 
 * primitives (implement using quote and eval?)
-    * quote, null, true, false, cons, (1 . ()), first, rest
-    * define, list, eq?, not, null?, pair?, and, or, xor, if
+    * eq?
+    * quote, (1 . ())
+    * list, null?, pair?, xor
     * member?, append, assoc, cond, equal?
     * eval, quasiquote, quote
     * sublis (substitution)

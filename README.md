@@ -36,6 +36,9 @@ Here's an example program consuming zeros until it encounters '1' or the end of 
     I      = λself.self
     true   = λfirst second.first
     false  = λfirst second.second
+    not    = λvalue.(value false true)
+    or     = λx y.(x true y)
+    and    = λx y.(x y false)
     if     = λcondition consequent alternative.(condition consequent alternative)
     null   = false
     pair   = λfirst rest. λselect.(select first rest)
