@@ -76,6 +76,7 @@ int main(void)
   retval = retval | test_compile("f= ->->x.x f", "01000001010");
   retval = retval | test_compile("f =->->x.x f", "01000001010");
   retval = retval | test_compile("f=->->x.x f f", "0100000101010");
+  retval = retval | test_compile("->x.y=x y", "000101010");
   retval = retval | test_compile("(->->x.x ->y.y)", "0110000100010");
   retval = retval | test_compile("(->->x.x ->x.x)", "0110000100010");
   retval = retval | test_compile("((->x->y.x input) output)", "011011000011010110");
