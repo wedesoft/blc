@@ -43,7 +43,7 @@ int main(void)
     int environment = gc_push(make_pair(rest(expression),
                                         make_pair(output, gc_push(make_false()))));
     print_expression(normalise(eval_expression(first(expression), environment),
-                               environment, 0, 0), stdout);
+                               NIL, 0, 2), stdout);
     fputc('\n', stdout);
     previous_expr = first(expression);
     gc_pop(6);

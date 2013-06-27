@@ -31,18 +31,18 @@ Example
 
 Here's an example program consuming zeros until it encounters '1' or the end of input.
 
-    :input  10
-    :output 1110
-    :I      λself.self
-    :true   λfirst second.first
-    :false  λfirst second.second
-    :if     λcondition consequent alternative.(condition consequent alternative)
-    :null   false
-    :pair   λfirst rest. λselect.(select first rest)
-    :first  λpair.(pair true)
-    :rest   λpair.(pair false)
-    :empty  λlist.(list λfirst rest bool.false true)
-    :Y      λself.(λarg.(self (arg arg)) λarg.(self (arg arg)))
+    input  = 10
+    output = 1110
+    I      = λself.self
+    true   = λfirst second.first
+    false  = λfirst second.second
+    if     = λcondition consequent alternative.(condition consequent alternative)
+    null   = false
+    pair   = λfirst rest. λselect.(select first rest)
+    first  = λpair.(pair true)
+    rest   = λpair.(pair false)
+    empty  = λlist.(list λfirst rest bool.false true)
+    Y      = λself.(λarg.(self (arg arg)) λarg.(self (arg arg)))
 
     ((Y λf input.((first input) true (f (rest input)))) input)
 

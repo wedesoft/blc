@@ -1,11 +1,15 @@
 TODO
 ====
 
+* primitives (implement using quote and eval?)
+    * quote, null, true, false, cons, (1 . ()), first, rest
+    * define, list, eq?, not, null?, pair?, and, or, xor, if
+    * member?, append, assoc, cond, equal?
+    * eval, quasiquote, quote
+    * sublis (substitution)
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first
-* implement object system
-* read from list
 * read from list/print to list
   (output true)
   1#<output>
@@ -24,12 +28,6 @@ TODO
 * Earley parser for bits?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
 * add input, eval, and quote without introducing new types?
-* primitives (implement using quote and eval?)
-    * quote, null, true, false, cons, (1 . ()), first, rest
-    * define, list, eq?, not, null?, pair?, and, or, xor, if
-    * member?, append, assoc, cond, equal?
-    * eval, quasiquote, quote
-    * sublis (substitution)
 * ffi
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?

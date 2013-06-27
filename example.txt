@@ -1,17 +1,17 @@
-:input  10
-:output 1110
-:I      ->self.self
-:true   ->first->second.first
-:false  ->first->second.second
-:if     ->condition consequent alternative.(condition consequent alternative)
-:null   false
-:pair   ->first rest. ->select.(select first rest)
-:first  ->pair.(pair true)
-:rest   ->pair.(pair false)
-:empty  ->list.(list ->first->rest->bool.false true)
-:Y      ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
-:append (Y ->append list other.(if (empty list) other (pair (first list) (append (rest list) other))))
-:parse (Y
+input  = 10
+output = 1110
+I      = ->self.self
+true   = ->first->second.first
+false  = ->first->second.second
+if     = ->condition consequent alternative.(condition consequent alternative)
+null   = false
+pair   = ->first rest. ->select.(select first rest)
+first  = ->pair.(pair true)
+rest   = ->pair.(pair false)
+empty  = ->list.(list ->first->rest->bool.false true)
+Y      = ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
+append = (Y ->append list other.(if (empty list) other (pair (first list) (append (rest list) other))))
+parse  = (Y
   ->parse input.
   (input (->head1 tail1.(tail1 ->head2 tail2.
     (if head1
@@ -26,7 +26,7 @@
           (parse tail2))
         (->term.(pair (pair head1 (pair head2 (first term))) (rest term)) (parse tail2))
         ))))))
-:eval (Y
+eval  = (Y
   ->eval input environment.
   (input (->head1 tail1.(tail1 ->head2 tail2.
     (if head1
@@ -37,7 +37,7 @@
       (if head2
         (eval (eval tail2 environment) environment)
         (->environment.(eval tail2 environment))))))))
-:env (pair (parse input) (pair output null))
+env   = (pair (parse input) (pair output null))
 
 (first (rest (rest (rest (rest (first(parse input)))))))
 

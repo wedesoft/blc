@@ -71,13 +71,13 @@ int find_var(const char *token)
 %union {
   int expr;
   int var;
-  char sym[16];
+  char sym[80];
 };
 
-%type <expr> expr subexpr lambda call abstraction
+%type <expr> expr subexpr nodef lambda call abstraction
 %type <var> variable
-%token <sym> VAR
-%token ZERO ONE LAMBDA LP RP DOT DEF
+%token <sym> VAR DEF
+%token ZERO ONE LAMBDA LP RP DOT
 
 %%
 run: /* empty */
@@ -87,22 +87,28 @@ run: /* empty */
    | DOT  {} run
    ;
 
-expr: VAR             { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda          { $$ = $1; }
-    | LP call RP      { $$ = $2; }
-    | DEF VAR subexpr { push($2); } expr { $$ = gc_push(make_definition($3, $5)); }
+expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
+    | lambda     { $$ = $1; }
+    | LP call RP { $$ = $2; }
+    | DEF nodef  { push($1); } expr { $$ = gc_push(make_definition($2, $4)); }
     ;
 
 call: subexpr      { $$ = $1; }
     | call subexpr { $$ = gc_push(make_call($1, $2)); }
     ;
 
-subexpr: VAR             { $$ = gc_push(make_variable(find_var($1))); }
-       | lambda          { $$ = $1; }
-       | LP call RP      { $$ = $2; }
-       | DEF VAR subexpr { push($2); } subexpr { $$ = gc_push(make_definition($3, $5)); pop(); }
-       | variable        { $$ = gc_push(make_variable($1)); }
+subexpr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
+       | lambda     { $$ = $1; }
+       | LP call RP { $$ = $2; }
+       | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_definition($2, $4)); pop(); }
+       | variable   { $$ = gc_push(make_variable($1)); }
        ;
+
+nodef: VAR           { $$ = gc_push(make_variable(find_var($1))); }
+     | lambda        { $$ = $1; }
+     | LP call RP    { $$ = $2; }
+     | variable      { $$ = gc_push(make_variable($1)); }
+     ;
 
 variable: ONE ZERO     { $$ = 0; }
         | ONE variable { $$ = $2 + 1; }
