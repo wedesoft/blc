@@ -31,8 +31,6 @@ Example
 
 Here's an example program consuming zeros until it encounters '1' or the end of input.
 
-    input  = 10
-    output = 1110
     I      = λself.self
     true   = λfirst second.first
     false  = λfirst second.second
@@ -41,7 +39,7 @@ Here's an example program consuming zeros until it encounters '1' or the end of 
     and    = λx y.(x y false)
     if     = λcondition consequent alternative.(condition consequent alternative)
     null   = false
-    pair   = λfirst rest. λselect.(select first rest)
+    pair   = λfirst rest.λselect.(select first rest)
     first  = λpair.(pair true)
     rest   = λpair.(pair false)
     empty  = λlist.(list λfirst rest bool.false true)

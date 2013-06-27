@@ -1,5 +1,3 @@
-input  = 10
-output = 1110
 I      = ->self.self
 true   = ->first->second.first
 false  = ->first->second.second
@@ -8,7 +6,7 @@ or     = ->x y.(x true y)
 and    = ->x y.(x y false)
 if     = ->condition consequent alternative.(condition consequent alternative)
 null   = false
-pair   = ->first rest. ->select.(select first rest)
+pair   = ->first rest.->select.(select first rest)
 first  = ->pair.(pair true)
 rest   = ->pair.(pair false)
 empty  = ->list.(list ->first->rest->bool.false true)

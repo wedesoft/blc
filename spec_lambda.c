@@ -43,8 +43,6 @@ int main(void)
   retval = retval | test_compile("0010", "0010");
   retval = retval | test_compile("00.10", "0010");
   retval = retval | test_compile("-10", "10");
-  retval = retval | test_compile("->.10", "0010");
-  retval = retval | test_compile("λ.10", "0010");
   retval = retval | test_compile("-10>", "10");
   retval = retval | test_compile("->x.x", "0010");
   retval = retval | test_compile("λx.x", "0010");
@@ -80,15 +78,15 @@ int main(void)
   retval = retval | test_compile("f=->->x.x f f", "0100000101010");
   retval = retval | test_compile("(->->x.x ->y.y)", "0110000100010");
   retval = retval | test_compile("(->->x.x ->x.x)", "0110000100010");
-  retval = retval | test_compile("((->x->y.x 10) 110)", "011011000011010110");
-  retval = retval | test_compile("((->x->y.y 10) 110)", "01101100001010110");
-  retval = retval | test_compile("(->x->y.x 10 110)", "011011000011010110");
-  retval = retval | test_compile("(->x->y.y 10 110)", "01101100001010110");
-  retval = retval | test_compile("(10 ->x->y.x) 0", "0111000001100");
-  retval = retval | test_compile("(10)", "10");
+  retval = retval | test_compile("((->x->y.x input) output)", "011011000011010110");
+  retval = retval | test_compile("((->x->y.y input) output)", "01101100001010110");
+  retval = retval | test_compile("(->x->y.x input output)", "011011000011010110");
+  retval = retval | test_compile("(->x->y.y input output)", "01101100001010110");
+  retval = retval | test_compile("(input ->x->y.x) 0", "0111000001100");
+  retval = retval | test_compile("(input)", "10");
   retval = retval | test_compile("((((((->input->output->I->true->false->Y."
                                  "((Y->f->input.(((input true)true)(f(input false))))input)"
-                                 "10)110)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
+                                 "input)output)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
                                  "01101101101101101100000000000001101110000001"
                                  "10110111011111011111001111001110111101111110"
                                  "10110001000001100000100001100011110011101000"

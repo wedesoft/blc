@@ -80,11 +80,13 @@ int find_var(const char *token)
 };
 
 %type <expr> expr subexpr nodef lambda call abstraction
-%type <var> variable
 %token <sym> VAR DEF
 %token ZERO ONE LAMBDA LP RP DOT
 
 %%
+init: { push("output"); push("input"); } run { pop(); pop(); }
+    ;
+
 run: /* empty */
    | expr { print_expression(normalise($1, NIL, 0, 0), yyout); fflush(yyout); gc_pop(n_registers); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run
@@ -106,18 +108,12 @@ subexpr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
        | lambda     { $$ = $1; }
        | LP call RP { $$ = $2; }
        | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_definition($2, $4)); pop(); }
-       | variable   { $$ = gc_push(make_variable($1)); }
        ;
 
 nodef: VAR           { $$ = gc_push(make_variable(find_var($1))); }
      | lambda        { $$ = $1; }
      | LP call RP    { $$ = $2; }
-     | variable      { $$ = gc_push(make_variable($1)); }
      ;
-
-variable: ONE ZERO     { $$ = 0; }
-        | ONE variable { $$ = $2 + 1; }
-        ;
 
 lambda: LAMBDA DOT         { push(""); } subexpr { $$ = gc_push(make_lambda($4)); pop(); }
       | LAMBDA abstraction { $$ = $2; }
