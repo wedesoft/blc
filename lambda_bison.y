@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "blc.h"
 
@@ -64,6 +65,10 @@ int find_var(const char *token)
     if (!strcmp(p, token)) retval = 0;
     p += strlen(p) + 1;
   }
+  if (retval == -1) {
+    yyerror("Unknown variable");
+    exit(1);
+  };
   return retval;
 }
 %}
