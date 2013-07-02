@@ -1,16 +1,7 @@
 TODO
 ====
 
-* primitives (implement using quote and eval?)
-    * eq?
-    * quote, (1 . ())
-    * list, null?, pair?, xor
-    * member?, append, assoc, cond, equal?
-    * eval, quasiquote, quote
-    * sublis (substitution)
-* implement object system 
-  namespaces, contexts, objects and polymorphism, inspect method
-  (first list) -> list.first
+* print_expression -> use write_bit
 * read from list/print to list
   (output true)
   1#<output>
@@ -21,7 +12,16 @@ TODO
   (pair false (pair true null))
   00011011100000100110110000000110111011101100000110000010
   (pair false (pair true #<output>))
-* interpreter for output
+* primitives (implement using quote and eval?)
+  * eq?
+  * list, null?, pair?, xor
+  * member?, append, assoc, cond, equal?
+  * eval, quasiquote, quote
+  * sublis (substitution)
+* implement object system 
+  namespaces, contexts, objects and polymorphism, inspect method
+  (first list) -> list.first
+  (1 . ())
 * direct integration of BLC (no need for definitions)?
 * continuation passing style, make environment visible?
 * error handling

@@ -524,6 +524,12 @@ void print_expression(int expression, FILE *file)
       print_expression(function(expression), file);
       print_expression(argument(expression), file);
       break;
+    case PROC:
+      fputs("#<proc>", file);
+      break;
+    case WRAP:
+      fputs("#<wrap>", file);
+      break;
     case DEFINITION:
       fputs("010", file);
       print_expression(term(expression), file);
