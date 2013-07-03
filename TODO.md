@@ -1,7 +1,6 @@
 TODO
 ====
 
-* print_expression -> use write_bit
 * read from list/print to list
   (output true)
   1#<output>

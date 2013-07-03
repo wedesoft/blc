@@ -88,7 +88,11 @@ init: { push("output"); push("input"); } run { pop(); pop(); }
     ;
 
 run: /* empty */
-   | expr { print_expression(normalise($1, NIL, 0, 0), yyout); fflush(yyout); gc_pop(n_registers); } run
+   | expr { gc_push($1);
+            write_expression(gc_push(make_output(yyout)),
+                             gc_push(normalise($1, NIL, 0, 0)));
+            fflush(yyout);
+            gc_pop(n_registers); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run
    | ONE  { fputc('1', yyout); fflush(yyout); } run
    | DOT  {} run

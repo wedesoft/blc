@@ -324,10 +324,11 @@ int read_bit(int input)
 int write_bit(int output, int bit)
 {
   int retval;
+  gc_push(output);
+  gc_push(bit);
   if (!is_nil(cells[output].output.used))
     retval = NIL;
   else if (!is_nil(bit)) {
-    gc_push(output);
     if (is_false(bit)) {
       fputc('0', file(output));
       retval = make_output(file(output));
@@ -337,9 +338,27 @@ int write_bit(int output, int bit)
     } else
       retval = NIL;
     cells[output].output.used = retval;
-    gc_pop(1);
   } else
     retval = NIL;
+  gc_pop(2);
+  return retval;
+}
+
+int write_false(int output)
+{
+  int retval;
+  gc_push(output);
+  retval = write_bit(output, make_false());
+  gc_pop(1);
+  return retval;
+}
+
+int write_true(int output)
+{
+  int retval;
+  gc_push(output);
+  retval = write_bit(output, make_true());
+  gc_pop(1);
   return retval;
 }
 
@@ -445,13 +464,18 @@ int lookup(int variable, int environment)
   return variable > 0 ? lookup(variable - 1, rest(environment)) : first(environment);
 }
 
-void print_variable(int variable, FILE *file)
+int write_variable(int output, int variable)
 {
-  fputc('1', file);
+  int retval;
+  gc_push(output);
+  gc_push(variable);
+  int rest = write_true(output);
   if (variable > 0)
-    print_variable(variable - 1, file);
+    retval = write_variable(rest, variable - 1);
   else
-    fputc('0', file);
+    retval = write_false(rest);
+  gc_pop(2);
+  return retval;
 }
 
 int normalise(int expression, int local_environment, int local_depth, int depth)
@@ -508,48 +532,51 @@ int normalise(int expression, int local_environment, int local_depth, int depth)
   return retval;
 }
 
-void print_expression(int expression, FILE *file)
+int write_expression(int output, int expression)
 {
+  int retval = NIL;
+  gc_push(output);
+  gc_push(expression);
   if (!is_nil(expression)) {
     switch (type(expression)) {
     case VARIABLE:
-      print_variable(variable(expression), file);
+      retval = write_variable(output, variable(expression));
       break;
-    case LAMBDA:
-      fputs("00", file);
-      print_expression(function(expression), file);
-      break;
-    case CALL:
-      fputs("011", file);
-      print_expression(function(expression), file);
-      print_expression(argument(expression), file);
-      break;
+    case LAMBDA: {
+      int rest = write_false(write_false(output));
+      retval = write_expression(rest, function(expression));
+      break; }
+    case CALL: {
+      int rest = write_true(write_true(write_false(output)));
+      retval = write_expression(write_expression(rest, function(expression)), argument(expression));
+      break; }
     case PROC:
-      fputs("#<proc>", file);
+      fputs("#<proc>", file(output));
       break;
     case WRAP:
-      fputs("#<wrap>", file);
+      fputs("#<wrap>", file(output));
       break;
-    case DEFINITION:
-      fputs("010", file);
-      print_expression(term(expression), file);
-      print_expression(body(expression), file); // test?
-      break;
+    case DEFINITION: {
+      int rest = write_false(write_true(write_false(output)));
+      retval = write_expression(write_expression(rest, term(expression)), body(expression));
+      break; }
     case INPUT:
       if (is_nil(used(expression)))
-        fputs("#<input>", file);
+        fputs("#<input>", file(output));
       else
-        fputs("#<input(used)>", file);
+        fputs("#<input(used)>", file(output));
       break;
     case OUTPUT:
       if (is_nil(used(expression)))
-        fputs("#<output>", file);
+        fputs("#<output>", file(output));
       else
-        fputs("#<output(used)>", file);
+        fputs("#<output(used)>", file(output));
       break;
     }
   } else
-    fputs("#<err>", file);
+    fputs("#<err>", file(output));
+  gc_pop(2);
+  return retval;
 }
 
 int eval_expression(int expression, int local_environment)

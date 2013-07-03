@@ -41,7 +41,7 @@ int eval_expression(int expression, int local_env);
 
 int normalise(int expression, int local_environment, int local_depth, int depth);
 
-void print_expression(int expression, FILE *file);
+int write_expression(int output, int expression);
 
 int make_variable(int variable);
 

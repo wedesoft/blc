@@ -42,11 +42,12 @@ int main(void)
     if (feof(stdin)) break;
     int environment = gc_push(make_pair(rest(expression),
                                         make_pair(output, gc_push(make_false()))));
-    print_expression(normalise(eval_expression(first(expression), environment),
-                               NIL, 0, 2), stdout);
+    int output_rest = gc_push(make_output(stdout));
+    write_expression(output_rest, normalise(eval_expression(first(expression), environment),
+                                            NIL, 0, 2));
     fputc('\n', stdout);
     previous_expr = first(expression);
-    gc_pop(6);
+    gc_pop(7);
   };
   return 0;
 }

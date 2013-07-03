@@ -31,9 +31,9 @@ char *to_string(char *buffer, int bufsize, int expression)
 {
   gc_push(expression);
   FILE *f = fmemopen(buffer, bufsize, "w");
-  print_expression(normalise(expression, NIL, 0, 0), f);
+  write_expression(gc_push(make_output(f)), gc_push(normalise(expression, NIL, 0, 0)));
   fclose(f);
-  gc_pop(1);
+  gc_pop(3);
   return buffer;
 }
 
