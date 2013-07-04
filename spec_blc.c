@@ -168,11 +168,11 @@ int main(void)
   retval = retval | test_read_write(" 011 0010 0010", "01100100010");
   retval = retval | test_read_write("01000100010", "01000100010");
   retval = retval | test_read_write(" 010 0010 0010", "01000100010");
-  retval = retval | test_read_write("0", "#<err>");
-  retval = retval | test_read_write("00", "#<err>");
-  retval = retval | test_read_write("01", "#<err>");
-  retval = retval | test_read_write("010", "#<err>");
-  retval = retval | test_read_write("1", "#<err>");
+  retval = retval | test_read_write("0", "");
+  retval = retval | test_read_write("00", "");
+  retval = retval | test_read_write("01", "");
+  retval = retval | test_read_write("010", "");
+  retval = retval | test_read_write("1", "");
   retval = retval | test_eval("10", "10");// first variable
   retval = retval | test_eval("110", "110");// second variable
   retval = retval | test_eval("0010", "0010");// identity function
@@ -197,7 +197,6 @@ int main(void)
   retval = retval | test_eval("011 011 0000110 001110 00110", "001110");
   retval = retval | test_eval("011 00110 0010", "10");// return global variable
   retval = retval | test_eval("01100100010", "0010");
-  retval = retval | test_input("10", "#<input>");// end of string
   retval = retval | test_input("011 10 0000110", "0010");// end of string
   retval = retval | test_input("011 10 0000110 0", "000010");// read '0'
   retval = retval | test_input("011 10 0000110 1", "0000110");// read '1'

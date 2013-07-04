@@ -518,10 +518,10 @@ int normalise(int expression, int local_environment, int local_depth, int depth)
       retval = normalise(unwrap(expression), environment(expression), 0, depth);
       break;
     case INPUT:
-      retval = expression;
+      retval = make_variable(depth - 2);
       break;
     case OUTPUT:
-      retval = expression;
+      retval = make_variable(depth - 1);
       break;
     default:
       retval = NIL;
@@ -550,31 +550,14 @@ int write_expression(int output, int expression)
       int rest = write_true(write_true(write_false(output)));
       retval = write_expression(write_expression(rest, function(expression)), argument(expression));
       break; }
-    case PROC:
-      fputs("#<proc>", file(output));
-      break;
-    case WRAP:
-      fputs("#<wrap>", file(output));
-      break;
     case DEFINITION: {
       int rest = write_false(write_true(write_false(output)));
       retval = write_expression(write_expression(rest, term(expression)), body(expression));
       break; }
-    case INPUT:
-      if (is_nil(used(expression)))
-        fputs("#<input>", file(output));
-      else
-        fputs("#<input(used)>", file(output));
-      break;
-    case OUTPUT:
-      if (is_nil(used(expression)))
-        fputs("#<output>", file(output));
-      else
-        fputs("#<output(used)>", file(output));
+    default:
       break;
     }
-  } else
-    fputs("#<err>", file(output));
+  };
   gc_pop(2);
   return retval;
 }
