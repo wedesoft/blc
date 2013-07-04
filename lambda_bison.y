@@ -66,7 +66,8 @@ int find_var(const char *token)
     p += strlen(p) + 1;
   }
   if (retval == -1) {
-    yyerror("Unknown variable");
+    yyerror("Unknown variable ");
+    yyerror(token);
     exit(1);
   };
   return retval;

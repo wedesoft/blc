@@ -22,22 +22,32 @@ extern int yyretval;
 
 %option noyywrap
 
+ASCLEAD [a-zA-Z_]
+ASCTAIL [a-zA-Z0-9_?!]
+U       [\x80-\xbf]
+U2      [\xc2-\xdf]
+U3      [\xe0-\xef]
+U4      [\xf0-\xf4]
+
+UTFLEAD  {ASCLEAD}|{U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
+UTFTAIL  {ASCTAIL}|{U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
+
 %%
 
-"0"                           { return ZERO; }
-"1"                           { return ONE; }
-"->"|"λ"                      { return LAMBDA; }
-"("                           { return LP; }
-")"                           { return RP; }
-"."                           { return DOT; }
-[a-zA-Z][a-zA-Z0-9]*[ \t]*"=" { strcpy(yylval.sym, yytext);
+"0"                          { return ZERO; }
+"1"                          { return ONE; }
+"->"                         { return LAMBDA; }
+"("                          { return LP; }
+")"                          { return RP; }
+"."                          { return DOT; }
+[ \t\n]+                     {}
+{UTFLEAD}{UTFTAIL}*[ \t]*"=" { strcpy(yylval.sym, yytext);
                                 char *p = yylval.sym;
                                 strsep(&p, " \t=");
                                 return DEF; }
-[a-zA-Z][a-zA-Z0-9]*          { strcpy(yylval.sym, yytext); return VAR; }
-<<EOF>>                       { return 0; }
-[ \t\n]+                      {}
-.                             {}
+{UTFLEAD}{UTFTAIL}*          { strcpy(yylval.sym, yytext); return VAR; }
+<<EOF>>                      { return 0; }
+.                            {}
 
 %%
 

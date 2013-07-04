@@ -31,21 +31,21 @@ Example
 
 Here's an example program consuming zeros until it encounters '1' or the end of input.
 
-    I      = λself.self
-    true   = λfirst second.first
-    false  = λfirst second.second
-    not    = λvalue.(value false true)
-    or     = λx y.(x true y)
-    and    = λx y.(x y false)
-    if     = λcondition consequent alternative.(condition consequent alternative)
+    I      = ->self.self
+    true   = ->first second.first
+    false  = ->first second.second
+    not    = ->value.(value false true)
+    or     = ->x y.(x true y)
+    and    = ->x y.(x y false)
+    if     = ->condition consequent alternative.(condition consequent alternative)
     null   = false
-    pair   = λfirst rest.λselect.(select first rest)
-    first  = λpair.(pair true)
-    rest   = λpair.(pair false)
-    empty  = λlist.(list λfirst rest bool.false true)
-    Y      = λself.(λarg.(self (arg arg)) λarg.(self (arg arg)))
+    pair   = ->first rest.->select.(select first rest)
+    first  = ->pair.(pair true)
+    rest   = ->pair.(pair false)
+    empty? = ->list.(list ->first rest bool.false true)
+    Y      = ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
 
-    ((Y λf input.((first input) true (f (rest input)))) input)
+    ((Y ->f input.((first input) true (f (rest input)))) input)
 
     001
 

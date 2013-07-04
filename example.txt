@@ -9,9 +9,9 @@ null   = false
 pair   = ->first rest.->select.(select first rest)
 first  = ->pair.(pair true)
 rest   = ->pair.(pair false)
-empty  = ->list.(list ->first->rest->bool.false true)
+empty? = ->list.(list ->first->rest->bool.false true)
 Y      = ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
-append = (Y ->append list other.(if (empty list) other (pair (first list) (append (rest list) other))))
+append = (Y ->append list other.(if (empty? list) other (pair (first list) (append (rest list) other))))
 parse  = (Y
   ->parse input.
   (input (->head1 tail1.(tail1 ->head2 tail2.
