@@ -377,22 +377,38 @@ int make_pair(int first, int rest)
 
 int is_pair(int expression) { return variable(function(function(function(expression)))) == 0; }
 
-int first(int list) { return argument(function(function(list))); }
+int first(int list)
+{
+  int retval;
+  if (is_input(list))
+    retval = first(read_bit(list));
+  else
+    retval = argument(function(function(list)));
+  return retval;
+}
 
-int rest(int list) { return argument(function(list)); }
+int rest(int list)
+{
+  int retval;
+  if (is_input(list))
+    retval = rest(read_bit(list));
+  else
+    retval = argument(function(list));
+  return retval;
+}
 
 int read_variable(int input)
 {
   int retval;
-  int b = gc_push(read_bit(gc_push(input)));
-  if (is_false(first(b)))
-    retval = make_pair(make_variable(0), rest(b));
-  else if (is_true(first(b))) {
-    retval = read_variable(rest(b));
+  gc_push(input);
+  if (is_false(first(input)))
+    retval = make_pair(make_variable(0), rest(input));
+  else if (is_true(first(input))) {
+    retval = read_variable(rest(input));
     if (!is_nil(retval)) cells[first(retval)].variable++;
   } else
     retval = NIL;
-  gc_pop(2);
+  gc_pop(1);
   return retval;
 }
 
@@ -428,21 +444,21 @@ int read_definition(int input)
 int read_expression(int input)
 {
   int retval;
-  int b1 = read_bit(gc_push(input));
-  if (is_false(first(b1))) {
-    int b2 = read_bit(rest(b1));
+  gc_push(input);
+  if (is_false(first(input))) {
+    int b2 = rest(input);
     if (is_false(first(b2)))
       retval = read_lambda(rest(b2));
     else if (is_true(first(b2))) {
-      int b3 = read_bit(rest(b2));
+      int b3 = rest(b2);
       if (is_true(first(b3)))
         retval = read_call(rest(b3));
       else
         retval = read_definition(rest(b3));
     } else
       retval = NIL;
-  } else if (is_true(first(b1)))
-    retval = read_variable(rest(b1));
+  } else if (is_true(first(input)))
+    retval = read_variable(rest(input));
   else
     retval = NIL;
   gc_pop(1);
