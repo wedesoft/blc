@@ -1,7 +1,7 @@
 TODO
 ====
 
-* read from list/print to list; read_bit <-> first, rest (split)
+* print to list; read_bit <-> first, rest (split)
   (output true)
   1#<output>
   ((output true) false)
