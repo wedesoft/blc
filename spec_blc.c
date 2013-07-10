@@ -43,8 +43,6 @@ int from_string(char *str)
   return retval;
 }
 
-
-
 char *to_string(char *buffer, int bufsize, int expression)
 {
   gc_push(expression);

@@ -1,6 +1,9 @@
 TODO
 ====
 
+* quote expr -> list of booleans
+* remove normalise
+* eval list -> expression
 * print to list; read_bit <-> first, rest (split)
   (output true)
   1#<output>
@@ -15,12 +18,13 @@ TODO
   * eq?
   * list, null?, pair?, xor
   * member?, append, assoc, cond, equal?
-  * eval, quasiquote, quote
+  * eval, quasiquote (quote with environment), quote
   * sublis (substitution)
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first
   (1 . ())
+* better garbage collector? reflective?
 * direct integration of BLC (no need for definitions)?
 * continuation passing style, make environment visible?
 * error handling
