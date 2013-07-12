@@ -293,15 +293,15 @@ int is_true(int expression) { return variable(function(function(expression))) ==
 
 int num_to_list(int number)
 {
-  int retval = make_false();
-  while (number > 0) {
-    gc_push(retval);
-    if (number & 0x1)
-      retval = make_pair(make_true(), retval);
-    else
-      retval = make_pair(make_false(), retval);
-    number >>= 1;
-    gc_pop(1);
+  int retval;
+  if (number == 0)
+    retval = make_false();
+  else if (number & 0x1) {
+    retval = make_pair(gc_push(make_true()), gc_push(num_to_list(number >> 1)));
+    gc_pop(2);
+  } else {
+    retval = make_pair(gc_push(make_false()), gc_push(num_to_list(number >> 1)));
+    gc_pop(2);
   };
   return retval;
 }
@@ -310,13 +310,17 @@ int is_pair(int expression);
 
 int list_to_num(int list)
 {
-  int retval = 0;
-  while (is_pair(list)) {
-    retval <<= 1;
-    if (is_true(first(list)))
-      retval += 1;
-    list = rest(list);
-  };
+  int retval;
+  if (!is_nil(list)) {
+    if (is_pair(list)) {
+      if (is_true(first(list)))
+        retval = 1 + (list_to_num(rest(list)) << 1);
+      else
+        retval = list_to_num(rest(list)) << 1;
+    } else
+      retval = 0;
+  } else
+    retval = 0;
   return retval;
 }
 

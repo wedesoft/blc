@@ -1,7 +1,6 @@
 TODO
 ====
 
-* use write_string
 * use errors instead of nil
 * go meta-circular
 * implement object system 
