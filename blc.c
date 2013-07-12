@@ -18,8 +18,8 @@
 #include <string.h>
 #include "blc.h"
 
-#define MAX_CELLS 16384
-#define MAX_REGISTERS 65536
+#define MAX_CELLS 1000000
+#define MAX_REGISTERS 4000000
 
 typedef enum { VARIABLE, LAMBDA, CALL, PROC, DEFINITION, WRAP, INPUT, OUTPUT } type_t;
 
@@ -291,7 +291,36 @@ int make_true(void) { return make_lambda(make_lambda(make_variable(1))); }
 
 int is_true(int expression) { return variable(function(function(expression))) == 1; }
 
-int read_bit(int input)
+int num_to_list(int number)
+{
+  int retval = make_false();
+  while (number > 0) {
+    gc_push(retval);
+    if (number & 0x1)
+      retval = make_pair(make_true(), retval);
+    else
+      retval = make_pair(make_false(), retval);
+    number >>= 1;
+    gc_pop(1);
+  };
+  return retval;
+}
+
+int is_pair(int expression);
+
+int list_to_num(int list)
+{
+  int retval = 0;
+  while (is_pair(list)) {
+    retval <<= 1;
+    if (is_true(first(list)))
+      retval += 1;
+    list = rest(list);
+  };
+  return retval;
+}
+
+int read_char(int input)
 {
   int retval;
   if (is_nil(input))
@@ -299,25 +328,60 @@ int read_bit(int input)
   else if (!is_nil(cells[input].input.used))
     retval = cells[input].input.used;
   else {
-    int c = fgetc(file(gc_push(input)));
-    switch (c) {
-    case '0':
-      retval = make_pair(gc_push(make_false()), gc_push(make_input(file(input))));
-      gc_pop(2);
-      break;
-    case '1':
-      retval = make_pair(gc_push(make_true()), gc_push(make_input(file(input))));
-      gc_pop(2);
-      break;
-    case EOF:
+    int num = fgetc(file(gc_push(input)));
+    if (num == EOF)
       retval = make_false();
-      break;
-    default:
-      retval = read_bit(input);
+    else {
+      retval = make_pair(gc_push(num_to_list(num)), gc_push(make_input(file(input))));
+      gc_pop(2);
     };
     cells[input].input.used = retval;
     gc_pop(1);
+  }
+  return retval;
+}
+
+int read_bit(int input)
+{
+  int retval;
+  int list = gc_push(read_char(input));
+  if (is_nil(list))
+    retval = NIL;
+  else if (!is_pair(list))
+    retval = list;
+  else {
+    int c = list_to_num(first(list));
+    switch (c) {
+    case '0':
+      retval = make_pair(gc_push(make_false()), rest(list));
+      gc_pop(1);
+      break;
+    case '1':
+      retval = make_pair(gc_push(make_true()), rest(list));
+      gc_pop(1);
+      break;
+    default:
+      retval = read_bit(rest(list));
+    };
   };
+  gc_pop(1);
+  return retval;
+}
+
+int write_char(int output, int list)
+{
+  int retval;
+  gc_push(output);
+  gc_push(list);
+  if (!is_nil(cells[output].output.used))
+    retval = NIL;
+  else if (!is_nil(list)) {
+    fputc(list_to_num(list), file(output));
+    retval = make_output(file(output));
+    cells[output].output.used = retval;
+  } else
+    retval = NIL;
+  gc_pop(2);
   return retval;
 }
 
@@ -326,18 +390,13 @@ int write_bit(int output, int bit)
   int retval;
   gc_push(output);
   gc_push(bit);
-  if (!is_nil(cells[output].output.used))
-    retval = NIL;
-  else if (!is_nil(bit)) {
-    if (is_false(bit)) {
-      fputc('0', file(output));
-      retval = make_output(file(output));
-    } else if (is_true(bit)) {
-      fputc('1', file(output));
-      retval = make_output(file(output));
-    } else
+  if (!is_nil(bit)) {
+    if (is_false(bit))
+      retval = write_char(output, num_to_list('0'));
+    else if (is_true(bit))
+      retval = write_char(output, num_to_list('1'));
+    else
       retval = NIL;
-    cells[output].output.used = retval;
   } else
     retval = NIL;
   gc_pop(2);

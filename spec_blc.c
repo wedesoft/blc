@@ -19,26 +19,26 @@
 
 #define BUFSIZE 102
 
-int to_list(char *str)
+int str_to_list(char *str)
 {
   int retval;
   if (*str == '\0')
     retval = make_false();
   else if (*str == '0') {
-    retval = make_pair(gc_push(make_false()), gc_push(to_list(str + 1)));
+    retval = make_pair(gc_push(make_false()), gc_push(str_to_list(str + 1)));
     gc_pop(2);
   } else if (*str == '1') {
-    retval = make_pair(gc_push(make_true()), gc_push(to_list(str + 1)));
+    retval = make_pair(gc_push(make_true()), gc_push(str_to_list(str + 1)));
     gc_pop(2);
   } else
-    retval = to_list(str + 1);
+    retval = str_to_list(str + 1);
   return retval;
 }
 
 int from_string(char *str)
 {
   FILE *file = fmemopen(str, strlen(str), "r");
-  int retval = first(read_expression(to_list(str)));
+  int retval = first(read_expression(str_to_list(str)));
   fclose(file);
   return retval;
 }
