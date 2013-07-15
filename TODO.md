@@ -2,6 +2,8 @@ TODO
 ====
 
 * use errors instead of nil
+  better garbage collector? reflective?
+  continuation passing style
 * go meta-circular
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
@@ -28,9 +30,7 @@ TODO
   * member?, append, assoc, cond, equal?
   * eval, quasiquote (quote with environment), quote
   * sublis (substitution)
-* better garbage collector? reflective?
 * direct integration of BLC (no need for definitions)?
-* continuation passing style, make environment visible?
 * error handling
 * named parameters, structures
 * Earley parser for bits?
