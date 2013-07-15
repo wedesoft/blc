@@ -21,8 +21,6 @@
 #endif
 #include <stdio.h>
 
-#define NIL -1
-
 extern int n_registers;
 
 int gc_push(int expression);

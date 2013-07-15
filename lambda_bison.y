@@ -91,7 +91,7 @@ init: { push("output"); push("input"); } run { pop(); pop(); }
 run: /* empty */
    | expr { gc_push($1);
             write_expression(gc_push(make_output(yyout)),
-                             gc_push(normalise($1, NIL, 0, 0)));
+                             gc_push(normalise($1, gc_push(make_false()), 0, 0)));
             fflush(yyout);
             gc_pop(n_registers); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run

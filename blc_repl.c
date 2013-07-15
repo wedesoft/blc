@@ -32,7 +32,7 @@ int copy_definitions(int previous_expr, int expression)
 
 int main(void)
 {
-  int previous_expr = NIL;
+  int previous_expr = make_false();
   while (1) {
     gc_push(previous_expr);
     int input = gc_push(make_input(stdin));
@@ -44,10 +44,10 @@ int main(void)
                                         make_pair(output, gc_push(make_false()))));
     int output_rest = gc_push(make_output(stdout));
     write_expression(output_rest, normalise(eval_expression(first(expression), environment),
-                                            NIL, 0, 2));
+                                            gc_push(make_false()), 0, 2));
     fputc('\n', stdout);
     previous_expr = first(expression);
-    gc_pop(7);
+    gc_pop(8);
   };
   return 0;
 }

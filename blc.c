@@ -72,10 +72,10 @@ int variable(int cell) { return cells[cell].variable; }
 int has_function(int cell) { return is_call(cell) || is_proc(cell) || is_lambda(cell); }
 int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : cells[cell].lambda; }
 int argument(int cell) { return cells[cell].call.argument; }
-int term(int cell) { return is_definition(cell) ? cells[cell].definition.term : NIL; }
-int body(int cell) { return is_definition(cell) ? cells[cell].definition.body : NIL; }
-int unwrap(int cell) { return is_wrap(cell) ? cells[cell].wrap.unwrap : NIL; }
-int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : is_wrap(cell) ? cells[cell].wrap.environment : NIL; }
+int term(int cell) { return cells[cell].definition.term; }
+int body(int cell) { return cells[cell].definition.body; }
+int unwrap(int cell) { return cells[cell].wrap.unwrap; }
+int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : cells[cell].wrap.environment; }
 FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : is_output(cell) ? cells[cell].output.file : NULL; }
 int used(int cell) { return is_input(cell) ? cells[cell].input.used : is_output(cell) ? cells[cell].output.used : cell; }
 
@@ -483,8 +483,10 @@ int read_expression(int input)
         retval = read_call(rest(b3));
       else
         retval = read_definition(rest(b3));
-    } else
-      retval = NIL;
+    } else {
+      fprintf(stderr, "Incomplete expression!\n");
+      exit(1);
+    };
   } else if (is_true(first(input)))
     retval = read_variable(rest(input));
   else {
