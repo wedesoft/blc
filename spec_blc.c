@@ -37,10 +37,7 @@ int str_to_list(char *str)
 
 int from_string(char *str)
 {
-  FILE *file = fmemopen(str, strlen(str), "r");
-  int retval = first(read_expression(str_to_list(str)));
-  fclose(file);
-  return retval;
+  return first(read_expression(str_to_list(str)));
 }
 
 char *to_string(char *buffer, int bufsize, int expression)
@@ -184,11 +181,6 @@ int main(void)
   retval = retval | test_read_write(" 011 0010 0010", "01100100010");
   retval = retval | test_read_write("01000100010", "01000100010");
   retval = retval | test_read_write(" 010 0010 0010", "01000100010");
-  // retval = retval | test_read_write("0", "");
-  // retval = retval | test_read_write("00", "");
-  // retval = retval | test_read_write("01", "");
-  // retval = retval | test_read_write("010", "");
-  // retval = retval | test_read_write("1", "");
   retval = retval | test_eval("10", "10");// first variable
   retval = retval | test_eval("110", "110");// second variable
   retval = retval | test_eval("0010", "0010");// identity function

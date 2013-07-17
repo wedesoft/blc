@@ -1,14 +1,14 @@
 TODO
 ====
 
-* use errors instead of nil
-  better garbage collector? reflective?
-  continuation passing style
-* go meta-circular
+* direct integration of BLC (no need for definitions)?
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first
   (1 . ())
+* continuation passing style, tail-call optimisation
+* better garbage collector? reflective?
+* go meta-circular
 * have write_expr produce lists,
   quote creates list or error
 * (eval (quote input))
@@ -30,7 +30,6 @@ TODO
   * member?, append, assoc, cond, equal?
   * eval, quasiquote (quote with environment), quote
   * sublis (substitution)
-* direct integration of BLC (no need for definitions)?
 * error handling
 * named parameters, structures
 * Earley parser for bits?
