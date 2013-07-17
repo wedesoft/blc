@@ -1,7 +1,8 @@
 TODO
 ====
 
-* direct integration of BLC (no need for definitions)?
+* check use of binary input in lambda-REPL
+* evaluate BLC fragments in lambda-language
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first

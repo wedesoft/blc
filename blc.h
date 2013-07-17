@@ -31,6 +31,10 @@ int term(int cell);
 
 int body(int cell);
 
+int function(int cell);
+
+int argument(int cell);
+
 int read_expression(int input);
 
 int eval_expression(int expression, int local_env);

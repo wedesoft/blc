@@ -74,6 +74,10 @@ int find_var(const char *token)
   return retval;
 }
 
+int n_definitions;
+int n_prev;
+int previous_expr;
+
 /* int copy_definitions(int previous_expr, int expression)
 {
   int retval;
@@ -89,6 +93,25 @@ int find_var(const char *token)
   return retval;
 }
 */
+
+int copy_definitions(int previous_expr, int expression, int n)
+{
+  int retval;
+  gc_push(previous_expr);
+  gc_push(expression);
+  if (n == 0)
+    retval = expression;
+  else {
+    int subexpr = copy_definitions(function(function(previous_expr)),
+                                   expression,
+                                   n - 1);
+    retval = make_call(gc_push(make_lambda(gc_push(subexpr))),
+                       argument(previous_expr));
+    gc_pop(2);
+  };
+  gc_pop(2);
+  return retval;
+}
 %}
 
 %union {
@@ -102,11 +125,16 @@ int find_var(const char *token)
 %token ZERO ONE LAMBDA LP RP DOT
 
 %%
-init: { push("output"); push("input"); } run { pop(); pop(); }
+init: { n_definitions = 0;
+        n_prev = 0;
+        previous_expr = make_false();
+        gc_push(previous_expr);
+        push("output");
+        push("input"); } run { pop(); pop(); }
     ;
 
 run: /* empty */
-   | expr { int expression = gc_push($1);
+   | expr { int expression = copy_definitions(previous_expr, gc_push($1), n_prev);
             int input = gc_push(make_input(yyin));
             int output = gc_push(make_output(yyout));
             int environment = gc_push(make_pair(input,
@@ -116,7 +144,10 @@ run: /* empty */
                                                     gc_push(make_false()), 0, 2));
             fputc('\n', yyout);
             fflush(yyout);
-            gc_pop(n_registers); } run
+            gc_pop(n_registers);
+            previous_expr = expression;
+            n_prev = n_definitions;
+            gc_push(previous_expr); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run
    | ONE  { fputc('1', yyout); fflush(yyout); } run
    | DOT  {} run
@@ -125,7 +156,7 @@ run: /* empty */
 expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
     | lambda     { $$ = $1; }
     | LP call RP { $$ = $2; }
-    | DEF nodef  { push($1); } expr { $$ = gc_push(make_call(make_lambda($4), $2)); }
+    | DEF nodef  { push($1); } expr { $$ = gc_push(make_call(make_lambda($4), $2)); n_definitions++; }
     ;
 
 call: subexpr      { $$ = $1; }
