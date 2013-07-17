@@ -1,3 +1,3 @@
 #!/bin/sh
-rlwrap ./lambda.sh
+rlwrap ./lambda
 

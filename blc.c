@@ -21,7 +21,7 @@
 #define MAX_CELLS 1000000
 #define MAX_REGISTERS 4000000
 
-typedef enum { VARIABLE, LAMBDA, CALL, PROC, DEFINITION, WRAP, INPUT, OUTPUT } type_t;
+typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT, OUTPUT } type_t;
 
 typedef struct { int function; int argument; } call_t;
 
@@ -62,7 +62,6 @@ int is_type(int cell, int t) { return type(cell) == t; }
 int is_variable(int cell) { return is_type(cell, VARIABLE); }
 int is_lambda(int cell) { return is_type(cell, LAMBDA); }
 int is_call(int cell) { return is_type(cell, CALL); }
-int is_definition(int cell) { return is_type(cell, DEFINITION); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
@@ -108,10 +107,6 @@ void mark(int expression)
       case CALL:
         mark(function(expression));
         mark(argument(expression));
-        break;
-      case DEFINITION:
-        mark(term(expression));
-        mark(body(expression));
         break;
       case PROC:
         mark(function(expression));
@@ -186,18 +181,6 @@ int make_call(int function, int argument)
   cells[retval].type = CALL;
   cells[retval].call.function = function;
   cells[retval].call.argument = argument;
-  gc_pop(2);
-  return retval;
-}
-
-int make_definition(int term, int body)
-{
-  gc_push(term);
-  gc_push(body);
-  int retval = cell();
-  cells[retval].type = DEFINITION;
-  cells[retval].definition.term = term;
-  cells[retval].definition.body = body;
   gc_pop(2);
   return retval;
 }
@@ -459,16 +442,6 @@ int read_call(int input)
   return retval;
 }
 
-int read_definition(int input)
-{
-  int retval;
-  int term = gc_push(read_expression(input));
-  int body = gc_push(read_expression(rest(term)));
-  retval = make_pair(make_definition(first(term), first(body)), rest(body));
-  gc_pop(2);
-  return retval;
-}
-
 int read_expression(int input)
 {
   int retval;
@@ -477,13 +450,9 @@ int read_expression(int input)
     int b2 = rest(input);
     if (is_false(first(b2)))
       retval = read_lambda(rest(b2));
-    else if (is_true(first(b2))) {
-      int b3 = rest(b2);
-      if (is_true(first(b3)))
-        retval = read_call(rest(b3));
-      else
-        retval = read_definition(rest(b3));
-    } else {
+    else if (is_true(first(b2)))
+      retval = read_call(rest(b2));
+    else {
       fprintf(stderr, "Incomplete expression!\n");
       exit(1);
     };
@@ -560,12 +529,6 @@ int normalise(int expression, int local_environment, int local_depth, int depth)
     retval = make_call(fun, arg);
     gc_pop(2);
     break; }
-  case DEFINITION: {
-    int def = gc_push(normalise(term(expression), local_environment, local_depth, depth));
-    int expr = gc_push(normalise(body(expression), local_environment, local_depth + 1, depth + 1));
-    retval = make_definition(def, expr);
-    gc_pop(2);
-    break; }
   case PROC:
     retval = make_lambda(normalise(function(expression), environment(expression), 1, depth + 1));
     break;
@@ -599,12 +562,8 @@ int write_expression(int output, int expression)
     retval = write_expression(rest, function(expression));
     break; }
   case CALL: {
-    int rest = write_true(write_true(write_false(output)));
+    int rest = write_true(write_false(output));
     retval = write_expression(write_expression(rest, function(expression)), argument(expression));
-    break; }
-  case DEFINITION: {
-    int rest = write_false(write_true(write_false(output)));
-    retval = write_expression(write_expression(rest, term(expression)), body(expression));
     break; }
   default:
     fprintf(stderr, "Cannot print expression!\n");
@@ -645,12 +604,6 @@ int eval_expression(int expression, int local_environment)
     else
       retval = eval_fun;
     gc_pop(1);
-    break; }
-  case DEFINITION: {
-    int wrap_term = gc_push(make_wrap(term(expression), local_environment));
-    int body_environment = gc_push(make_pair(wrap_term, local_environment));
-    retval = eval_expression(body(expression), body_environment);
-    gc_pop(2);
     break; }
   case WRAP:
     retval = eval_expression(unwrap(expression), environment(expression));

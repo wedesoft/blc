@@ -66,26 +66,24 @@ int main(void)
   retval = retval | test_compile("011->x.x 000010", "0110010000010");
   retval = retval | test_compile("011 ->->x.x ->y.y", "0110000100010");
   retval = retval | test_compile("011 ->->x.x ->x.x", "0110000100010");
-  retval = retval | test_compile("f=->->x.x f", "01000001010");
-  retval = retval | test_compile("f= ->->x.x f", "01000001010");
-  retval = retval | test_compile("f =->->x.x f", "01000001010");
-  retval = retval | test_compile("f=->->x.x f f", "0100000101010");
-  retval = retval | test_compile("->x.y=x y", "000101010");
-  retval = retval | test_compile("(->->x.x ->y.y)", "0110000100010");
-  retval = retval | test_compile("(->->x.x ->x.x)", "0110000100010");
-  retval = retval | test_compile("((->x->y.x input) output)", "011011000011010110");
-  retval = retval | test_compile("((->x->y.y input) output)", "01101100001010110");
-  retval = retval | test_compile("(->x->y.x input output)", "011011000011010110");
-  retval = retval | test_compile("(->x->y.y input output)", "01101100001010110");
-  retval = retval | test_compile("(input ->x->y.x) 0", "0111000001100");
+  retval = retval | test_compile("f=->->x.x f", "010010000010");
+  retval = retval | test_compile("f= ->->x.x f", "010010000010");
+  retval = retval | test_compile("f =->->x.x f", "010010000010");
+  retval = retval | test_compile("->x.y=x y", "0001001010");
+  retval = retval | test_compile("(->->x.x ->y.y)", "010000100010");
+  retval = retval | test_compile("(->->x.x ->x.x)", "010000100010");
+  retval = retval | test_compile("((->x->y.x input) output)", "0101000011010110");
+  retval = retval | test_compile("((->x->y.y input) output)", "010100001010110");
+  retval = retval | test_compile("(->x->y.x input output)", "0101000011010110");
+  retval = retval | test_compile("(->x->y.y input output)", "010100001010110");
+  retval = retval | test_compile("(input ->x->y.x) 0", "011000001100");
   retval = retval | test_compile("(input)", "10");
   retval = retval | test_compile("((((((->input->output->I->true->false->Y."
                                  "((Y->f->input.(((input true)true)(f(input false))))input)"
                                  "input)output)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
-                                 "01101101101101101100000000000001101110000001"
-                                 "10110111011111011111001111001110111101111110"
-                                 "10110001000001100000100001100011110011101000"
-                                 "0111100111010");
+                                 "01010101010100000000000001011000000101011011"
+                                 "11101111100111001101111011111101011000100000"
+                                 "110000010000100011100110100001110011010");
   return retval;
 }
 

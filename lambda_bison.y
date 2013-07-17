@@ -20,6 +20,7 @@
 #include "blc.h"
 
 extern int yyretval;
+extern FILE *yyin;
 extern FILE *yyout;
 extern char *yytext;
 extern int n_registers;
@@ -72,6 +73,22 @@ int find_var(const char *token)
   };
   return retval;
 }
+
+/* int copy_definitions(int previous_expr, int expression)
+{
+  int retval;
+  gc_push(previous_expr);
+  gc_push(expression);
+  if (is_definition(previous_expr)) {
+    int subexpr = gc_push(copy_definitions(body(previous_expr), expression));
+    retval = make_pair(make_definition(term(previous_expr), first(subexpr)), rest(subexpr));
+    gc_pop(1);
+  } else
+    retval = expression;
+  gc_pop(2);
+  return retval;
+}
+*/
 %}
 
 %union {
@@ -89,9 +106,15 @@ init: { push("output"); push("input"); } run { pop(); pop(); }
     ;
 
 run: /* empty */
-   | expr { gc_push($1);
-            write_expression(gc_push(make_output(yyout)),
-                             gc_push(normalise($1, gc_push(make_false()), 0, 0)));
+   | expr { int expression = gc_push($1);
+            int input = gc_push(make_input(yyin));
+            int output = gc_push(make_output(yyout));
+            int environment = gc_push(make_pair(input,
+                                                make_pair(output, gc_push(make_false()))));
+            int output_rest = gc_push(make_output(yyout));
+            write_expression(output_rest, normalise(eval_expression(expression, environment),
+                                                    gc_push(make_false()), 0, 2));
+            fputc('\n', yyout);
             fflush(yyout);
             gc_pop(n_registers); } run
    | ZERO { fputc('0', yyout); fflush(yyout); } run
@@ -102,7 +125,7 @@ run: /* empty */
 expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
     | lambda     { $$ = $1; }
     | LP call RP { $$ = $2; }
-    | DEF nodef  { push($1); } expr { $$ = gc_push(make_definition($2, $4)); }
+    | DEF nodef  { push($1); } expr { $$ = gc_push(make_call(make_lambda($4), $2)); }
     ;
 
 call: subexpr      { $$ = $1; }
@@ -112,7 +135,7 @@ call: subexpr      { $$ = $1; }
 subexpr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
        | lambda     { $$ = $1; }
        | LP call RP { $$ = $2; }
-       | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_definition($2, $4)); pop(); }
+       | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_call(make_lambda($4), $2)); pop(); }
        ;
 
 nodef: VAR           { $$ = gc_push(make_variable(find_var($1))); }

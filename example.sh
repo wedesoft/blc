@@ -1,2 +1,2 @@
 #!/bin/sh
-cat example.txt | ./lambda | ./blc
+cat example.txt | ./lambda
