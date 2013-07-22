@@ -120,7 +120,7 @@ int copy_definitions(int previous_expr, int expression, int n)
   char sym[80];
 };
 
-%type <expr> expr subexpr nodef lambda call abstraction
+%type <expr> expr subexpr nodef lambda call abstraction blc blc_var blc_lambda blc_call
 %token <sym> VAR DEF
 %token ZERO ONE LAMBDA LP RP DOT
 
@@ -147,29 +147,42 @@ run: /* empty */
             previous_expr = expression;
             n_prev = n_definitions;
             gc_push(previous_expr); } run
-   | ZERO { fputc('0', yyout); fflush(yyout); } run
-   | ONE  { fputc('1', yyout); fflush(yyout); } run
-   | DOT  {} run
    ;
 
 expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
-    | lambda     { $$ = $1; }
+    | lambda
     | LP call RP { $$ = $2; }
     | DEF nodef  { push($1); } expr { $$ = gc_push(make_call(make_lambda($4), $2)); n_definitions++; }
+    | blc
     ;
 
-call: subexpr      { $$ = $1; }
+blc: blc_var
+   | blc_lambda
+   | blc_call
+   ;
+
+blc_var: ONE ZERO    { $$ = gc_push(make_variable(0)); }
+       | ONE blc_var { $$ = gc_push(make_variable(variable($2) + 1)); }
+       ;
+
+blc_lambda: ZERO ZERO blc { $$ = gc_push(make_lambda($3)); }
+          ;
+
+blc_call: ZERO ONE blc blc { $$ = gc_push(make_call($3, $4)); }
+        ;
+
+call: subexpr
     | call subexpr { $$ = gc_push(make_call($1, $2)); }
     ;
 
 subexpr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
-       | lambda     { $$ = $1; }
+       | lambda
        | LP call RP { $$ = $2; }
        | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_call(make_lambda($4), $2)); pop(); }
        ;
 
 nodef: VAR           { $$ = gc_push(make_variable(find_var($1))); }
-     | lambda        { $$ = $1; }
+     | lambda
      | LP call RP    { $$ = $2; }
      ;
 

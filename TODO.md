@@ -1,6 +1,8 @@
 TODO
 ====
 
+* go meta-circular
+  REPL -> input -> new REPL -> ...
 * evaluate BLC fragments in lambda-language
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
@@ -8,7 +10,6 @@ TODO
   (1 . ())
 * continuation passing style, tail-call optimisation
 * better garbage collector? reflective?
-* go meta-circular
 * have write_expr produce lists,
   quote creates list or error
 * (eval (quote input))
