@@ -1,7 +1,6 @@
 TODO
 ====
 
-* check use of binary input in lambda-REPL
 * evaluate BLC fragments in lambda-language
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method

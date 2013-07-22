@@ -21,6 +21,7 @@ extern int yyretval;
 %}
 
 %option noyywrap
+%option always-interactive
 
 ASCLEAD [a-zA-Z_]
 ASCTAIL [a-zA-Z0-9_?!]

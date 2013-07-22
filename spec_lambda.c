@@ -44,46 +44,41 @@ int main(void)
   retval = retval | test_compile("00.10", "0010");
   retval = retval | test_compile("-10", "10");
   retval = retval | test_compile("-10>", "10");
-  retval = retval | test_compile("->x.x", "0010");
-  retval = retval | test_compile("->xy.xy", "0010");
-  retval = retval | test_compile("-> x.x", "0010");
-  retval = retval | test_compile("->x .x", "0010");
-  retval = retval | test_compile("->x. x", "0010");
-  retval = retval | test_compile("->x.->y.x", "0000110");
-  retval = retval | test_compile("->x.->y.y", "000010");
-  retval = retval | test_compile("->x.->x.x", "000010");
-  retval = retval | test_compile("00->x.x", "000010");
-  retval = retval | test_compile("->.->y.y", "000010");
-  retval = retval | test_compile("->->y.y", "000010");
-  retval = retval | test_compile("->x->y.x", "0000110");
-  retval = retval | test_compile("->x y.x", "0000110");
-  retval = retval | test_compile("->x.->y.x", "0000110");
-  retval = retval | test_compile("->x->y.x", "0000110");
-  retval = retval | test_compile("->x->.x", "0000110");
-  retval = retval | test_compile("-> x -> y . x", "0000110");
-  retval = retval | test_compile("011->->x.x->y.y", "0110000100010");
-  retval = retval | test_compile("011000010->y.y", "0110000100010");
-  retval = retval | test_compile("011->x.x 000010", "0110010000010");
-  retval = retval | test_compile("011 ->->x.x ->y.y", "0110000100010");
-  retval = retval | test_compile("011 ->->x.x ->x.x", "0110000100010");
-  retval = retval | test_compile("f=->->x.x f", "010010000010");
-  retval = retval | test_compile("f= ->->x.x f", "010010000010");
-  retval = retval | test_compile("f =->->x.x f", "010010000010");
-  retval = retval | test_compile("->x.y=x y", "0001001010");
-  retval = retval | test_compile("(->->x.x ->y.y)", "010000100010");
-  retval = retval | test_compile("(->->x.x ->x.x)", "010000100010");
-  retval = retval | test_compile("((->x->y.x input) output)", "0101000011010110");
-  retval = retval | test_compile("((->x->y.y input) output)", "010100001010110");
-  retval = retval | test_compile("(->x->y.x input output)", "0101000011010110");
-  retval = retval | test_compile("(->x->y.y input output)", "010100001010110");
-  retval = retval | test_compile("(input ->x->y.x) 0", "011000001100");
-  retval = retval | test_compile("(input)", "10");
-  retval = retval | test_compile("((((((->input->output->I->true->false->Y."
-                                 "((Y->f->input.(((input true)true)(f(input false))))input)"
-                                 "input)output)->x.x)->x->y.x)->x->y.y)->f.(->x.(f(x x))->x.(f(x x))))",
-                                 "01010101010100000000000001011000000101011011"
-                                 "11101111100111001101111011111101011000100000"
-                                 "110000010000100011100110100001110011010");
+  retval = retval | test_compile("->x.x", "0010\n");
+  retval = retval | test_compile("->xy.xy", "0010\n");
+  retval = retval | test_compile("-> x.x", "0010\n");
+  retval = retval | test_compile("->x .x", "0010\n");
+  retval = retval | test_compile("->x. x", "0010\n");
+  retval = retval | test_compile("->x.->y.x", "0000110\n");
+  retval = retval | test_compile("->x.->y.y", "000010\n");
+  retval = retval | test_compile("->x.->x.x", "000010\n");
+  retval = retval | test_compile("00->x.x", "000010\n");
+  retval = retval | test_compile("->.->y.y", "000010\n");
+  retval = retval | test_compile("->->y.y", "000010\n");
+  retval = retval | test_compile("->x->y.x", "0000110\n");
+  retval = retval | test_compile("->x y.x", "0000110\n");
+  retval = retval | test_compile("->x.->y.x", "0000110\n");
+  retval = retval | test_compile("->x->y.x", "0000110\n");
+  retval = retval | test_compile("->x->.x", "0000110\n");
+  retval = retval | test_compile("-> x -> y . x", "0000110\n");
+  retval = retval | test_compile("011->->x.x->y.y", "011000010\n0010\n");
+  retval = retval | test_compile("011000010->y.y", "0110000100010\n");
+  retval = retval | test_compile("011->x.x 000010", "0110010\n000010");
+  retval = retval | test_compile("011 ->->x.x ->y.y", "011000010\n0010\n");
+  retval = retval | test_compile("011 ->->x.x ->x.x", "011000010\n0010\n");
+  retval = retval | test_compile("f=->->x.x f", "000010\n");
+  retval = retval | test_compile("f= ->->x.x f", "000010\n");
+  retval = retval | test_compile("f =->->x.x f", "000010\n");
+  retval = retval | test_compile("->x.y=x y", "0001001010\n");
+  retval = retval | test_compile("(->->x.x ->y.y)", "0010\n");
+  retval = retval | test_compile("(->->x.x ->x.x)", "0010\n");
+  retval = retval | test_compile("((->x->y.x input) output)", "10\n");
+  retval = retval | test_compile("((->x->y.y input) output)", "110\n");
+  retval = retval | test_compile("(->x->y.x input output)", "10\n");
+  retval = retval | test_compile("(->x->y.y input output)", "110\n");
+  retval = retval | test_compile("(input ->x->y.x)\n0", "000010\n");
+  retval = retval | test_compile("(input ->x->y.x)\n1", "0000110\n");
+  retval = retval | test_compile("(input)", "10\n");
   return retval;
 }
 

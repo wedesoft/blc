@@ -139,11 +139,10 @@ run: /* empty */
             int output = gc_push(make_output(yyout));
             int environment = gc_push(make_pair(input,
                                                 make_pair(output, gc_push(make_false()))));
+            int result = eval_expression(expression, environment);
             int output_rest = gc_push(make_output(yyout));
-            write_expression(output_rest, normalise(eval_expression(expression, environment),
-                                                    gc_push(make_false()), 0, 2));
+            write_expression(output_rest, normalise(result, gc_push(make_false()), 0, 2));
             fputc('\n', yyout);
-            fflush(yyout);
             gc_pop(n_registers);
             previous_expr = expression;
             n_prev = n_definitions;
