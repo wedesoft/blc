@@ -20,7 +20,7 @@
 
 #define BUFSIZE 256
 
-int test_compile(char *cmd, char *spec)
+int test_eval(char *cmd, char *spec)
 {
   int retval = 0;
   char buffer[BUFSIZE];
@@ -40,36 +40,38 @@ int test_compile(char *cmd, char *spec)
 int main(void)
 {
   int retval = 0;
-  retval = retval | test_compile("0010", "0010\n");
-  retval = retval | test_compile("->x.x", "0010\n");
-  retval = retval | test_compile("->xy.xy", "0010\n");
-  retval = retval | test_compile("-> x.x", "0010\n");
-  retval = retval | test_compile("->x .x", "0010\n");
-  retval = retval | test_compile("->x. x", "0010\n");
-  retval = retval | test_compile("->x.->y.x", "0000110\n");
-  retval = retval | test_compile("->x.->y.y", "000010\n");
-  retval = retval | test_compile("->x.->x.x", "000010\n");
-  retval = retval | test_compile("->.->y.y", "000010\n");
-  retval = retval | test_compile("->->y.y", "000010\n");
-  retval = retval | test_compile("->x->y.x", "0000110\n");
-  retval = retval | test_compile("->x y.x", "0000110\n");
-  retval = retval | test_compile("->x.->y.x", "0000110\n");
-  retval = retval | test_compile("->x->y.x", "0000110\n");
-  retval = retval | test_compile("->x->.x", "0000110\n");
-  retval = retval | test_compile("-> x -> y . x", "0000110\n");
-  retval = retval | test_compile("f=->->x.x f", "000010\n");
-  retval = retval | test_compile("f= ->->x.x f", "000010\n");
-  retval = retval | test_compile("f =->->x.x f", "000010\n");
-  retval = retval | test_compile("->x.y=x y", "0001001010\n");
-  retval = retval | test_compile("(->->x.x ->y.y)", "0010\n");
-  retval = retval | test_compile("(->->x.x ->x.x)", "0010\n");
-  retval = retval | test_compile("((->x->y.x input) output)", "10\n");
-  retval = retval | test_compile("((->x->y.y input) output)", "110\n");
-  retval = retval | test_compile("(->x->y.x input output)", "10\n");
-  retval = retval | test_compile("(->x->y.y input output)", "110\n");
-  retval = retval | test_compile("(input ->x->y.x)\n0", "000010\n");
-  retval = retval | test_compile("(input ->x->y.x)\n1", "0000110\n");
-  retval = retval | test_compile("(input)", "10\n");
+  retval = retval | test_eval("1110", "1110\n");
+  retval = retval | test_eval("0010", "0010\n");
+  retval = retval | test_eval("0100100010", "0010\n");
+  retval = retval | test_eval("->x.x", "0010\n");
+  retval = retval | test_eval("->xy.xy", "0010\n");
+  retval = retval | test_eval("-> x.x", "0010\n");
+  retval = retval | test_eval("->x .x", "0010\n");
+  retval = retval | test_eval("->x. x", "0010\n");
+  retval = retval | test_eval("->x.->y.x", "0000110\n");
+  retval = retval | test_eval("->x.->y.y", "000010\n");
+  retval = retval | test_eval("->x.->x.x", "000010\n");
+  retval = retval | test_eval("->.->y.y", "000010\n");
+  retval = retval | test_eval("->->y.y", "000010\n");
+  retval = retval | test_eval("->x->y.x", "0000110\n");
+  retval = retval | test_eval("->x y.x", "0000110\n");
+  retval = retval | test_eval("->x.->y.x", "0000110\n");
+  retval = retval | test_eval("->x->y.x", "0000110\n");
+  retval = retval | test_eval("->x->.x", "0000110\n");
+  retval = retval | test_eval("-> x -> y . x", "0000110\n");
+  retval = retval | test_eval("f=->->x.x f", "000010\n");
+  retval = retval | test_eval("f= ->->x.x f", "000010\n");
+  retval = retval | test_eval("f =->->x.x f", "000010\n");
+  retval = retval | test_eval("->x.y=x y", "0001001010\n");
+  retval = retval | test_eval("(->->x.x ->y.y)", "0010\n");
+  retval = retval | test_eval("(->->x.x ->x.x)", "0010\n");
+  retval = retval | test_eval("((->x->y.x input) output)", "10\n");
+  retval = retval | test_eval("((->x->y.y input) output)", "110\n");
+  retval = retval | test_eval("(->x->y.x input output)", "10\n");
+  retval = retval | test_eval("(->x->y.y input output)", "110\n");
+  retval = retval | test_eval("(input ->x->y.x)\n0", "000010\n");
+  retval = retval | test_eval("(input ->x->y.x)\n1", "0000110\n");
+  retval = retval | test_eval("(input)", "10\n");
   return retval;
 }
 

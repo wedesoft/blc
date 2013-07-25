@@ -78,22 +78,6 @@ int n_definitions;
 int n_prev;
 int previous_expr;
 
-/* int copy_definitions(int previous_expr, int expression)
-{
-  int retval;
-  gc_push(previous_expr);
-  gc_push(expression);
-  if (is_definition(previous_expr)) {
-    int subexpr = gc_push(copy_definitions(body(previous_expr), expression));
-    retval = make_pair(make_definition(term(previous_expr), first(subexpr)), rest(subexpr));
-    gc_pop(1);
-  } else
-    retval = expression;
-  gc_pop(2);
-  return retval;
-}
-*/
-
 int copy_definitions(int previous_expr, int expression, int n)
 {
   int retval;

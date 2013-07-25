@@ -177,7 +177,7 @@ int main(void)
   retval = retval | test_read_write("  1110 ", "1110");
   retval = retval | test_read_write("0010", "0010");
   retval = retval | test_read_write("00 10", "0010");
-  retval = retval | test_read_write("0100100010", "0100100010");
+  retval = retval | test_read_write("010010000010", "010010000010");
   retval = retval | test_read_write(" 01 0010 0010", "0100100010");
   retval = retval | test_eval("10", "10");// first variable
   retval = retval | test_eval("110", "110");// second variable
@@ -199,15 +199,15 @@ int main(void)
   retval = retval | test_eval("01 01 000010 001110 00110", "00110");
   retval = retval | test_eval("01 01 0000110 001110 00110", "001110");
   retval = retval | test_eval("01 00110 0010", "10");// return global variable
-  retval = retval | test_eval("0100100010", "0010");
+  retval = retval | test_eval("01 0010 0010", "0010");// pass identity function to itself
   retval = retval | test_input("01 10 0000110", "0010");// end of string
   retval = retval | test_input("01 10 0000110 0", "000010");// read '0'
   retval = retval | test_input("01 10 0000110 1", "0000110");// read '1'
   retval = retval | test_input("01 01 10 000000000010 0000110 0", "000010");// determine no EOS
   retval = retval | test_input("01 01 10 000000000010 0000110 1", "000010");// determine no EOS
   retval = retval | test_input("01 01 10 000000000010 0000110", "0000110");// determine EOS
-  retval = retval | test_input("01 01 10 000010 0000110 00", "000010");
-  retval = retval | test_input("01 01 10 000010 0000110 01", "0000110");
+  retval = retval | test_input("01 01 10 000010 0000110 00", "000010");// read second bit (false)
+  retval = retval | test_input("01 01 10 000010 0000110 01", "0000110");// read second bit (true)
   retval = retval | test_input("01 01 01 10 0000110 1110 110 0", "10");// select variable using input bit
   retval = retval | test_input("01 01 01 10 0000110 1110 110 1", "110");// select variable using input bit
   retval = retval | test_input("01 01 01 01 10 000010 0000110 1110 110 00", "10");// select variable using second input bit
@@ -215,6 +215,8 @@ int main(void)
   retval = retval | test_output("10", "");// no output
   retval = retval | test_output("01 10 000010", "0");// write '0'
   retval = retval | test_output("01 10 0000110", "1");// write '1'
+  retval = retval | test_output("01 01 10 000010 0000110", "01");// write '01'
+  retval = retval | test_output("01 01 10 0000110 000010", "10");// write '10'
   retval = retval | test_input_output("01 110 01 10 0000110 0", "0");// print out bit from input
   retval = retval | test_input_output("01 110 01 10 0000110 1", "1");// print out bit from input
   retval = retval | test_input_output("01 110 01 01 10 000010 0000110 00", "0");// print out second bit from input

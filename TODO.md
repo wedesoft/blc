@@ -1,9 +1,14 @@
 TODO
 ====
 
+* IO (monad) with FFI (input, output, input8, output8)
+  stdin, stdout, self?: constants
+  read_bit, write_bit, read_char, write_char: methods
+* symbols/strings?
+* inspect methods
 * go meta-circular
-  REPL -> input -> new REPL -> ...
-* evaluate BLC fragments in lambda-language
+  binary representation for proc, wrap, input, output
+  forward declaration?
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first
@@ -35,7 +40,6 @@ TODO
 * named parameters, structures
 * Earley parser for bits?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
-* add input, eval, and quote without introducing new types?
 * ffi
 * binary tree tokenizer, compose grammars
 * overload representation of pairs?
