@@ -18,10 +18,9 @@
 
 int main(void)
 {
-  while (1) {
+  while (!feof(stdin)) {
     int input = gc_push(make_input(stdin));
     int expression = gc_push(read_expression(input));
-    if (feof(stdin)) break;
     write_expression(first(expression), make_pair(rest(expression), make_false()), stdout);
     fputc('\n', stdout);
     gc_pop(3);
