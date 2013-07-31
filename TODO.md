@@ -1,14 +1,14 @@
 TODO
 ====
 
-* IO (monad) with FFI (input, output, input8, output8)
+* go meta-circular
+  binary representation for proc, wrap, input, output
+  forward declaration?
+* IO (monad) with FFI
   stdin, stdout, self?: constants
   read_bit, write_bit, read_char, write_char: methods
 * symbols/strings?
 * inspect methods
-* go meta-circular
-  binary representation for proc, wrap, input, output
-  forward declaration?
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
   (first list) -> list.first

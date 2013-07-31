@@ -13,22 +13,18 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#include <stdlib.h>
 #include "blc.h"
 
 int main(void)
 {
   while (1) {
     int input = gc_push(make_input(stdin));
-    int output = gc_push(make_output(stdout));
-    int expression = read_expression(input);
+    int expression = gc_push(read_expression(input));
     if (feof(stdin)) break;
-    int environment = gc_push(make_pair(rest(expression),
-                                        make_pair(output, gc_push(make_false()))));
-    int output_rest = gc_push(make_output(stdout));
-    write_expression(output_rest, normalise(eval_expression(first(expression), environment),
-                                            gc_push(make_false()), 0, 2));
+    write_expression(first(expression), make_pair(rest(expression), make_false()), stdout);
     fputc('\n', stdout);
-    gc_pop(7);
+    gc_pop(3);
   };
   return 0;
 }

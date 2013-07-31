@@ -69,8 +69,6 @@ int main(void)
   retval = retval | test_eval("((->x->y.y input) output)", "110\n");
   retval = retval | test_eval("(->x->y.x input output)", "10\n");
   retval = retval | test_eval("(->x->y.y input output)", "110\n");
-  retval = retval | test_eval("(input ->x->y.x)\n0", "000010\n");
-  retval = retval | test_eval("(input ->x->y.x)\n1", "0000110\n");
   retval = retval | test_eval("(input)", "10\n");
   return retval;
 }

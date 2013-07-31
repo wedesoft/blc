@@ -21,7 +21,7 @@
 #define MAX_CELLS 1000000
 #define MAX_REGISTERS 4000000
 
-typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT, OUTPUT } type_t;
+typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
 typedef struct { int function; int argument; } call_t;
 
@@ -33,8 +33,6 @@ typedef struct { int unwrap; int environment; } wrap_t;
 
 typedef struct { FILE *file; int used; } input_t;
 
-typedef struct { FILE *file; int used; } output_t;
-
 typedef struct {
   type_t type;
   union {
@@ -45,7 +43,6 @@ typedef struct {
     proc_t proc;
     wrap_t wrap;
     input_t input;
-    output_t output;
   };
   char mark;
 } cell_t;
@@ -65,18 +62,18 @@ int is_call(int cell) { return is_type(cell, CALL); }
 int is_proc(int cell) { return is_type(cell, PROC); }
 int is_wrap(int cell) { return is_type(cell, WRAP); }
 int is_input(int cell) { return is_type(cell, INPUT); }
-int is_output(int cell) { return is_type(cell, OUTPUT); }
+
+int has_function(int cell) { return is_call(cell) || is_proc(cell) || is_lambda(cell); }
 
 int variable(int cell) { return cells[cell].variable; }
-int has_function(int cell) { return is_call(cell) || is_proc(cell) || is_lambda(cell); }
 int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : cells[cell].lambda; }
 int argument(int cell) { return cells[cell].call.argument; }
 int term(int cell) { return cells[cell].definition.term; }
 int body(int cell) { return cells[cell].definition.body; }
 int unwrap(int cell) { return cells[cell].wrap.unwrap; }
 int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : cells[cell].wrap.environment; }
-FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : is_output(cell) ? cells[cell].output.file : NULL; }
-int used(int cell) { return is_input(cell) ? cells[cell].input.used : is_output(cell) ? cells[cell].output.used : cell; }
+FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
+int used(int cell) { return is_input(cell) ? cells[cell].input.used : cell; }
 
 void clear_marks(void) {
   int i;
@@ -117,7 +114,6 @@ void mark(int expression)
         mark(environment(expression));
         break;
       case INPUT:
-      case OUTPUT:
         mark(used(expression));
         break;
     }
@@ -147,7 +143,7 @@ int cell(void)
     mark_registers();
     retval = find_cell();
     if (retval == MAX_CELLS) {
-      fprintf(stderr, "Out of memory!\n");
+      fputs("Out of memory!\n", stderr);
       exit(1);
     };
   };
@@ -218,15 +214,6 @@ int make_input(FILE *file)
   return retval;
 }
 
-int make_output(FILE *file)
-{
-  int retval = cell();
-  cells[retval].type = OUTPUT;
-  cells[retval].output.file = file;
-  cells[retval].output.used = retval;
-  return retval;
-}
-
 int make_false(void) { return make_lambda(make_lambda(make_variable(0))); }
 
 int is_false(int expression)
@@ -264,12 +251,10 @@ int num_to_list(int number)
   return retval;
 }
 
-int is_pair(int expression);
-
 int list_to_num(int list)
 {
   int retval;
-  if (is_pair(list)) {
+  if (!is_false(list)) {
     if (is_true(first(list)))
       retval = 1 + (list_to_num(rest(list)) << 1);
     else
@@ -302,7 +287,7 @@ int read_bit(int input)
 {
   int retval;
   int list = gc_push(read_char(input));
-  if (!is_pair(list))
+  if (is_false(list))
     retval = list;
   else {
     int c = list_to_num(first(list));
@@ -323,54 +308,6 @@ int read_bit(int input)
   return retval;
 }
 
-int write_char(int output, int list)
-{
-  int retval;
-  gc_push(output);
-  gc_push(list);
-  if (used(output) != output) {
-    fprintf(stderr, "Output object already used!\n");
-    exit(1);
-  } else {
-    fputc(list_to_num(list), file(output));
-    retval = make_output(file(output));
-    cells[output].output.used = retval;
-  }
-  gc_pop(2);
-  return retval;
-}
-
-int write_bit(int output, int bit)
-{
-  int retval;
-  gc_push(output);
-  gc_push(bit);
-  if (is_true(bit))
-    retval = write_char(output, num_to_list('1'));
-  else
-    retval = write_char(output, num_to_list('0'));
-  gc_pop(2);
-  return retval;
-}
-
-int write_false(int output)
-{
-  int retval;
-  gc_push(output);
-  retval = write_bit(output, make_false());
-  gc_pop(1);
-  return retval;
-}
-
-int write_true(int output)
-{
-  int retval;
-  gc_push(output);
-  retval = write_bit(output, make_true());
-  gc_pop(1);
-  return retval;
-}
-
 int make_pair(int first, int rest)
 {
   gc_push(first);
@@ -378,16 +315,6 @@ int make_pair(int first, int rest)
   int retval = make_lambda(make_call(make_call(make_variable(0), first), rest));
   gc_pop(2);
   return retval;
-}
-
-int is_pair(int expression)
-{
-  return
-    has_function(expression) &&
-    has_function(function(expression)) &&
-    has_function(function(function(expression))) &&
-    is_variable(function(function(function(expression)))) &&
-    variable(function(function(function(expression)))) == 0;
 }
 
 int first(int list)
@@ -453,13 +380,13 @@ int read_expression(int input)
     else if (is_true(first(b2)))
       retval = read_call(rest(b2));
     else {
-      fprintf(stderr, "Incomplete expression!\n");
+      fputs("Incomplete expression!\n", stderr);
       exit(1);
     };
   } else if (is_true(first(input)))
     retval = read_variable(rest(input));
   else {
-    fprintf(stderr, "Incomplete expression!\n");
+    fputs("Incomplete expression!\n", stderr);
     exit(1);
   };
   gc_pop(1);
@@ -469,7 +396,7 @@ int read_expression(int input)
 int length(int list)
 {
   int retval;
-  if (!is_pair(list))
+  if (is_false(list))
     retval = 0;
   else
     retval = 1 + length(rest(list));
@@ -479,97 +406,13 @@ int length(int list)
 int lookup(int variable, int environment)
 {
   int retval;
-  if (is_pair(environment)) {
+  if (!is_false(environment)) {
     if (variable > 0)
       retval = lookup(variable - 1, rest(environment));
     else
       retval = first(environment);
   } else
     retval = MAX_CELLS;
-  return retval;
-}
-
-int write_variable(int output, int variable)
-{
-  int retval;
-  gc_push(output);
-  gc_push(variable);
-  int rest = write_true(output);
-  if (variable > 0)
-    retval = write_variable(rest, variable - 1);
-  else
-    retval = write_false(rest);
-  gc_pop(2);
-  return retval;
-}
-
-int normalise(int expression, int local_environment, int local_depth, int depth)
-{
-  int retval;
-  gc_push(expression);
-  gc_push(local_environment);
-  switch (type(expression)) {
-  case VARIABLE:
-    if (variable(expression) < local_depth)
-      retval = expression;
-    else {
-      int value = lookup(variable(expression) - local_depth, local_environment);
-      if (value != MAX_CELLS)
-        retval = normalise(value, local_environment, local_depth, depth);
-      else
-        retval = make_variable(variable(expression) + depth - local_depth);
-    };
-    break;
-  case LAMBDA:
-    retval = make_lambda(normalise(function(expression), local_environment, local_depth + 1, depth + 1));
-    break;
-  case CALL: {
-    int fun = gc_push(normalise(function(expression), local_environment, local_depth, depth));
-    int arg = gc_push(normalise(argument(expression), local_environment, local_depth, depth));
-    retval = make_call(fun, arg);
-    gc_pop(2);
-    break; }
-  case PROC:
-    retval = make_lambda(normalise(function(expression), environment(expression), 1, depth + 1));
-    break;
-  case WRAP:
-    retval = normalise(unwrap(expression), environment(expression), 0, depth);
-    break;
-  case INPUT:
-    retval = make_variable(depth - 2);
-    break;
-  case OUTPUT:
-    retval = make_variable(depth - 1);
-    break;
-  default:
-    retval = expression;
-  };
-  gc_pop(2);
-  return retval;
-}
-
-int write_expression(int output, int expression)
-{
-  int retval;
-  gc_push(output);
-  gc_push(expression);
-  switch (type(expression)) {
-  case VARIABLE:
-    retval = write_variable(output, variable(expression));
-    break;
-  case LAMBDA: {
-    int rest = write_false(write_false(output));
-    retval = write_expression(rest, function(expression));
-    break; }
-  case CALL: {
-    int rest = write_true(write_false(output));
-    retval = write_expression(write_expression(rest, function(expression)), argument(expression));
-    break; }
-  default:
-    fprintf(stderr, "Cannot print expression!\n");
-    exit(1);
-  }
-  gc_pop(2);
   return retval;
 }
 
@@ -599,9 +442,7 @@ int eval_expression(int expression, int local_environment)
     } else if (is_input(eval_fun)) {
       int bit = eval_expression(read_bit(eval_fun), local_environment);
       retval = eval_expression(make_call(bit, argument(expression)), local_environment);
-    } else if (is_output(eval_fun))
-      retval = write_bit(eval_fun, eval_expression(argument(expression), local_environment));
-    else
+    } else
       retval = eval_fun;
     gc_pop(1);
     break; }
@@ -613,4 +454,28 @@ int eval_expression(int expression, int local_environment)
   }
   gc_pop(2);
   return retval;
+}
+
+void write_expression(int expression, int local_environment, FILE *output)
+{
+  gc_push(expression);
+  gc_push(local_environment);
+  int result = gc_push(eval_expression(expression, local_environment));
+  int empty = eval_expression(make_call(make_call(result, gc_push(make_lambda(make_lambda(make_lambda(make_false()))))), gc_push(make_true())), local_environment);
+  if (is_false(empty)) {
+    int bit = eval_expression(make_call(result, make_true()), local_environment);
+    if (is_true(bit))
+      fputc('1', output);
+    else if (is_false(bit))
+      fputc('0', output);
+    else {
+      fputs("Expecting boolean!\n", stderr);
+      exit(1);
+    };
+    write_expression(make_call(result, make_false()), local_environment, output);
+  } else if (!is_true(empty)) {
+    fputs("Expecting list expression!\n", stderr);
+    exit(1);
+  };
+  gc_pop(5);
 }

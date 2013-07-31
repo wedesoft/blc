@@ -37,11 +37,9 @@ int argument(int cell);
 
 int read_expression(int input);
 
+void write_expression(int expression, int local_environment, FILE *output);
+
 int eval_expression(int expression, int local_env);
-
-int normalise(int expression, int local_environment, int local_depth, int depth);
-
-int write_expression(int output, int expression);
 
 int make_variable(int variable);
 
@@ -51,11 +49,13 @@ int make_call(int function, int argument);
 
 int make_input(FILE *file);
 
-int make_output(FILE *file);
-
 int make_false(void);
 
+int is_false(int expression);
+
 int make_true(void);
+
+int is_true(int expression);
 
 int make_pair(int first, int rest);
 
