@@ -40,36 +40,21 @@ int test_eval(char *cmd, char *spec)
 int main(void)
 {
   int retval = 0;
-  retval = retval | test_eval("1110", "1110\n");
-  retval = retval | test_eval("0010", "0010\n");
-  retval = retval | test_eval("0100100010", "0010\n");
-  retval = retval | test_eval("->x.x", "0010\n");
-  retval = retval | test_eval("->xy.xy", "0010\n");
-  retval = retval | test_eval("-> x.x", "0010\n");
-  retval = retval | test_eval("->x .x", "0010\n");
-  retval = retval | test_eval("->x. x", "0010\n");
-  retval = retval | test_eval("->x.->y.x", "0000110\n");
-  retval = retval | test_eval("->x.->y.y", "000010\n");
-  retval = retval | test_eval("->x.->x.x", "000010\n");
-  retval = retval | test_eval("->.->y.y", "000010\n");
-  retval = retval | test_eval("->->y.y", "000010\n");
-  retval = retval | test_eval("->x->y.x", "0000110\n");
-  retval = retval | test_eval("->x y.x", "0000110\n");
-  retval = retval | test_eval("->x.->y.x", "0000110\n");
-  retval = retval | test_eval("->x->y.x", "0000110\n");
-  retval = retval | test_eval("->x->.x", "0000110\n");
-  retval = retval | test_eval("-> x -> y . x", "0000110\n");
-  retval = retval | test_eval("f=->->x.x f", "000010\n");
-  retval = retval | test_eval("f= ->->x.x f", "000010\n");
-  retval = retval | test_eval("f =->->x.x f", "000010\n");
-  retval = retval | test_eval("->x.y=x y", "0001001010\n");
-  retval = retval | test_eval("(->->x.x ->y.y)", "0010\n");
-  retval = retval | test_eval("(->->x.x ->x.x)", "0010\n");
-  retval = retval | test_eval("((->x->y.x input) output)", "10\n");
-  retval = retval | test_eval("((->x->y.y input) output)", "110\n");
-  retval = retval | test_eval("(->x->y.x input output)", "10\n");
-  retval = retval | test_eval("(->x->y.y input output)", "110\n");
-  retval = retval | test_eval("(input)", "10\n");
+  retval = retval | test_eval("000010", "\n");
+  retval = retval | test_eval("00010110 000010 000010", "0\n");
+  retval = retval | test_eval("->first.->second.second", "\n");
+  retval = retval | test_eval("->first->second.second", "\n");
+  retval = retval | test_eval("->first second.second", "\n");
+  retval = retval | test_eval("->.->second.second", "\n");
+  retval = retval | test_eval("->->second.second", "\n");
+  retval = retval | test_eval("(->x.x ->x->y.y)", "\n");
+  retval = retval | test_eval("f=->->y.y f", "\n");
+  retval = retval | test_eval("->x->y.second=y second", "\n");
+  retval = retval | test_eval("f=->->y.y\nt=->x->.x\npair=->h t.->s.(s h t)\n(pair f (pair t f))", "01\n");
+  retval = retval | test_eval("->s.(s (input ->x->.x) ->->y.y)\n0", "0\n");
+  retval = retval | test_eval("->s.(s (input ->x->.x) ->->y.y)\n1", "1\n");
+  retval = retval | test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n00", "0\n");
+  retval = retval | test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n01", "1\n");
   return retval;
 }
 

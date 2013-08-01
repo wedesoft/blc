@@ -461,7 +461,9 @@ void write_expression(int expression, int local_environment, FILE *output)
   gc_push(expression);
   gc_push(local_environment);
   int result = gc_push(eval_expression(expression, local_environment));
-  int empty = eval_expression(make_call(make_call(result, gc_push(make_lambda(make_lambda(make_lambda(make_false()))))), gc_push(make_true())), local_environment);
+  int empty = eval_expression(make_call(gc_push(make_call(result, make_lambda(make_lambda(make_lambda(make_false()))))),
+                                        gc_push(make_true())),
+                              local_environment);
   if (is_false(empty)) {
     int bit = eval_expression(make_call(result, make_true()), local_environment);
     if (is_true(bit))

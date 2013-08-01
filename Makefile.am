@@ -4,8 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 AM_YFLAGS = -d
 
-#bin_PROGRAMS = spec_blc blc lambda spec_lambda
-bin_PROGRAMS = spec_blc blc
+bin_PROGRAMS = spec_blc blc lambda spec_lambda
 
 blc_SOURCES = blc_repl.c blc.c
 blc_LDFLAGS = 
@@ -15,13 +14,13 @@ spec_blc_SOURCES = spec_blc.c blc.c
 spec_blc_LDFLAGS =
 spec_blc_LDADD =
 
-# lambda_SOURCES = lambda_repl.c lambda.c lambda_bison.y lambda_flex.l blc.c
-# lambda_LDFLAGS =
-# lambda_LDADD =
-# 
-# spec_lambda_SOURCES = spec_lambda.c lambda.c lambda_bison.y lambda_flex.l blc.c
-# spec_lambda_LDFLAGS =
-# spec_lambda_LDADD =
+lambda_SOURCES = lambda_repl.c lambda.c lambda_bison.y lambda_flex.l blc.c
+lambda_LDFLAGS =
+lambda_LDADD =
+
+spec_lambda_SOURCES = spec_lambda.c lambda.c lambda_bison.y lambda_flex.l blc.c
+spec_lambda_LDFLAGS =
+spec_lambda_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
@@ -31,8 +30,7 @@ BUILT_SOURCES = lambda_bison.h
 
 EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
 
-#test: spec_blc.tmp spec_lambda.tmp
-test: spec_blc.tmp
+test: spec_blc.tmp spec_lambda.tmp
 
 spec_blc.tmp: spec_blc$(EXEEXT)
 	./spec_blc$(EXEEXT) && $(TOUCH) $@

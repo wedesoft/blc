@@ -37,16 +37,16 @@ int str_to_list(char *str)
 
 int from_string(char *str)
 {
-  return first(read_expression(str_to_list(str)));
+  return read_expression(str_to_list(str));
 }
 
 char *to_string(char *buffer, int bufsize, int expression)
 {
   gc_push(expression);
   FILE *f = fmemopen(buffer, bufsize, "w");
-  write_expression(expression, gc_push(make_false()), f);
+  write_expression(first(expression), make_pair(rest(expression), make_false()), f);
   fclose(f);
-  gc_pop(2);
+  gc_pop(1);
   return buffer;
 }
 
@@ -75,7 +75,11 @@ int main(void)
   retval = retval | test_eval("00010110 01 0010 0000110 000010", "1"); // identity function
   retval = retval | test_eval("00010110 01 01 000010 000010 0000110 000010", "1"); // not false
   retval = retval | test_eval("00010110 01 01 0000110 000010 0000110 000010", "0"); // not true
-  // retval = retval | test_eval("01 10 110", "10");// ignore argument
+  retval = retval | test_eval("10 100001", "100001"); // mirror input
+  retval = retval | test_eval("00010110 011100000110 000010 0", "0"); // read false
+  retval = retval | test_eval("00010110 011100000110 000010 1", "1"); // read true
+  retval = retval | test_eval("00010110 01011100000100000110 000010 00", "0"); // read second bit
+  retval = retval | test_eval("00010110 01011100000100000110 000010 01", "1"); // read second bit
   return retval;
 }
 
