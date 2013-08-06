@@ -4,7 +4,8 @@ TODO
 * id = ->x.x
   id(true)
 * obj.fun
-  (obj.send fun)
+  (send obj fun)
+  (1 . ())
 * go meta-circular
   binary representation for proc, wrap, input, output
   forward declaration?
@@ -14,8 +15,6 @@ TODO
 * inspect methods
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
-  (first list) -> list.first
-  (1 . ())
 * continuations, continuation passing style, tail-call optimisation
 * better garbage collector? reflective?
 * quote expr -> list of booleans
