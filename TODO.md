@@ -1,6 +1,7 @@
 TODO
 ====
 
+* memoization in proc and wrap?
 * id = ->x.x
   id(true)
 * obj.fun

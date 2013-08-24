@@ -29,6 +29,7 @@ Makefile.in
 m4
 missing
 spec_blc
+spec_blc2
 spec_lambda
 stamp-h1
 ylwrap
