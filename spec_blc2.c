@@ -111,11 +111,7 @@ int t(void) { return t_; }
 
 int is_f_(int cell)
 {
-  return
-    is_proc(cell) &&
-    is_lambda(term(cell)) &&
-    is_var(body(term(cell))) &&
-    idx(body(term(cell))) == 0;
+  return is_proc(cell) && is_lambda(term(cell)) && is_var(body(term(cell))) && idx(body(term(cell))) == 0;
 }
 
 int op_if(int condition, int consequent, int alternative)
@@ -150,13 +146,7 @@ int proc_stack(int term, int stack)
   return retval;
 }
 
-int proc(int term)
-{
-  int retval = cell(PROC);
-  cells[retval].proc.term = term;
-  cells[retval].proc.stack = f_ == -1 ? retval : f_;
-  return retval;
-}
+int proc(int term) { return proc_stack(term, f_); }
 
 int wrap(int unwrap, int context)
 {
@@ -197,21 +187,19 @@ int eval_env(int cell, int env)
 
 int eval(int cell) { return eval_env(cell, f_); }
 
-int is_f(int cell)
-{
-  return eval(op_if(cell, t_, f_)) == f_;
-}
+int is_f(int cell) { return eval(op_if(cell, t_, f_)) == f_; }
 
 int first(int list) { return call(list, t_); }
 int rest(int list) { return call(list, f_); }
 int empty(int list) { return call(call(list, proc(lambda(lambda(f_)))), t_); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
-int op_not(int a) { return call(proc(lambda(lambda(op_if(var(2), var(0), var(1))))), a); }
+int op_not_ = -1;
+int op_not(int a) { return call(op_not_, a); }
 int op_and(int a, int b) { return op_if(a, b, a); }
 int op_or(int a, int b) { return op_if(a, a, b); }
 int eq_bool_ = -1;
-int eq_bool(int a, int b) { return call(call(eq_bool_, a), b); }
+int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
 
 int int_to_num(int integer)
 {
@@ -291,9 +279,12 @@ int select_if(int list, int fun) { return call(call(select_if_, fun), list); }
 
 void init(void)
 {
-  f_ = proc(lambda(var(0)));
+  f_ = cell(PROC);
+  cells[f_].proc.term = lambda(var(0));
+  cells[f_].proc.stack = f_;
   t_ = proc(lambda(var(1)));
   pair_ = proc(lambda(lambda(op_if(var(0), var(1), var(2)))));
+  op_not_ = proc(lambda(lambda(op_if(var(2), var(0), var(1)))));
   eq_bool_ = proc(lambda(op_if(var(0), var(1), op_not(var(1)))));
   y_ = proc(call(lambda(call(var(1), call(var(0), var(0)))),
                  lambda(call(var(1), call(var(0), var(0))))));
