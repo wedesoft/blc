@@ -1,7 +1,7 @@
 TODO
 ====
 
-* list_to_str
+* better garbage collector? reflective?
 * id = ->x.x
   id(true)
 * obj.fun
@@ -17,7 +17,6 @@ TODO
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
 * continuations, continuation passing style, tail-call optimisation
-* better garbage collector? reflective?
 * quote expr -> list of booleans
 * eval list -> expression
 * write expression to list
