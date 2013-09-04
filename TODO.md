@@ -1,6 +1,7 @@
 TODO
 ====
 
+* make select_if more efficient
 * better garbage collector? reflective?
 * id = ->x.x
   id(true)

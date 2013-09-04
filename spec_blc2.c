@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CELLS 65536
+#define MAX_CELLS 1048576
 typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
 typedef struct { int fun; int arg; } call_t;
@@ -61,25 +61,25 @@ int cell(int type)
 void check_cell(int cell) { assert(cell >= 0 && cell < MAX_CELLS); }
 
 int type(int cell) { check_cell(cell); return cells[cell].type; }
-int is_type(int cell, int t) { return type(cell) == t; }
-void check_type(int cell, int t) { assert(is_type(cell, t)); }
 
-int is_var(int cell) { return is_type(cell, VAR); }
-int is_lambda(int cell) { return is_type(cell, LAMBDA); }
-int is_call(int cell) { return is_type(cell, CALL); }
-int is_proc(int cell) { return is_type(cell, PROC); }
-int is_wrap(int cell) { return is_type(cell, WRAP); }
-int is_input(int cell) { return is_type(cell, INPUT); }
+int is_var(int cell) { return type(cell) == VAR; }
+int is_lambda(int cell) { return type(cell) == LAMBDA; }
+int is_call(int cell) { return type(cell) == CALL; }
+int is_proc(int cell) { return type(cell) == PROC; }
+int is_wrap(int cell) { return type(cell) == WRAP; }
+int is_input(int cell) { return type(cell) == INPUT; }
 
-int idx(int cell) { check_type(cell, VAR); return cells[cell].idx; }
-int body(int cell) { check_type(cell, LAMBDA); return cells[cell].body; }
-int fun(int cell) { check_type(cell, CALL); return cells[cell].call.fun; }
-int arg(int cell) { check_type(cell, CALL); return cells[cell].call.arg; }
-int term(int cell) { check_type(cell, PROC); return cells[cell].proc.term; }
-int stack(int cell) { check_type(cell, PROC); return cells[cell].proc.stack; }
-int unwrap(int cell) { check_type(cell, WRAP); return cells[cell].wrap.unwrap; }
-int context(int cell) { check_type(cell, WRAP); return cells[cell].wrap.context; }
-int cache(int cell) { check_type(cell, WRAP); return cells[cell].wrap.cache; }
+int idx(int cell) { assert(is_var(cell)); return cells[cell].idx; }
+int body(int cell) { assert(is_lambda(cell)); return cells[cell].body; }
+int fun(int cell) { assert(is_call(cell)); return cells[cell].call.fun; }
+int arg(int cell) { assert(is_call(cell)); return cells[cell].call.arg; }
+int term(int cell) { assert(is_proc(cell)); return cells[cell].proc.term; }
+int stack(int cell) { assert(is_proc(cell)); return cells[cell].proc.stack; }
+int unwrap(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.unwrap; }
+int context(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.context; }
+int cache(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.cache; }
+FILE *file(int cell) { assert(is_input(cell)); return cells[cell].input.file; }
+int used(int cell) { assert(is_input(cell)); return cells[cell].input.used; }
 
 int var(int idx)
 {
@@ -157,6 +157,32 @@ int wrap(int unwrap, int context)
   return retval;
 }
 
+int input(FILE *file)
+{
+  int retval = cell(INPUT);
+  cells[retval].input.file = file;
+  cells[retval].input.used = retval;
+  return retval;
+}
+
+int int_to_num(int integer);
+
+int read_char(int in)
+{
+  int retval;
+  if (used(in) != in)
+    retval = used(in);
+  else {
+    int c = fgetc(file(in));
+    if (c == EOF)
+      retval = f_;
+    else
+      retval = pair(int_to_num(c), input(file(in)));
+    cells[in].input.used = retval;
+  }
+  return retval;
+}
+
 int eval_env(int cell, int env)
 {
   int retval;
@@ -169,7 +195,11 @@ int eval_env(int cell, int env)
       break;
     case CALL: {
       int f = eval_env(fun(cell), env);
-      retval = eval_env(term(f), pair(wrap(arg(cell), env), stack(f)));
+      if (is_input(f)) {
+        int bit = eval_env(read_char(f), env);
+        retval = eval_env(call(bit, arg(cell)), env);
+      } else
+        retval = eval_env(term(f), pair(wrap(arg(cell), env), stack(f)));
       break; }
     case WRAP:
       if (cache(cell) != cell)
@@ -277,6 +307,15 @@ int map(int list, int fun) { return call(call(map_, fun), list); }
 int select_if_ = -1;
 int select_if(int list, int fun) { return call(call(select_if_, fun), list); }
 
+int bits_to_bytes_ = -1;
+int bits_to_bytes(int bits) { return call(bits_to_bytes_, bits); }
+
+int bytes_to_bits_ = -1;
+int bytes_to_bits(int bytes) { return call(bytes_to_bits_, bytes); }
+
+int select_binary_ = -1;
+int select_binary(int list) { return call(select_binary_, list); }
+
 void init(void)
 {
   f_ = cell(PROC);
@@ -303,24 +342,45 @@ void init(void)
                                                 pair(first(var(0)),
                                                      call(call(var(2), var(1)), rest(var(0)))),
                                                 call(call(var(2), var(1)), rest(var(0))))))));
+  bits_to_bytes_ = lambda(map(var(0), lambda(op_if(var(0), int_to_num('1'), int_to_num('0')))));
+  bytes_to_bits_ = lambda(map(var(0), lambda(eq_num(var(0), int_to_num('1')))));
+  select_binary_ = lambda(select_if(var(0), lambda(op_or(eq_num(var(0), int_to_num('0')),
+                                                         eq_num(var(0), int_to_num('1'))))));
 }
+
+FILE *tmp_ = NULL;
+
+void destroy(void)
+{
+  if (tmp_) fclose(tmp_);
+  tmp_ = NULL;
+}
+
+int str_to_input(const char *text)
+{
+  if (tmp_) fclose(tmp_);
+  FILE *f = fopen("test.tmp", "w");
+  fputs(text, f);
+  fclose(f);
+  tmp_ = fopen("test.tmp", "r");
+  return input(tmp_);
+}
+
+
 
 int main(void)
 {
   init();
   // variable
   assert(type(var(0)) == VAR);
-  assert(is_type(var(0), VAR));
   assert(is_var(var(0)));
   assert(idx(var(1)) == 1);
   // lambda (function)
   assert(type(lambda(var(0))) == LAMBDA);
-  assert(is_type(lambda(var(0)), LAMBDA));
   assert(is_lambda(lambda(var(0))));
   assert(idx(body(lambda(var(1)))) == 1);
   // call
   assert(type(call(lambda(var(0)), var(0))) == CALL);
-  assert(is_type(call(lambda(var(0)), var(0)), CALL));
   assert(is_call(call(lambda(var(0)), var(0))));
   assert(idx(body(fun(call(lambda(var(1)), var(2))))) == 1);
   assert(idx(arg(call(lambda(var(1)), var(2)))) == 2);
@@ -342,7 +402,6 @@ int main(void)
   assert(idx(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 2)) == 3);
   // procs (closures)
   assert(type(proc(lambda(var(0)))) == PROC);
-  assert(is_type(proc(lambda(var(0))), PROC));
   assert(is_proc(proc(lambda(var(0)))));
   assert(idx(term(proc(var(0)))) == 0);
   assert(is_f_(stack(proc_stack(var(0), f()))));
@@ -352,7 +411,6 @@ int main(void)
   assert(is_f_(stack(eval(lambda(var(0))))));
   // wraps
   assert(type(wrap(var(0), pair(f(), f()))) == WRAP);
-  assert(is_type(wrap(var(0), pair(f(), f())), WRAP));
   assert(is_wrap(wrap(var(0), pair(f(), f()))));
   assert(idx(unwrap(wrap(var(0), pair(f(), f())))) == 0);
   assert(is_f_(context(wrap(var(0), f()))));
@@ -436,6 +494,25 @@ int main(void)
   assert(!strcmp(list_to_str(select_if(str_to_list("+"), lambda(eq_num(int_to_num('+'), var(0))))), "+"));
   assert(!strcmp(list_to_str(select_if(str_to_list("a+b+"), lambda(eq_num(int_to_num('+'), var(0))))), "++"));
   assert(!strcmp(list_to_str(select_if(str_to_list("a+b+"), lambda(op_not(eq_num(int_to_num('+'), var(0)))))), "ab"));
+  // input
+  assert(type(input(stdin)) == INPUT);
+  assert(is_input(input(stdin)));
+  assert(file(input(stdin)) == stdin);
+  assert(file(used(input(stdin))) == stdin);
+  int in1 = str_to_input("abcdefghijklmnopqrstuvwxyz");
+  assert(!is_f(eq_num(first(in1), int_to_num('a'))));
+  assert(!is_f(eq_num(first(rest(in1)), int_to_num('b'))));
+  assert(!strcmp(list_to_str(in1), "abcdefghijklmnopqrstuvwxyz"));
+  // bits to bytes
+  assert(!strcmp(list_to_str(bits_to_bytes(pair(f(), pair(t(), pair(f(), f()))))), "010"));
+  // bytes to bits
+  assert(is_f(at(bytes_to_bits(str_to_list("010")), 0)));
+  assert(!is_f(at(bytes_to_bits(str_to_list("010")), 1)));
+  assert(is_f(at(bytes_to_bits(str_to_list("010")), 2)));
+  assert(is_f(rest(rest(rest(bytes_to_bits(str_to_list("010")))))));
+  // select binary
+  assert(!strcmp(list_to_str(select_binary(str_to_list("0a1b0"))), "010"));
   fprintf(stderr, "%d\n", cell(VAR));
+  destroy();
   return 0;
 }
