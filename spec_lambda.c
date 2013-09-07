@@ -39,22 +39,21 @@ int test_eval(char *cmd, char *spec)
 
 int main(void)
 {
-  int retval = 0;
-  retval = retval | test_eval("000010", "\n");
-  retval = retval | test_eval("00010110 000010 000010", "0\n");
-  retval = retval | test_eval("->first.->second.second", "\n");
-  retval = retval | test_eval("->first->second.second", "\n");
-  retval = retval | test_eval("->first second.second", "\n");
-  retval = retval | test_eval("->.->second.second", "\n");
-  retval = retval | test_eval("->->second.second", "\n");
-  retval = retval | test_eval("(->x.x ->x->y.y)", "\n");
-  retval = retval | test_eval("f=->->y.y f", "\n");
-  retval = retval | test_eval("->x->y.second=y second", "\n");
-  retval = retval | test_eval("f=->->y.y\nt=->x->.x\npair=->h t.->s.(s h t)\n(pair f (pair t f))", "01\n");
-  retval = retval | test_eval("->s.(s (input ->x->.x) ->->y.y)\n0", "0\n");
-  retval = retval | test_eval("->s.(s (input ->x->.x) ->->y.y)\n1", "1\n");
-  retval = retval | test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n00", "0\n");
-  retval = retval | test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n01", "1\n");
-  return retval;
+  assert(!test_eval("000010", "\n"));
+  assert(!test_eval("00010110 000010 000010", "0\n"));
+  assert(!test_eval("->first.->second.second", "\n"));
+  assert(!test_eval("->first->second.second", "\n"));
+  assert(!test_eval("->first second.second", "\n"));
+  assert(!test_eval("->.->second.second", "\n"));
+  assert(!test_eval("->->second.second", "\n"));
+  assert(!test_eval("(->x.x ->x->y.y)", "\n"));
+  assert(!test_eval("f=->->y.y f", "\n"));
+  assert(!test_eval("->x->y.second=y second", "\n"));
+  assert(!test_eval("f=->->y.y\nt=->x->.x\npair=->h t.->s.(s h t)\n(pair f (pair t f))", "01\n"));
+  assert(!test_eval("->s.(s (input ->x->.x) ->->y.y)\n0", "0\n"));
+  assert(!test_eval("->s.(s (input ->x->.x) ->->y.y)\n1", "1\n"));
+  assert(!test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n00", "0\n"));
+  assert(!test_eval("->s.(s ((input ->->y.y) ->x->.x) ->->y.y)\n01", "1\n"));
+  return 0;
 }
 

@@ -1,8 +1,9 @@
 TODO
 ====
 
-* make select_if more efficient
 * better garbage collector? reflective?
+* continuations, continuation passing style, tail-call optimisation
+* detect closed lambdas and convert them to procs early
 * id = ->x.x
   id(true)
 * obj.fun
@@ -17,7 +18,6 @@ TODO
 * inspect methods
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
-* continuations, continuation passing style, tail-call optimisation
 * quote expr -> list of booleans
 * eval list -> expression
 * write expression to list

@@ -13,471 +13,473 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+#include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "blc.h"
 
-#define MAX_CELLS 1000000
-#define MAX_REGISTERS 4000000
+#define NVERBOSE
 
-typedef enum { VARIABLE, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+#define MAX_CELLS 1048576
 
-typedef struct { int function; int argument; } call_t;
+typedef struct { int fun; int arg; } call_t;
 
 typedef struct { int term; int body; } definition_t;
 
-typedef struct { int function; int environment; } proc_t;
+typedef struct { int term; int stack; } proc_t;
 
-typedef struct { int unwrap; int environment; } wrap_t;
+typedef struct { int unwrap; int context; int cache; } wrap_t;
 
 typedef struct { FILE *file; int used; } input_t;
 
 typedef struct {
   type_t type;
   union {
-    int variable;
-    int lambda;
+    int idx;
+    int body;
     call_t call;
     definition_t definition;
     proc_t proc;
     wrap_t wrap;
     input_t input;
   };
-  char mark;
 } cell_t;
 
 cell_t cells[MAX_CELLS];
+int n_cells = 0;
 
-int n_registers = 0;
-int registers[MAX_REGISTERS];
-
-int type(int cell) { return cells[cell].type; }
-
-int is_type(int cell, int t) { return type(cell) == t; }
-
-int is_variable(int cell) { return is_type(cell, VARIABLE); }
-int is_lambda(int cell) { return is_type(cell, LAMBDA); }
-int is_call(int cell) { return is_type(cell, CALL); }
-int is_proc(int cell) { return is_type(cell, PROC); }
-int is_wrap(int cell) { return is_type(cell, WRAP); }
-int is_input(int cell) { return is_type(cell, INPUT); }
-
-int has_function(int cell) { return is_call(cell) || is_proc(cell) || is_lambda(cell); }
-
-int variable(int cell) { return cells[cell].variable; }
-int function(int cell) { return is_call(cell) ? cells[cell].call.function : is_proc(cell) ? cells[cell].proc.function : cells[cell].lambda; }
-int argument(int cell) { return cells[cell].call.argument; }
-int term(int cell) { return cells[cell].definition.term; }
-int body(int cell) { return cells[cell].definition.body; }
-int unwrap(int cell) { return cells[cell].wrap.unwrap; }
-int environment(int cell) { return is_proc(cell) ? cells[cell].proc.environment : cells[cell].wrap.environment; }
-FILE *file(int cell) { return is_input(cell) ? cells[cell].input.file : NULL; }
-int used(int cell) { return is_input(cell) ? cells[cell].input.used : cell; }
-
-void clear_marks(void) {
-  int i;
-  for (i=0; i<MAX_CELLS; i++)
-    cells[i].mark = 0;
-}
-
-int find_cell(void)
+int cell(int type)
 {
-  int retval = 0;
-  while (cells[retval].mark) {
-    retval++;
-    if (retval == MAX_CELLS) break;
+  if (n_cells >= MAX_CELLS) {
+    fputs("Out of memory!\n", stderr);
+    exit(1);
   };
+  int retval = n_cells++;
+  cells[retval].type = type;
   return retval;
 }
 
-void mark(int expression)
+void check_cell(int cell) { assert(cell >= 0 && cell < MAX_CELLS); }
+
+int type(int cell) { check_cell(cell); return cells[cell].type; }
+
+int is_var(int cell) { return type(cell) == VAR; }
+int is_lambda(int cell) { return type(cell) == LAMBDA; }
+int is_call(int cell) { return type(cell) == CALL; }
+int is_proc(int cell) { return type(cell) == PROC; }
+int is_wrap(int cell) { return type(cell) == WRAP; }
+int is_input(int cell) { return type(cell) == INPUT; }
+
+int idx(int cell) { assert(is_var(cell)); return cells[cell].idx; }
+int body(int cell) { assert(is_lambda(cell)); return cells[cell].body; }
+int fun(int cell) { assert(is_call(cell)); return cells[cell].call.fun; }
+int arg(int cell) { assert(is_call(cell)); return cells[cell].call.arg; }
+int term(int cell) { assert(is_proc(cell)); return cells[cell].proc.term; }
+int stack(int cell) { assert(is_proc(cell)); return cells[cell].proc.stack; }
+int unwrap(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.unwrap; }
+int context(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.context; }
+int cache(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.cache; }
+FILE *file(int cell) { assert(is_input(cell)); return cells[cell].input.file; }
+int used(int cell) { assert(is_input(cell)); return cells[cell].input.used; }
+
+int var(int idx)
 {
-  if (!cells[expression].mark) {
-    cells[expression].mark = 1;
-    switch (type(expression)) {
-      case VARIABLE:
-        break;
-      case LAMBDA:
-        mark(function(expression));
-        break;
-      case CALL:
-        mark(function(expression));
-        mark(argument(expression));
-        break;
-      case PROC:
-        mark(function(expression));
-        mark(environment(expression));
-        break;
-      case WRAP:
-        mark(unwrap(expression));
-        mark(environment(expression));
-        break;
-      case INPUT:
-        mark(used(expression));
-        break;
-    }
+  int retval = cell(VAR);
+  cells[retval].idx = idx;
+  return retval;
+}
+
+int lambda(int body)
+{
+  int retval = cell(LAMBDA);
+  cells[retval].body = body;
+  return retval;
+}
+
+int call(int fun, int arg)
+{
+  int retval = cell(CALL);
+  cells[retval].call.fun = fun;
+  cells[retval].call.arg = arg;
+  return retval;
+}
+
+int f_ = -1;
+int t_ = -1;
+
+int f(void) { return f_; }
+int t(void) { return t_; }
+
+int is_f_(int cell)
+{
+  return is_proc(cell) &&
+         is_proc(term(cell)) &&
+         is_var(term(term(cell))) &&
+         idx(term(term(cell))) == 0;
+}
+
+int op_if(int condition, int consequent, int alternative)
+{
+  return call(call(condition, consequent), alternative);
+}
+
+int pair_ = -1;
+
+int pair(int first, int rest)
+{
+  return call(call(pair_, rest), first);
+}
+
+int first_(int list) { return arg(list); }
+int rest_(int list) { return arg(fun(list)); }
+
+int at_(int list, int i)
+{
+  if (is_f_(list)) {
+    fputs("Array out of range!\n", stderr);
+    exit(1);
   };
+  return i > 0 ? at_(rest_(list), i - 1) : first_(list);
 }
 
-void mark_registers(void)
+int proc_stack(int term, int stack)
 {
-  int i;
-  for (i=0; i<n_registers; i++)
-    mark(registers[i]);
-}
-
-int gc_push(int expression) { registers[n_registers++] = expression; return expression; }
-
-void gc_pop(int n) { n_registers -= n; }
-
-int cell(void)
-{
-#ifdef NDEBUG
-  int retval = find_cell();
-#else
-  int retval = MAX_CELLS;
-#endif
-  if (retval == MAX_CELLS) {
-    clear_marks();
-    mark_registers();
-    retval = find_cell();
-    if (retval == MAX_CELLS) {
-      fputs("Out of memory!\n", stderr);
-      exit(1);
-    };
-  };
-  cells[retval].mark = 1;
+  int retval = cell(PROC);
+  cells[retval].proc.term = term;
+  cells[retval].proc.stack = stack;
   return retval;
 }
 
-int make_variable(int variable)
-{
-  int retval = cell();
-  cells[retval].type = VARIABLE;
-  cells[retval].variable = variable;
-  return retval;
-}
+int proc(int term) { return proc_stack(term, f_); }
 
-int make_lambda(int lambda)
+int wrap(int unwrap, int context)
 {
-  gc_push(lambda);
-  int retval = cell();
-  cells[retval].type = LAMBDA;
-  cells[retval].lambda = lambda;
-  gc_pop(1);
-  return retval;
-}
-
-int make_call(int function, int argument)
-{
-  gc_push(function);
-  gc_push(argument);
-  int retval = cell();
-  cells[retval].type = CALL;
-  cells[retval].call.function = function;
-  cells[retval].call.argument = argument;
-  gc_pop(2);
-  return retval;
-}
-
-int make_proc(int function, int environment)
-{
-  gc_push(function);
-  gc_push(environment);
-  int retval = cell();
-  cells[retval].type = PROC;
-  cells[retval].proc.function = function;
-  cells[retval].proc.environment = environment;
-  gc_pop(2);
-  return retval;
-}
-
-int make_wrap(int unwrap, int environment)
-{
-  gc_push(unwrap);
-  gc_push(environment);
-  int retval = cell();
-  cells[retval].type = WRAP;
+  int retval = cell(WRAP);
   cells[retval].wrap.unwrap = unwrap;
-  cells[retval].wrap.environment = environment;
-  gc_pop(2);
+  cells[retval].wrap.context = context;
+  cells[retval].wrap.cache = retval;
   return retval;
 }
 
-int make_input(FILE *file)
+int input(FILE *file)
 {
-  int retval = cell();
-  cells[retval].type = INPUT;
+  int retval = cell(INPUT);
   cells[retval].input.file = file;
   cells[retval].input.used = retval;
   return retval;
 }
 
-int make_false(void) { return make_lambda(make_lambda(make_variable(0))); }
-
-int is_false(int expression)
-{
-  return
-    has_function(expression) &&
-    has_function(function(expression)) &&
-    is_variable(function(function(expression))) &&
-    variable(function(function(expression))) == 0;
-}
-
-int make_true(void) { return make_lambda(make_lambda(make_variable(1))); }
-
-int is_true(int expression)
-{
-  return
-    has_function(expression) &&
-    has_function(function(expression)) &&
-    is_variable(function(function(expression))) &&
-    variable(function(function(expression))) == 1;
-}
-
-int num_to_list(int number)
+int read_char(int in)
 {
   int retval;
-  if (number == 0)
-    retval = make_false();
-  else if (number & 0x1) {
-    retval = make_pair(gc_push(make_true()), gc_push(num_to_list(number >> 1)));
-    gc_pop(2);
-  } else {
-    retval = make_pair(gc_push(make_false()), gc_push(num_to_list(number >> 1)));
-    gc_pop(2);
-  };
-  return retval;
-}
-
-int list_to_num(int list)
-{
-  int retval;
-  if (!is_false(list)) {
-    if (is_true(first(list)))
-      retval = 1 + (list_to_num(rest(list)) << 1);
-    else
-      retval = list_to_num(rest(list)) << 1;
-  } else
-    retval = 0;
-  return retval;
-}
-
-int read_char(int input)
-{
-  int retval;
-  if (used(input) != input)
-    retval = used(input);
+  if (used(in) != in)
+    retval = used(in);
   else {
-    int num = fgetc(file(gc_push(input)));
-    if (num == EOF)
-      retval = make_false();
-    else {
-      retval = make_pair(gc_push(num_to_list(num)), gc_push(make_input(file(input))));
-      gc_pop(2);
-    };
-    cells[input].input.used = retval;
-    gc_pop(1);
+    int c = fgetc(file(in));
+    if (c == EOF)
+      retval = f_;
+    else
+      retval = pair(int_to_num(c), input(file(in)));
+    cells[in].input.used = retval;
   }
   return retval;
 }
 
-int read_bit(int input)
+#ifndef NVERBOSE
+int level = 0;
+
+void display(int cell);
+#endif
+
+int eval_env(int cell, int env)
 {
+#ifndef NVERBOSE
+  int i;
+  for (i=0; i<level; i++)
+    fputs("|", stderr);
+  display(cell);
+  fputc('\n', stderr);
+  level++;
+#endif
   int retval;
-  int list = gc_push(read_char(input));
-  if (is_false(list))
-    retval = list;
-  else {
-    int c = list_to_num(first(list));
-    switch (c) {
-    case '0':
-      retval = make_pair(gc_push(make_false()), rest(list));
-      gc_pop(1);
+  switch (type(cell)) {
+    case VAR:
+      retval = eval_env(at_(env, idx(cell)), env);
       break;
-    case '1':
-      retval = make_pair(gc_push(make_true()), rest(list));
-      gc_pop(1);
+    case LAMBDA:
+      retval = proc_stack(body(cell), env);
+      break;
+    case CALL: {
+      int f = eval_env(fun(cell), env);
+      if (is_input(f))
+        retval = eval_env(call(read_char(f), arg(cell)), env);
+      else
+        retval = eval_env(term(f), pair(wrap(arg(cell), env), stack(f)));
+      break; }
+    case WRAP:
+      if (cache(cell) != cell)
+        retval = cache(cell);
+      else {
+        retval = eval_env(unwrap(cell), context(cell));
+        cells[cell].wrap.cache = retval;
+      };
       break;
     default:
-      retval = read_bit(rest(list));
-    };
+      retval = cell;
   };
-  gc_pop(1);
+#ifndef NVERBOSE
+  level--;
+  for (i=0; i<level; i++)
+    fputs("|", stderr);
+  fputs("\\-> ", stderr);
+  display(retval);
+  fputc('\n', stderr);
+#endif
   return retval;
 }
 
-int make_pair(int first, int rest)
+int eval(int cell) { return eval_env(cell, f_); }
+
+int is_f(int cell) { return eval(op_if(cell, t_, f_)) == f_; }
+
+int first(int list) { return call(list, t_); }
+int rest(int list) { return call(list, f_); }
+int empty(int list) { return call(call(list, proc(lambda(lambda(f_)))), t_); }
+int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
+
+int op_not(int a) { return op_if(a, f_, t_); }
+int op_and(int a, int b) { return op_if(a, b, f_); }
+int op_or(int a, int b) { return op_if(a, t_, b); }
+int eq_bool_ = -1;
+int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
+
+int int_to_num(int integer)
 {
-  gc_push(first);
-  gc_push(rest);
-  int retval = make_lambda(make_call(make_call(make_variable(0), first), rest));
-  gc_pop(2);
-  return retval;
+  assert(integer >= 0);
+  return integer == 0 ? f_ : pair(integer & 0x1 ? t_ : f_, int_to_num(integer >> 1));
 }
 
-int first(int list)
+int num_to_int_(int number)
 {
-  int retval;
-  if (is_input(list))
-    retval = first(read_bit(list));
-  else
-    retval = argument(function(function(list)));
-  return retval;
+  return is_f_(number) ? 0 : (is_f_(first_(number)) ? 0 : 1) | num_to_int_(rest_(number)) << 1;
 }
 
-int rest(int list)
+int num_to_int(int number)
 {
-  int retval;
-  if (is_input(list))
-    retval = rest(read_bit(list));
-  else
-    retval = argument(function(list));
-  return retval;
+  int eval_num = eval(number);
+  return !is_f(empty(eval_num)) ? 0 : (is_f(first(eval_num)) ? 0 : 1) | num_to_int(rest(eval_num)) << 1;
 }
 
-int read_variable(int input)
+int y_ = -1;
+
+int y_comb(int fun) { return call(y_, proc(fun)); }
+
+int str_to_list(const char *str)
 {
-  int retval;
-  gc_push(input);
-  if (is_true(first(input))) {
-    retval = read_variable(rest(input));
-    cells[first(retval)].variable++;
-  } else
-    retval = make_pair(make_variable(0), rest(input));
-  gc_pop(1);
-  return retval;
+  return *str == '\0' ? f_ : pair(int_to_num(*str), str_to_list(str + 1));
 }
 
-int read_lambda(int input)
-{
-  int retval;
-  int term = gc_push(read_expression(input));
-  retval = make_pair(make_lambda(first(term)), rest(term));
-  gc_pop(1);
-  return retval;
-}
+#define BUFSIZE 1024
+char buffer[BUFSIZE];
 
-int read_call(int input)
+char *list_to_buffer_(int list, char *buffer, int bufsize)
 {
-  int retval;
-  int function = gc_push(read_expression(input));
-  int argument = gc_push(read_expression(rest(function)));
-  retval = make_pair(make_call(first(function), first(argument)), rest(argument));
-  gc_pop(2);
-  return retval;
-}
-
-int read_expression(int input)
-{
-  int retval;
-  gc_push(input);
-  if (is_false(first(input))) {
-    int b2 = rest(input);
-    if (is_false(first(b2)))
-      retval = read_lambda(rest(b2));
-    else if (is_true(first(b2)))
-      retval = read_call(rest(b2));
-    else {
-      fputs("Incomplete expression!\n", stderr);
-      exit(1);
-    };
-  } else if (is_true(first(input)))
-    retval = read_variable(rest(input));
+  if (bufsize <= 1) {
+    fputs("Buffer too small!\n", stderr);
+    exit(1);
+  };
+  if (is_f_(list))
+    *buffer = '\0';
   else {
+    *buffer = num_to_int_(first_(list));
+    list_to_buffer_(rest_(list), buffer + 1, bufsize - 1);
+  };
+  return buffer;
+}
+
+char *list_to_str_(int list) { return list_to_buffer_(list, buffer, BUFSIZE); }
+
+char *list_to_buffer(int list, char *buffer, int bufsize)
+{
+  if (bufsize <= 1) {
+    fputs("Buffer too small!\n", stderr);
+    exit(1);
+  };
+  int eval_list = eval(list);
+  if (!is_f(empty(eval_list)))
+    *buffer = '\0';
+  else {
+    *buffer = num_to_int(first(eval_list));
+    list_to_buffer(rest(list), buffer + 1, bufsize - 1);
+  };
+  return buffer;
+}
+
+char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
+
+int eq_num_ = -1;
+int eq_num(int a, int b) { return call(call(eq_num_, a), b); }
+
+int id_ = -1;
+int id(void) { return id_; }
+
+int map_ = -1;
+int map(int list, int fun) { return call(call(map_, fun), list); }
+
+int select_if_ = -1;
+int select_if(int list, int fun) { return call(call(select_if_, fun), list); }
+
+int bits_to_bytes_ = -1;
+int bits_to_bytes(int bits) { return call(bits_to_bytes_, bits); }
+
+int bytes_to_bits_ = -1;
+int bytes_to_bits(int bytes) { return call(bytes_to_bits_, bytes); }
+
+int select_binary_ = -1;
+int select_binary(int list) { return call(select_binary_, list); }
+
+void init(void)
+{
+  f_ = cell(PROC);
+  cells[f_].proc.term = proc(var(0));
+  cells[f_].proc.stack = f_;
+  t_ = proc(lambda(var(1)));
+  pair_ = proc(lambda(lambda(op_if(var(0), var(1), var(2)))));
+  eq_bool_ = proc(lambda(op_if(var(0), var(1), op_not(var(1)))));
+  y_ = proc(call(lambda(call(var(1), call(var(0), var(0)))),
+                 lambda(call(var(1), call(var(0), var(0))))));
+  eq_num_ = y_comb(lambda(lambda(op_if(op_or(empty(var(0)), empty(var(1))),
+                                       op_and(empty(var(0)), empty(var(1))),
+                                       op_and(eq_bool(first(var(0)), first(var(1))),
+                                              call(call(var(2), rest(var(0))), rest(var(1))))))));
+  id_ = proc(var(0));
+  map_ = y_comb(lambda(lambda(op_if(empty(var(0)),
+                                    f_,
+                                    pair(call(var(1), first(var(0))),
+                                         call(call(var(2), var(1)), rest(var(0))))))));
+  select_if_ = y_comb(lambda(lambda(op_if(empty(var(0)),
+                                          f_,
+                                          op_if(call(var(1), first(var(0))),
+                                                pair(first(var(0)),
+                                                     call(call(var(2), var(1)), rest(var(0)))),
+                                                call(call(var(2), var(1)), rest(var(0))))))));
+  bits_to_bytes_ = proc(map(var(0), proc(op_if(var(0), int_to_num('1'), int_to_num('0')))));
+  bytes_to_bits_ = proc(map(var(0), proc(eq_num(var(0), int_to_num('1')))));
+  select_binary_ = proc(select_if(var(0), proc(op_or(eq_num(var(0), int_to_num('0')),
+                                                     eq_num(var(0), int_to_num('1'))))));
+}
+
+#ifndef NVERBOSE
+void display(int cell)
+{
+  typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+  if (cell == t_)
+    fputs("true", stderr);
+  else if (cell == f_)
+    fputs("false", stderr);
+  else if (cell == pair_)
+    fputs("pair", stderr);
+  else
+    switch (type(cell)) {
+      case VAR:
+        fprintf(stderr, "var(%d)", idx(cell));
+        break;
+      case LAMBDA:
+        fputs("lambda(", stderr);
+        display(body(cell));
+        fputs(")", stderr);
+        break;
+      case CALL:
+        fputs("call(", stderr);
+        display(fun(cell));
+        fputs(", ", stderr);
+        display(arg(cell));
+        fputs(")", stderr);
+        break;
+      case PROC:
+        fputs("proc(", stderr);
+        display(term(cell));
+        fputs(")", stderr);
+        break;
+      case WRAP:
+        fputs("wrap(", stderr);
+        display(unwrap(cell));
+        fputs(")", stderr);
+        break;
+      case INPUT:
+        fputs("input(...)", stderr);
+        break;
+    };
+}
+#endif
+
+FILE *tmp_ = NULL;
+
+void destroy(void)
+{
+  if (tmp_) fclose(tmp_);
+  tmp_ = NULL;
+}
+
+int str_to_input(const char *text)
+{
+  if (tmp_) fclose(tmp_);
+  FILE *f = fopen("test.tmp", "w");
+  fputs(text, f);
+  fclose(f);
+  tmp_ = fopen("test.tmp", "r");
+  return input(tmp_);
+}
+
+int read_var(int in)
+{
+  int retval;
+  int eval_in = eval(in);
+  if (!is_f(empty(eval_in))) {
+    fputs("Incomplete variable!\n", stderr);
+    exit(1);
+  } else
+    if (is_f(first(eval_in)))
+      retval = pair(var(0), rest(eval_in));
+    else {
+      retval = read_var(rest(eval_in));
+      cells[first_(retval)].idx++;
+    };
+  return retval;
+}
+
+int read_lambda(int in)
+{
+  int term = read_expr(in);
+  return pair(lambda(first_(term)), rest_(term));
+}
+
+int read_call(int in)
+{
+  int fun = read_expr(in);
+  int arg = read_expr(rest_(fun));
+  return pair(call(first_(fun), first_(arg)), rest_(arg));
+}
+
+int read_expr(int in)
+{
+  int retval;
+  int eval_in = eval(in);
+  if (!is_f(empty(eval_in))) {
     fputs("Incomplete expression!\n", stderr);
     exit(1);
-  };
-  gc_pop(1);
-  return retval;
-}
-
-int length(int list)
-{
-  int retval;
-  if (is_false(list))
-    retval = 0;
-  else
-    retval = 1 + length(rest(list));
-  return retval;
-}
-
-int lookup(int variable, int environment)
-{
-  int retval;
-  if (!is_false(environment)) {
-    if (variable > 0)
-      retval = lookup(variable - 1, rest(environment));
-    else
-      retval = first(environment);
-  } else
-    retval = MAX_CELLS;
-  return retval;
-}
-
-int eval_expression(int expression, int local_environment)
-{
-  int retval;
-  gc_push(expression);
-  gc_push(local_environment);
-  switch (type(expression)) {
-  case VARIABLE: {
-    int value = lookup(variable(expression), local_environment);
-    if (value != MAX_CELLS)
-      retval = eval_expression(value, local_environment);
-    else
-      retval = make_variable(variable(expression) - length(local_environment));
-    break; }
-  case LAMBDA:
-    retval = make_proc(function(expression), local_environment);
-    break;
-  case CALL: {
-    int eval_fun = gc_push(eval_expression(function(expression), local_environment));
-    if (is_proc(eval_fun)) {
-      int wrap_argument = make_wrap(argument(expression), local_environment);
-      int call_environment = gc_push(make_pair(wrap_argument, environment(eval_fun)));
-      retval = eval_expression(function(eval_fun), call_environment);
-      gc_pop(1);
-    } else if (is_input(eval_fun)) {
-      int bit = eval_expression(read_bit(eval_fun), local_environment);
-      retval = eval_expression(make_call(bit, argument(expression)), local_environment);
+  } else {
+    if (is_f(first(eval_in))) {
+      int eval_rest = eval(rest(eval_in));
+      if (!is_f(empty(eval_rest))) {
+        fputs("Incomplete structure!\n", stderr);
+        exit(1);
+      };
+      if (is_f(first(eval_rest)))
+        retval = read_lambda(rest(eval_rest));
+      else
+        retval = read_call(rest(eval_rest));
     } else
-      retval = eval_fun;
-    gc_pop(1);
-    break; }
-  case WRAP:
-    retval = eval_expression(unwrap(expression), environment(expression));
-    break;
-  default:
-    retval = expression;
-  }
-  gc_pop(2);
-  return retval;
-}
-
-void write_expression(int expression, int local_environment, FILE *output)
-{
-  gc_push(expression);
-  gc_push(local_environment);
-  int result = gc_push(eval_expression(expression, local_environment));
-  int empty = eval_expression(make_call(gc_push(make_call(result, make_lambda(make_lambda(make_lambda(make_false()))))),
-                                        gc_push(make_true())),
-                              local_environment);
-  if (is_false(empty)) {
-    int bit = eval_expression(make_call(result, make_true()), local_environment);
-    if (is_true(bit))
-      fputc('1', output);
-    else if (is_false(bit))
-      fputc('0', output);
-    else {
-      fputs("Expecting boolean!\n", stderr);
-      exit(1);
-    };
-    write_expression(make_call(result, make_false()), local_environment, output);
-  } else if (!is_true(empty)) {
-    fputs("Expecting list expression!\n", stderr);
-    exit(1);
+      retval = read_var(rest(eval_in));
   };
-  gc_pop(5);
+  return retval;
 }

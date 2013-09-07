@@ -37,7 +37,7 @@ UTFTAIL  {ASCTAIL}|{U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
 
 "0"                          { return ZERO; }
 "1"                          { return ONE; }
-"->"                         { return LAMBDA; }
+"->"                         { return LAMBDA_; }
 "("                          { return LP; }
 ")"                          { return RP; }
 "."                          { return DOT; }
@@ -46,7 +46,7 @@ UTFTAIL  {ASCTAIL}|{U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
                                 char *p = yylval.sym;
                                 strsep(&p, " \t=");
                                 return DEF; }
-{UTFLEAD}{UTFTAIL}*          { strcpy(yylval.sym, yytext); return VAR; }
+{UTFLEAD}{UTFTAIL}*          { strcpy(yylval.sym, yytext); return VAR_; }
 <<EOF>>                      { return 0; }
 .                            {}
 

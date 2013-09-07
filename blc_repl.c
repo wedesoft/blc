@@ -18,12 +18,14 @@
 
 int main(void)
 {
-  while (!feof(stdin)) {
-    int input = gc_push(make_input(stdin));
-    int expression = gc_push(read_expression(input));
-    write_expression(first(expression), make_pair(rest(expression), make_false()), stdout);
-    fputc('\n', stdout);
-    gc_pop(3);
+  init();
+  int expr = read_expr(bytes_to_bits(select_binary(input(stdin))));
+  int list = eval_env(bits_to_bytes(first_(expr)), pair(rest_(expr), f()));
+  while (is_f(empty(list))) {
+    fputc(num_to_int(first(list)), stdout);
+    list = eval(rest(list));
   };
+  fputc('\n', stdout);
+  destroy();
   return 0;
 }

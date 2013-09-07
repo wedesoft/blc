@@ -36,32 +36,32 @@ int yyerror(const char *p)
 #define STACKSIZE  16384
 #define NAMEBUFSIZE 65536
 
-char *stack[STACKSIZE];
-int stack_n;
-char names[NAMEBUFSIZE];
-char *name_p;
+char *name[STACKSIZE];
+int names;
+char buffer[NAMEBUFSIZE];
+char *buffer_p;
 
 void push(const char *token)
 {
-  stack[stack_n++] = name_p;
-  strcpy(name_p, token);
-  name_p += strlen(token) + 1;
+  name[names++] = buffer_p;
+  strcpy(buffer_p, token);
+  buffer_p += strlen(token) + 1;
 }
 
 void pop(void)
 {
-  if (stack_n > 0) {
-    name_p = stack[stack_n - 1];
-    stack_n--;
+  if (names > 0) {
+    buffer_p = name[names - 1];
+    names--;
   } else
-    name_p = names;
+    buffer_p = buffer;
 }
 
 int find_var(const char *token)
 {
   int retval = -1;
-  char *p = names;
-  while (p < name_p) {
+  char *p = buffer;
+  while (p < buffer_p) {
     if (retval >= 0) retval++;
     if (!strcmp(p, token)) retval = 0;
     p += strlen(p) + 1;
@@ -81,20 +81,24 @@ int previous_expr;
 int copy_definitions(int previous_expr, int expression, int n)
 {
   int retval;
-  gc_push(previous_expr);
-  gc_push(expression);
   if (n == 0)
     retval = expression;
   else {
-    int subexpr = copy_definitions(function(function(previous_expr)),
+    int subexpr = copy_definitions(body(fun(previous_expr)),
                                    expression,
                                    n - 1);
-    retval = make_call(gc_push(make_lambda(gc_push(subexpr))),
-                       argument(previous_expr));
-    gc_pop(2);
+    retval = call(lambda(subexpr), arg(previous_expr));
   };
-  gc_pop(2);
   return retval;
+}
+
+void write_expression(int expr, int env, FILE *stream)
+{
+  int list = eval_env(bits_to_bytes(expr), env);
+  while (is_f(empty(list))) {
+    fputc(num_to_int(first(list)), stream);
+    list = eval(rest(list));
+  };
 }
 %}
 
@@ -105,33 +109,30 @@ int copy_definitions(int previous_expr, int expression, int n)
 };
 
 %type <expr> expr subexpr nodef lambda call abstraction blc blc_var blc_lambda blc_call
-%token <sym> VAR DEF
-%token ZERO ONE LAMBDA LP RP DOT
+%token <sym> VAR_ DEF
+%token ZERO ONE LAMBDA_ LP RP DOT
 
 %%
 init: { n_definitions = 0;
         n_prev = 0;
-        previous_expr = make_false();
-        gc_push(previous_expr);
-        push("input"); } run { pop(); }
+        init();
+        previous_expr = f();
+        push("input"); } run { pop(); destroy(); }
     ;
 
 run: /* empty */
-   | expr { int expression = copy_definitions(previous_expr, gc_push($1), n_prev);
-            int input = gc_push(make_input(yyin));
-            int environment = gc_push(make_pair(input, gc_push(make_false())));
+   | expr { int expression = copy_definitions(previous_expr, $1, n_prev);
+            int environment = pair(bytes_to_bits(select_binary(input(yyin))), f());
             write_expression(expression, environment, yyout);
             fputc('\n', yyout);
-            gc_pop(n_registers);
             previous_expr = expression;
-            n_prev = n_definitions;
-            gc_push(previous_expr); } run
+            n_prev = n_definitions; } run
    ;
 
-expr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
+expr: VAR_       { $$ = var(find_var($1)); }
     | lambda
     | LP call RP { $$ = $2; }
-    | DEF nodef  { push($1); } expr { $$ = gc_push(make_call(make_lambda($4), $2)); n_definitions++; }
+    | DEF nodef  { push($1); } expr { $$ = call(lambda($4), $2); n_definitions++; }
     | blc
     ;
 
@@ -140,39 +141,39 @@ blc: blc_var
    | blc_call
    ;
 
-blc_var: ONE ZERO    { $$ = gc_push(make_variable(0)); }
-       | ONE blc_var { $$ = gc_push(make_variable(variable($2) + 1)); }
+blc_var: ONE ZERO    { $$ = var(0); }
+       | ONE blc_var { $$ = var(idx($2) + 1); }
        ;
 
-blc_lambda: ZERO ZERO blc { $$ = gc_push(make_lambda($3)); }
+blc_lambda: ZERO ZERO blc { $$ = lambda($3); }
           ;
 
-blc_call: ZERO ONE blc blc { $$ = gc_push(make_call($3, $4)); }
+blc_call: ZERO ONE blc blc { $$ = call($3, $4); }
         ;
 
 call: subexpr
-    | call subexpr { $$ = gc_push(make_call($1, $2)); }
+    | call subexpr { $$ = call($1, $2); }
     ;
 
-subexpr: VAR        { $$ = gc_push(make_variable(find_var($1))); }
+subexpr: VAR_       { $$ = var(find_var($1)); }
        | lambda
        | LP call RP { $$ = $2; }
-       | DEF nodef  { push($1); } subexpr { $$ = gc_push(make_call(make_lambda($4), $2)); pop(); }
+       | DEF nodef  { push($1); } subexpr { $$ = call(lambda($4), $2); pop(); }
        ;
 
-nodef: VAR           { $$ = gc_push(make_variable(find_var($1))); }
+nodef: VAR_          { $$ = var(find_var($1)); }
      | lambda
      | LP call RP    { $$ = $2; }
      ;
 
-lambda: LAMBDA DOT         { push(""); } subexpr { $$ = gc_push(make_lambda($4)); pop(); }
-      | LAMBDA abstraction { $$ = $2; }
-      | LAMBDA             { push(""); } lambda  { $$ = gc_push(make_lambda($3)); pop(); }
-      | LAMBDA VAR         { push($2); } lambda  { $$ = gc_push(make_lambda($4)); pop(); }
+lambda: LAMBDA_ DOT         { push(""); } subexpr { $$ = lambda($4); pop(); }
+      | LAMBDA_ abstraction { $$ = $2; }
+      | LAMBDA_             { push(""); } lambda  { $$ = lambda($3); pop(); }
+      | LAMBDA_ VAR_        { push($2); } lambda  { $$ = lambda($4); pop(); }
       ;
 
-abstraction: VAR { push($1); } DOT subexpr { $$ = gc_push(make_lambda($4)); pop(); }
-           | VAR { push($1); } abstraction { $$ = gc_push(make_lambda($3)); pop(); }
+abstraction: VAR_ { push($1); } DOT subexpr { $$ = lambda($4); pop(); }
+           | VAR_ { push($1); } abstraction { $$ = lambda($3); pop(); }
            ;
 
 %%

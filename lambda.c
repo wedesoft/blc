@@ -18,9 +18,9 @@
 
 #define NAMEBUFSIZE 65536
 
-extern int stack_n;
-extern char names[NAMEBUFSIZE];
-extern char *name_p;
+extern int names;
+extern char buffer[NAMEBUFSIZE];
+extern char *buffer_p;
 
 extern void yyrestart(FILE *input_file);
 extern void yyset_out(FILE *out_str);
@@ -30,8 +30,8 @@ int yyretval;
 
 int compile_lambda(FILE *f_in, FILE *f_out)
 {
-  stack_n = 0;
-  name_p = names;
+  names = 0;
+  buffer_p = buffer;
   yyretval = 0;
   yyrestart(f_in);
   yyset_out(f_out);

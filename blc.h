@@ -19,49 +19,114 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <stdlib.h>
 #include <stdio.h>
 
-extern int n_registers;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
-int gc_push(int expression);
+int cell(int type);
 
-void gc_pop(int n);
+int type(int cell);
 
-int term(int cell);
+int is_var(int cell);
+int is_lambda(int cell);
+int is_call(int cell);
+int is_proc(int cell);
+int is_wrap(int cell);
+int is_input(int cell);
 
+int idx(int cell);
 int body(int cell);
+int fun(int cell);
+int arg(int cell);
+int term(int cell);
+int stack(int cell);
+int unwrap(int cell);
+int context(int cell);
+int cache(int cell);
+FILE *file(int cell);
+int used(int cell);
 
-int function(int cell);
+int var(int idx);
+int lambda(int body);
+int call(int fun, int arg);
 
-int argument(int cell);
+int f(void);
+int t(void);
 
-int read_expression(int input);
+int is_f_(int cell);
 
-void write_expression(int expression, int local_environment, FILE *output);
+int op_if(int condition, int consequent, int alternative);
 
-int eval_expression(int expression, int local_env);
+int pair(int first, int rest);
 
-int make_variable(int variable);
+int first_(int list);
+int rest_(int list);
 
-int make_lambda(int lambda);
+int at_(int list, int i);
 
-int make_call(int function, int argument);
+int proc_stack(int term, int stack);
 
-int make_input(FILE *file);
+int proc(int term);
 
-int make_false(void);
+int wrap(int unwrap, int context);
 
-int is_false(int expression);
+int input(FILE *file);
 
-int make_true(void);
+int int_to_num(int integer);
 
-int is_true(int expression);
+int eval_env(int cell, int env);
 
-int make_pair(int first, int rest);
+int eval(int cell);
+
+int is_f(int cell);
 
 int first(int list);
-
 int rest(int list);
+int empty(int list);
+int at(int list, int i);
+
+int op_not(int a);
+int op_and(int a, int b);
+int op_or(int a, int b);
+int eq_bool(int a, int b);
+
+int int_to_num(int integer);
+
+int num_to_int_(int number);
+
+int num_to_int(int number);
+
+int y_comb(int fun);
+
+int str_to_list(const char *str);
+
+char *list_to_str_(int list);
+
+char *list_to_str(int list);
+
+int eq_num(int a, int b);
+
+int id(void);
+
+int map(int list, int fun);
+
+int select_if(int list, int fun);
+
+int bits_to_bytes(int bits);
+
+int bytes_to_bits(int bytes);
+
+int select_binary(int list);
+
+void init(void);
+
+void destroy(void);
+
+int str_to_input(const char *text);
+
+int read_expr(int in);
 
 #endif
 
