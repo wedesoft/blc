@@ -2,7 +2,7 @@ TODO
 ====
 
 * better garbage collector? reflective?
-* continuations, continuation passing style, tail-call optimisation
+* tail-call optimisation
 * detect closed lambdas and convert them to procs early
 * id = ->x.x
   id(true)

@@ -37,7 +37,6 @@ typedef struct {
     int idx;
     int body;
     call_t call;
-    definition_t definition;
     proc_t proc;
     wrap_t wrap;
     input_t input;
@@ -160,6 +159,12 @@ int wrap(int unwrap, int context)
   return retval;
 }
 
+void memoize(int cell, int value)
+{
+  assert(is_wrap(cell));
+  cells[cell].wrap.cache = value;
+}
+
 int input(FILE *file)
 {
   int retval = cell(INPUT);
@@ -185,55 +190,65 @@ int read_char(int in)
 }
 
 #ifndef NVERBOSE
-int level = 0;
-
 void display(int cell);
 #endif
 
 int eval_env(int cell, int env)
 {
-#ifndef NVERBOSE
-  int i;
-  for (i=0; i<level; i++)
-    fputs("|", stderr);
-  display(cell);
-  fputc('\n', stderr);
-  level++;
-#endif
   int retval;
-  switch (type(cell)) {
+  int cont = f_;
+  int quit = 0;
+  while (!quit) {
+    switch (type(cell)) {
     case VAR:
-      retval = eval_env(at_(env, idx(cell)), env);
+      cell = at_(env, idx(cell));
       break;
     case LAMBDA:
-      retval = proc_stack(body(cell), env);
+      cell = proc_stack(body(cell), env);
       break;
     case CALL: {
-      int f = eval_env(fun(cell), env);
-      if (is_input(f))
-        retval = eval_env(call(read_char(f), arg(cell)), env);
-      else
-        retval = eval_env(term(f), pair(wrap(arg(cell), env), stack(f)));
+      int f = fun(cell);
+      if (is_proc(f)) {
+        env = pair(wrap(arg(cell), env), stack(f));
+        cell = term(f);
+      } else if (is_input(f))
+        cell = call(read_char(f), arg(cell));
+      else {
+        cont = pair(wrap(cell, env), cont);
+        cell = f;
+      };
       break; }
     case WRAP:
       if (cache(cell) != cell)
-        retval = cache(cell);
+        cell = cache(cell);
       else {
-        retval = eval_env(unwrap(cell), context(cell));
-        cells[cell].wrap.cache = retval;
+        cont = pair(wrap(cell, env), cont);
+        env = context(cell);
+        cell = unwrap(cell);
       };
       break;
     default:
-      retval = cell;
+      if (is_f_(cont)) {
+        retval = cell;
+        quit = 1;
+      } else {
+        int next = first_(cont);
+        int cmd = unwrap(next);
+        switch (type(cmd)) {
+        case CALL:
+          cell = call(cell, arg(cmd));
+          break;
+        case WRAP:
+          memoize(cmd, cell);
+          break;
+        default:
+          assert(0);
+        };
+        env = context(next);
+        cont = rest_(cont);
+      };
+    };
   };
-#ifndef NVERBOSE
-  level--;
-  for (i=0; i<level; i++)
-    fputs("|", stderr);
-  fputs("\\-> ", stderr);
-  display(retval);
-  fputc('\n', stderr);
-#endif
   return retval;
 }
 
@@ -380,34 +395,34 @@ void display(int cell)
     fputs("pair", stderr);
   else
     switch (type(cell)) {
-      case VAR:
-        fprintf(stderr, "var(%d)", idx(cell));
-        break;
-      case LAMBDA:
-        fputs("lambda(", stderr);
-        display(body(cell));
-        fputs(")", stderr);
-        break;
-      case CALL:
-        fputs("call(", stderr);
-        display(fun(cell));
-        fputs(", ", stderr);
-        display(arg(cell));
-        fputs(")", stderr);
-        break;
-      case PROC:
-        fputs("proc(", stderr);
-        display(term(cell));
-        fputs(")", stderr);
-        break;
-      case WRAP:
-        fputs("wrap(", stderr);
-        display(unwrap(cell));
-        fputs(")", stderr);
-        break;
-      case INPUT:
-        fputs("input(...)", stderr);
-        break;
+    case VAR:
+      fprintf(stderr, "var(%d)", idx(cell));
+      break;
+    case LAMBDA:
+      fputs("lambda(", stderr);
+      display(body(cell));
+      fputs(")", stderr);
+      break;
+    case CALL:
+      fputs("call(", stderr);
+      display(fun(cell));
+      fputs(", ", stderr);
+      display(arg(cell));
+      fputs(")", stderr);
+      break;
+    case PROC:
+      fputs("proc(", stderr);
+      display(term(cell));
+      fputs(")", stderr);
+      break;
+    case WRAP:
+      fputs("wrap(", stderr);
+      display(unwrap(cell));
+      fputs(")", stderr);
+      break;
+    case INPUT:
+      fputs("input(...)", stderr);
+      break;
     };
 }
 #endif
