@@ -498,3 +498,14 @@ int read_expr(int in)
   };
   return retval;
 }
+
+void write_expression(int expr, int env, FILE *stream)
+{
+  int list = eval_env(bits_to_bytes(expr), env);
+  while (is_f(empty(list))) {
+    fputc(num_to_int(first(list)), stream);
+    list = eval(rest(list));
+  };
+  fputc('\n', stream);
+}
+

@@ -92,14 +92,6 @@ int copy_definitions(int previous_expr, int expression, int n)
   return retval;
 }
 
-void write_expression(int expr, int env, FILE *stream)
-{
-  int list = eval_env(bits_to_bytes(expr), env);
-  while (is_f(empty(list))) {
-    fputc(num_to_int(first(list)), stream);
-    list = eval(rest(list));
-  };
-}
 %}
 
 %union {
@@ -124,7 +116,6 @@ run: /* empty */
    | expr { int expression = copy_definitions(previous_expr, $1, n_prev);
             int environment = pair(bytes_to_bits(select_binary(input(yyin))), f());
             write_expression(expression, environment, yyout);
-            fputc('\n', yyout);
             previous_expr = expression;
             n_prev = n_definitions; } run
    ;

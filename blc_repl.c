@@ -20,12 +20,7 @@ int main(void)
 {
   init();
   int expr = read_expr(bytes_to_bits(select_binary(input(stdin))));
-  int list = eval_env(bits_to_bytes(first_(expr)), pair(rest_(expr), f()));
-  while (is_f(empty(list))) {
-    fputc(num_to_int(first(list)), stdout);
-    list = eval(rest(list));
-  };
-  fputc('\n', stdout);
+  write_expression(first_(expr), pair(rest_(expr), f()), stdout);
   destroy();
   return 0;
 }
