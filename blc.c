@@ -196,7 +196,6 @@ void display(int cell);
 int eval_env(int cell, int env)
 {
   int retval;
-  int cont = f_;
   int quit = 0;
   while (!quit) {
     switch (type(cell)) {
@@ -213,40 +212,18 @@ int eval_env(int cell, int env)
         cell = term(f);
       } else if (is_input(f))
         cell = call(read_char(f), arg(cell));
-      else {
-        cont = pair(wrap(cell, env), cont);
-        cell = f;
-      };
+      else
+        cell = call(eval_env(f, env), arg(cell));
       break; }
     case WRAP:
       if (cache(cell) != cell)
         cell = cache(cell);
-      else {
-        cont = pair(wrap(cell, env), cont);
-        env = context(cell);
-        cell = unwrap(cell);
-      };
+      else
+        memoize(cell, eval_env(unwrap(cell), context(cell)));
       break;
     default:
-      if (is_f_(cont)) {
-        retval = cell;
-        quit = 1;
-      } else {
-        int next = first_(cont);
-        int cmd = unwrap(next);
-        switch (type(cmd)) {
-        case CALL:
-          cell = call(cell, arg(cmd));
-          break;
-        case WRAP:
-          memoize(cmd, cell);
-          break;
-        default:
-          assert(0);
-        };
-        env = context(next);
-        cont = rest_(cont);
-      };
+      retval = cell;
+      quit = 1;
     };
   };
   return retval;
