@@ -236,9 +236,8 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         cell = cache(cell);
       else {
         cont = lambda(call(memoize(cell), cont));
-        int value = eval_env(unwrap(cell), context(cell), cont); // (cell λx.((memo cell x) cont))
-        cells[target(fun(body(cont)))].wrap.cache = value;
-        cont = arg(body(cont));
+        env = context(cell);
+        cell = unwrap(cell);
       };
       break;
     default:
@@ -246,8 +245,8 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         retval = cell;// (cell cont)
         quit = 1;
       } else {
-        retval = cell;
-        quit = 1;
+        cells[target(fun(body(cont)))].wrap.cache = cell;
+        cont = arg(body(cont));
       };
     };
   };
