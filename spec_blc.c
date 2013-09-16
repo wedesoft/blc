@@ -56,6 +56,13 @@ int main(void)
   assert(is_proc(proc(lambda(var(0)))));
   assert(idx(term(proc(var(0)))) == 0);
   assert(is_f_(stack(proc_stack(var(0), f()))));
+  // output continuation
+  assert(type(output()) == OUTPUT);
+  assert(is_output(output()));
+  // memoization
+  assert(type(memoize(wrap(var(0), f()))) == MEMOIZE);
+  assert(is_memoize(memoize(wrap(var(0), f()))));
+  assert(idx(unwrap(target(memoize(wrap(var(1), f()))))) == 1);
   // evaluation of lambdas
   assert(is_proc(eval(lambda(var(0)))));
   assert(idx(term(eval(lambda(var(1))))) == 1);

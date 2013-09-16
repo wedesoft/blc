@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT } type_t;
 
 int cell(int type);
 
@@ -34,7 +34,9 @@ int is_lambda(int cell);
 int is_call(int cell);
 int is_proc(int cell);
 int is_wrap(int cell);
+int is_memoize(int cell);
 int is_input(int cell);
+int is_output(int cell);
 
 int idx(int cell);
 int body(int cell);
@@ -72,11 +74,15 @@ int proc(int term);
 
 int wrap(int unwrap, int context);
 
+int memoize(int target);
+
 int input(FILE *file);
+
+int output(void);
 
 int int_to_num(int integer);
 
-int eval_env(int cell, int env);
+int eval_env(int cell, int env, int cont);
 
 int eval(int cell);
 

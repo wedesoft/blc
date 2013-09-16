@@ -39,6 +39,7 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
+    int target;
     input_t input;
   };
 } cell_t;
@@ -66,7 +67,9 @@ int is_lambda(int cell) { return type(cell) == LAMBDA; }
 int is_call(int cell) { return type(cell) == CALL; }
 int is_proc(int cell) { return type(cell) == PROC; }
 int is_wrap(int cell) { return type(cell) == WRAP; }
+int is_memoize(int cell) { return type(cell) == MEMOIZE; }
 int is_input(int cell) { return type(cell) == INPUT; }
+int is_output(int cell) { return type(cell) == OUTPUT; }
 
 int idx(int cell) { assert(is_var(cell)); return cells[cell].idx; }
 int body(int cell) { assert(is_lambda(cell)); return cells[cell].body; }
@@ -77,6 +80,7 @@ int stack(int cell) { assert(is_proc(cell)); return cells[cell].proc.stack; }
 int unwrap(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.context; }
 int cache(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.cache; }
+int target(int cell) { assert(is_memoize(cell)); return cells[cell].target; }
 FILE *file(int cell) { assert(is_input(cell)); return cells[cell].input.file; }
 int used(int cell) { assert(is_input(cell)); return cells[cell].input.used; }
 
@@ -159,10 +163,19 @@ int wrap(int unwrap, int context)
   return retval;
 }
 
+/*
 void memoize(int cell, int value)
 {
   assert(is_wrap(cell));
   cells[cell].wrap.cache = value;
+}
+*/
+
+int memoize(int target)
+{
+  int retval = cell(MEMOIZE);
+  cells[retval].target = target;
+  return retval;
 }
 
 int input(FILE *file)
@@ -172,6 +185,9 @@ int input(FILE *file)
   cells[retval].input.used = retval;
   return retval;
 }
+
+int output_ = -1;
+int output(void) { return output_; }
 
 int read_char(int in)
 {
@@ -193,7 +209,7 @@ int read_char(int in)
 void display(int cell);
 #endif
 
-int eval_env(int cell, int env)
+int eval_env(int cell, int env, int cont) // cont: λx.(return x)
 {
   int retval;
   int quit = 0;
@@ -213,23 +229,32 @@ int eval_env(int cell, int env)
       } else if (is_input(f))
         cell = call(read_char(f), arg(cell));
       else
-        cell = call(eval_env(f, env), arg(cell));
+        cell = call(eval_env(f, env, cont), arg(cell)); // (cell λf.((f wrap_arg) cont))
       break; }
     case WRAP:
       if (cache(cell) != cell)
         cell = cache(cell);
-      else
-        memoize(cell, eval_env(unwrap(cell), context(cell)));
+      else {
+        cont = lambda(call(memoize(cell), cont));
+        int value = eval_env(unwrap(cell), context(cell), cont); // (cell λx.((memo cell x) cont))
+        cells[target(fun(body(cont)))].wrap.cache = value;
+        cont = arg(body(cont));
+      };
       break;
     default:
-      retval = cell;
-      quit = 1;
+      if (is_output(cont)) {
+        retval = cell;// (cell cont)
+        quit = 1;
+      } else {
+        retval = cell;
+        quit = 1;
+      };
     };
   };
   return retval;
 }
 
-int eval(int cell) { return eval_env(cell, f_); }
+int eval(int cell) { return eval_env(cell, f_, output_); }
 
 int is_f(int cell) { return eval(op_if(cell, t_, f_)) == f_; }
 
@@ -335,6 +360,7 @@ void init(void)
   cells[f_].proc.term = proc(var(0));
   cells[f_].proc.stack = f_;
   t_ = proc(lambda(var(1)));
+  output_ = cell(OUTPUT);
   pair_ = proc(lambda(lambda(op_if(var(0), var(1), var(2)))));
   eq_bool_ = proc(lambda(op_if(var(0), var(1), op_not(var(1)))));
   y_ = proc(call(lambda(call(var(1), call(var(0), var(0)))),
@@ -478,7 +504,7 @@ int read_expr(int in)
 
 void write_expression(int expr, int env, FILE *stream)
 {
-  int list = eval_env(bits_to_bytes(expr), env);
+  int list = eval_env(bits_to_bytes(expr), env, output_);
   while (is_f(empty(list))) {
     fputc(num_to_int(first(list)), stream);
     list = eval(rest(list));
