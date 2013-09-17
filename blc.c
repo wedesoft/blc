@@ -228,8 +228,10 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         cell = term(f);
       } else if (is_input(f))
         cell = call(read_char(f), arg(cell));
-      else
-        cell = call(eval_env(f, env, cont), arg(cell)); // (cell λf.((f wrap_arg) cont))
+      else {
+        cont = lambda(call(wrap(arg(cell), env), cont));
+        cell = f;
+      };
       break; }
     case WRAP:
       if (cache(cell) != cell)
@@ -242,10 +244,13 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
       break;
     default:
       if (is_output(cont)) {
-        retval = cell;// (cell cont)
+        retval = cell;
         quit = 1;
-      } else {
+      } else if (is_memoize(fun(body(cont)))) {
         cells[target(fun(body(cont)))].wrap.cache = cell;
+        cont = arg(body(cont));
+      } else {
+        cell = call(cell, fun(body(cont)));
         cont = arg(body(cont));
       };
     };
