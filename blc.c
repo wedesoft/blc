@@ -221,16 +221,10 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
     case LAMBDA:
       cell = proc_stack(body(cell), env);
       break;
-    case CALL: {
-      int f = fun(cell);
-      if (is_proc(f)) {
-        env = pair(wrap(arg(cell), env), stack(f));
-        cell = term(f);
-      } else {
-        cont = lambda(call(wrap(arg(cell), env), cont));
-        cell = f;
-      };
-      break; }
+    case CALL:
+      cont = lambda(call(call(var(0), cont), wrap(arg(cell), env)));
+      cell = fun(cell);
+      break;
     case WRAP:
       if (cache(cell) != cell)
         cell = cache(cell);
@@ -240,19 +234,39 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         cell = unwrap(cell);
       };
       break;
-    default:
-      if (is_output(cont)) {
+    case INPUT:
+      cell = read_char(cell);
+      break;
+    case PROC:
+      switch (type(cont)) {
+      case VAR:
+        cont = first_(env);
+        env = rest_(env);
+        cell = term(cell);
+        break;
+      case LAMBDA:
+        env = stack(cell);
+        cont = body(cont);
+        break;
+      case CALL:
+        env = pair(arg(cont), env);
+        cont = fun(cont);
+        break;
+      case OUTPUT:
         retval = cell;
         quit = 1;
-      } else if (is_memoize(fun(body(cont)))) {
-        cells[target(fun(body(cont)))].wrap.cache = cell;
-        cont = arg(body(cont));
-      } else if (is_input(cell))
-        cell = read_char(cell);
-      else {
-        cell = call(cell, fun(body(cont)));
-        cont = arg(body(cont));
+        break;
+      case MEMOIZE:
+        cells[target(cont)].wrap.cache = cell;
+        cont = first_(env);
+        env = rest_(env);
+        break;
+      default:
+        assert(0);
       };
+      break;
+    default:
+      assert(0);
     };
   };
   return retval;
