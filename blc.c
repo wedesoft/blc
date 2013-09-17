@@ -226,9 +226,7 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
       if (is_proc(f)) {
         env = pair(wrap(arg(cell), env), stack(f));
         cell = term(f);
-      } else if (is_input(f))
-        cell = call(read_char(f), arg(cell));
-      else {
+      } else {
         cont = lambda(call(wrap(arg(cell), env), cont));
         cell = f;
       };
@@ -249,7 +247,9 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
       } else if (is_memoize(fun(body(cont)))) {
         cells[target(fun(body(cont)))].wrap.cache = cell;
         cont = arg(body(cont));
-      } else {
+      } else if (is_input(cell))
+        cell = read_char(cell);
+      else {
         cell = call(cell, fun(body(cont)));
         cont = arg(body(cont));
       };

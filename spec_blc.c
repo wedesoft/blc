@@ -157,10 +157,10 @@ int main(void)
   assert(is_input(input(stdin)));
   assert(file(input(stdin)) == stdin);
   assert(file(used(input(stdin))) == stdin);
-  int alpha = str_to_input("abcdefghijklmnopqrstuvwxyz");
+  int alpha = str_to_input("abcdefg");
   assert(!is_f(eq_num(first(alpha), int_to_num('a'))));
   assert(!is_f(eq_num(first(rest(alpha)), int_to_num('b'))));
-  assert(!strcmp(list_to_str(alpha), "abcdefghijklmnopqrstuvwxyz"));
+  assert(!strcmp(list_to_str(alpha), "abcdefg"));
   // bits to bytes
   assert(!strcmp(list_to_str(bits_to_bytes(pair(f(), pair(t(), pair(f(), f()))))), "010"));
   // bytes to bits

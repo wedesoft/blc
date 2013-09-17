@@ -47,6 +47,7 @@ int stack(int cell);
 int unwrap(int cell);
 int context(int cell);
 int cache(int cell);
+int target(int cell);
 FILE *file(int cell);
 int used(int cell);
 
