@@ -221,16 +221,10 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
     case LAMBDA:
       cell = proc_stack(body(cell), env);
       break;
-    case CALL: {
-      int f = fun(cell);
-      if (is_proc(f)) {
-        env = pair(wrap(arg(cell), env), stack(f));
-        cell = term(f);
-      } else {
-        cont = lambda(call(wrap(arg(cell), env), cont));
-        cell = f;
-      };
-      break; }
+    case CALL:
+      cont = lambda(call(wrap(arg(cell), env), cont));
+      cell = fun(cell);
+      break;
     case WRAP:
       if (cache(cell) != cell)
         cell = cache(cell);
@@ -249,8 +243,9 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         cont = arg(body(cont));
       } else if (is_input(cell))
         cell = read_char(cell);
-      else {
-        cell = call(cell, fun(body(cont)));
+      else { // proc
+        env = pair(fun(body(cont)), stack(cell));
+        cell = term(cell);
         cont = arg(body(cont));
       };
     };
