@@ -210,7 +210,7 @@ int read_char(int in)
 void display(int cell);
 #endif
 
-int eval_env(int cell, int env, int cont) // cont: λx.(return x)
+int eval_env(int cell, int env, int cont)
 {
   int retval;
   int quit = 0;
@@ -241,6 +241,7 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
     case PROC:
       switch (type(cont)) {
       case VAR:
+        assert(idx(cont) == 0);
         cont = first_(env);
         env = rest_(env);
         cell = term(cell);
@@ -253,15 +254,14 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         env = pair(arg(cont), env);
         cont = fun(cont);
         break;
+      case MEMOIZE:
+        store(target(cont), cell);
+        cont = value(cont);
+        cell = proc(cell);
+        break;
       case OUTPUT:
         retval = cell;
         quit = 1;
-        break;
-      case MEMOIZE:
-        store(target(cont), cell);
-        // cont = value(cont);
-        cont = first_(env);
-        env = rest_(env);
         break;
       default:
         assert(0);
@@ -533,4 +533,3 @@ void write_expression(int expr, int env, FILE *stream)
   };
   fputc('\n', stream);
 }
-

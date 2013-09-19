@@ -3,7 +3,6 @@ TODO
 
 * better garbage collector? reflective?
 * tail-call optimisation
-* detect closed lambdas and convert them to procs early
 * id = ->x.x
   id(true)
 * obj.fun
