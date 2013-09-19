@@ -6,7 +6,9 @@ TODO
 * obj.fun
   (send obj fun)
   (1 . ())
+  inspect methods
 * tail-call optimisation
+* error handling
 * better garbage collector? reflective?
 * go meta-circular
   binary representation for proc, wrap, input, output
@@ -14,7 +16,6 @@ TODO
 * IO (monad) with FFI
   stdin, stdout, self?: constants
 * symbols/strings?
-* inspect methods
 * implement object system 
   namespaces, contexts, objects and polymorphism, inspect method
 * quote expr -> list of booleans
@@ -26,7 +27,6 @@ TODO
   * member?, append, assoc, cond, equal?
   * eval, quasiquote (quote with environment), quote
   * sublis (substitution)
-* error handling
 * named parameters, structures
 * Earley parser for bits?
 * add *quote* and *eval* to environment (<-> *read\_bit*?)
