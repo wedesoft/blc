@@ -1,13 +1,13 @@
 TODO
 ====
 
-* better garbage collector? reflective?
-* tail-call optimisation
 * id = ->x.x
   id(true)
 * obj.fun
   (send obj fun)
   (1 . ())
+* tail-call optimisation
+* better garbage collector? reflective?
 * go meta-circular
   binary representation for proc, wrap, input, output
   forward declaration?
