@@ -47,6 +47,7 @@ int stack(int cell);
 int unwrap(int cell);
 int context(int cell);
 int cache(int cell);
+int value(int cell);
 int target(int cell);
 FILE *file(int cell);
 int used(int cell);
@@ -75,7 +76,7 @@ int proc(int term);
 
 int wrap(int unwrap, int context);
 
-int memoize(int target);
+int memoize(int value, int target);
 
 int input(FILE *file);
 

@@ -60,9 +60,10 @@ int main(void)
   assert(type(output()) == OUTPUT);
   assert(is_output(output()));
   // memoization
-  assert(type(memoize(wrap(var(0), f()))) == MEMOIZE);
-  assert(is_memoize(memoize(wrap(var(0), f()))));
-  assert(idx(unwrap(target(memoize(wrap(var(1), f()))))) == 1);
+  assert(type(memoize(var(0), wrap(f(), f()))) == MEMOIZE);
+  assert(is_memoize(memoize(var(0), wrap(f(), f()))));
+  assert(is_wrap(target(memoize(var(0), wrap(f(), f())))));
+  assert(idx(value(memoize(var(0), wrap(f(), f())))) == 0);
   // evaluation of lambdas
   assert(is_proc(eval(lambda(var(0)))));
   assert(idx(term(eval(lambda(var(1))))) == 1);
