@@ -23,11 +23,11 @@
 
 typedef struct { int fun; int arg; } call_t;
 
-typedef struct { int term; int body; } definition_t;
-
 typedef struct { int term; int stack; } proc_t;
 
 typedef struct { int unwrap; int context; int cache; } wrap_t;
+
+typedef struct { int value; int target; } memoize_t;
 
 typedef struct { FILE *file; int used; } input_t;
 
@@ -39,7 +39,7 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
-    int target;
+    memoize_t memoize;
     input_t input;
   };
 } cell_t;
@@ -80,7 +80,8 @@ int stack(int cell) { assert(is_proc(cell)); return cells[cell].proc.stack; }
 int unwrap(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.context; }
 int cache(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.cache; }
-int target(int cell) { assert(is_memoize(cell)); return cells[cell].target; }
+int value(int cell) { assert(is_memoize(cell)); return cells[cell].memoize.value; }
+int target(int cell) { assert(is_memoize(cell)); return cells[cell].memoize.target; }
 FILE *file(int cell) { assert(is_input(cell)); return cells[cell].input.file; }
 int used(int cell) { assert(is_input(cell)); return cells[cell].input.used; }
 
@@ -163,18 +164,18 @@ int wrap(int unwrap, int context)
   return retval;
 }
 
-/*
-void memoize(int cell, int value)
+int store(int cell, int value)
 {
   assert(is_wrap(cell));
   cells[cell].wrap.cache = value;
+  return value;
 }
-*/
 
-int memoize(int target)
+int memoize(int value, int target)
 {
   int retval = cell(MEMOIZE);
-  cells[retval].target = target;
+  cells[retval].memoize.value = value;
+  cells[retval].memoize.target = target;
   return retval;
 }
 
@@ -229,7 +230,7 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
       if (cache(cell) != cell)
         cell = cache(cell);
       else {
-        cont = lambda(call(memoize(cell), cont));
+        cont = lambda(call(memoize(var(0), cell), cont));
         env = context(cell);
         cell = unwrap(cell);
       };
@@ -257,7 +258,8 @@ int eval_env(int cell, int env, int cont) // cont: λx.(return x)
         quit = 1;
         break;
       case MEMOIZE:
-        cells[target(cont)].wrap.cache = cell;
+        store(target(cont), cell);
+        // cont = value(cont);
         cont = first_(env);
         env = rest_(env);
         break;
@@ -444,6 +446,8 @@ void display(int cell)
     case INPUT:
       fputs("input(...)", stderr);
       break;
+    default:
+      assert(0);
     };
 }
 #endif
