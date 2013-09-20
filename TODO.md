@@ -1,12 +1,12 @@
 TODO
 ====
 
+* proto-language with booleans, integers, strings, objects, inspect-methods
 * id = ->x.x
   id(true)
 * obj.fun
   (send obj fun)
   (1 . ())
-  inspect methods
 * tail-call optimisation
 * error handling
 * better garbage collector? reflective?

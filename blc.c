@@ -286,6 +286,7 @@ int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 int op_not(int a) { return op_if(a, f_, t_); }
 int op_and(int a, int b) { return op_if(a, b, f_); }
 int op_or(int a, int b) { return op_if(a, t_, b); }
+int op_xor(int a, int b) { return op_if(a, op_not(b), b); }
 int eq_bool_ = -1;
 int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
 

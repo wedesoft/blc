@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 AM_YFLAGS = -d
 
-bin_PROGRAMS = spec_blc blc lambda spec_lambda
+bin_PROGRAMS = blc spec_blc lambda spec_lambda spec_dsl
 
 blc_SOURCES = blc_repl.c blc.c
 blc_LDFLAGS = 
@@ -22,6 +22,10 @@ spec_lambda_SOURCES = spec_lambda.c lambda.c lambda_bison.y lambda_flex.l blc.c
 spec_lambda_LDFLAGS =
 spec_lambda_LDADD =
 
+spec_dsl_SOURCES = spec_dsl.c blc.c
+spec_dsl_LDFLAGS =
+spec_dsl_LDADD =
+
 noinst_HEADERS = blc.h lambda.h
 
 noinst_DATA = README.html TODO.html
@@ -30,13 +34,16 @@ BUILT_SOURCES = lambda_bison.h
 
 EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
 
-test: spec_blc.tmp spec_lambda.tmp
+test: spec_blc.tmp spec_lambda.tmp spec_dsl.tmp
 
 spec_blc.tmp: spec_blc$(EXEEXT)
 	./spec_blc$(EXEEXT) && $(TOUCH) $@
 
 spec_lambda.tmp: spec_lambda$(EXEEXT)
 	./spec_lambda$(EXEEXT) && $(TOUCH) $@
+
+spec_dsl.tmp: spec_dsl$(EXEEXT)
+	./spec_dsl$(EXEEXT) && $(TOUCH) $@
 
 .md.html:
 	$(PANDOC) -o $@ $< || echo "Install Pandoc to compile Markdown to HTML"

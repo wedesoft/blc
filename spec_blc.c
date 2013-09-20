@@ -105,6 +105,11 @@ int main(void)
   assert(!is_f(op_or(f(), t())));
   assert(!is_f(op_or(t(), f())));
   assert(!is_f(op_or(t(), t())));
+  // boolean 'xor'
+  assert(is_f(op_xor(f(), f())));
+  assert(!is_f(op_xor(f(), t())));
+  assert(!is_f(op_xor(t(), f())));
+  assert(is_f(op_xor(t(), t())));
   // boolean '=='
   assert(!is_f(eq_bool(f(), f())));
   assert(is_f(eq_bool(f(), t())));

@@ -98,6 +98,7 @@ int at(int list, int i);
 int op_not(int a);
 int op_and(int a, int b);
 int op_or(int a, int b);
+int op_xor(int a, int b);
 int eq_bool(int a, int b);
 
 int int_to_num(int integer);
