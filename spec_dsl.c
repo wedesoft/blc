@@ -35,10 +35,10 @@ int plus(int a, int b)
   int fun = y_comb(lambda(lambda(lambda(op_if(op_and(empty(var(0)), empty(var(1))), op_if(var(2), pair(t(), f()), f()),
                               pair(op_xor(op_xor(first_bit(var(0)), first_bit(var(1))), var(2)),
                                    call(call(call(var(3),
-                                         op_if(var(2),
-                                               op_or(first_bit(var(0)), first_bit(var(1))),
-                                               op_and(first_bit(var(0)), first_bit(var(1))))
-                                         ), rest_bits(var(1))), rest_bits(var(0)))))))));
+                                                  op_if(var(2),
+                                                        op_or(first_bit(var(0)), first_bit(var(1))),
+                                                        op_and(first_bit(var(0)), first_bit(var(1))))),
+                                             rest_bits(var(1))), rest_bits(var(0)))))))));
   return call(call(call(fun, f()), b), a);
 }
 
@@ -53,13 +53,10 @@ int main(void)
   init();
   init_lib();
   int n = cell(VAR);
-  int i;
-  int j;
-  for (i=0; i<10; i++) {
-    for (j=0; j<10; j++)
-      printf(" %2d(%2d)", num_to_int(plus(int_to_num(i), int_to_num(j))));
-    printf("\n");
-  };
+  // Integer addition
+  assert(num_to_int(plus(int_to_num(2), int_to_num(1))) == 3);
+  assert(num_to_int(plus(int_to_num(2), int_to_num(2))) == 4);
+  assert(num_to_int(plus(int_to_num(1), int_to_num(3))) == 4);
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
   return 0;
