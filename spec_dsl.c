@@ -31,16 +31,16 @@ int shl_;
 int shl(int list) { return call(shl_, list); }
 
 int zip_;
-int zip(int a, int b) { return call2(zip_, b, a); }
+int zip(int a, int b) { return call2(zip_, a, b); }
 
 int add_;
-int add(int a, int b) { return call3(add_, f(), b, a); }
+int add(int a, int b) { return call3(add_, a, b, f()); }
 
 int sub_;
-int sub(int a, int b) { return call3(sub_, f(), b, a); }
+int sub(int a, int b) { return call3(sub_, a, b, f()); }
 
 int mul_;
-int mul(int a, int b) { return call2(mul_, b, a); }
+int mul(int a, int b) { return call2(mul_, a, b); }
 
 void init_lib(void)
 {
@@ -51,30 +51,30 @@ void init_lib(void)
   zip_ = y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
                               f(),
                               pair(pair(odd(var(0)), odd(var(1))),
-                                   call2(var(2), shr(var(1)), shr(var(0)))))));
+                                   call2(var(2), shr(var(0)), shr(var(1)))))));
   add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
                               op_if(var(2), pair(t(), f()), f()),
                               call(lambda(pair(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
                                                var(0))),
                                    call3(var(3),
+                                         shr(var(1)), shr(var(0)),
                                          op_if(var(2),
                                                op_or(odd(var(0)), odd(var(1))),
-                                               op_and(odd(var(0)), odd(var(1)))),
-                                         shr(var(1)), shr(var(0)))))));
+                                               op_and(odd(var(0)), odd(var(1)))))))));
   sub_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
-                              op_if(var(2), pair(t(), call3(var(3), var(2), shr(var(1)), shr(var(0)))), f()),
+                              op_if(var(2), pair(t(), call3(var(3), shr(var(0)), shr(var(1)), var(2))), f()),
                               call(lambda(op_if(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
                                                 pair(t(), var(0)),
                                                 op_if(empty(var(0)), f(), pair(f(), var(0))))),
                                    call3(var(3),
+                                         shr(var(0)), shr(var(1)),
                                          op_if(var(2),
                                                op_or(even(var(0)), odd(var(1))),
-                                               op_and(even(var(0)), odd(var(1)))),
-                                         shr(var(1)), shr(var(0)))))));
+                                               op_and(even(var(0)), odd(var(1)))))))));
   mul_ = y_comb(lambda2(op_if(empty(var(0)),
                               f(),
                               call(lambda(op_if(first(var(1)), add(var(2), var(0)), var(0))),
-                                   shl(call2(var(2), shr(var(0)), var(1)))))));
+                                   shl(call2(var(2), var(1), shr(var(0))))))));
 }
 
 int main(void)

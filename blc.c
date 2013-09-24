@@ -108,8 +108,8 @@ int call(int fun, int arg)
   cells[retval].call.arg = arg;
   return retval;
 }
-int call2(int fun, int arg1, int arg2) { return call(call(fun, arg1), arg2); }
-int call3(int fun, int arg1, int arg2, int arg3) { return call(call(call(fun, arg1), arg2), arg3); }
+int call2(int fun, int arg1, int arg2) { return call(call(fun, arg2), arg1); }
+int call3(int fun, int arg1, int arg2, int arg3) { return call(call(call(fun, arg3), arg2), arg1); }
 
 int f_ = -1;
 int t_ = -1;
@@ -127,11 +127,11 @@ int is_f_(int cell)
 
 int op_if(int condition, int consequent, int alternative)
 {
-  return call2(condition, consequent, alternative);
+  return call2(condition, alternative, consequent);
 }
 
 int pair_ = -1;
-int pair(int first, int rest) { return call2(pair_, rest, first); }
+int pair(int first, int rest) { return call2(pair_, first, rest); }
 
 int first_(int list) { return arg(list); }
 int rest_(int list) { return arg(fun(list)); }
@@ -223,7 +223,7 @@ int eval_env(int cell, int env, int cont)
       cell = proc_stack(body(cell), env);
       break;
     case CALL:
-      cont = lambda(call2(var(0), cont, wrap(arg(cell), env)));
+      cont = lambda(call2(var(0), wrap(arg(cell), env), cont));
       cell = fun(cell);
       break;
     case WRAP:
@@ -280,7 +280,7 @@ int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
-int empty(int list) { return call2(list, proc(lambda2(f())), t()); }
+int empty(int list) { return call2(list, t(), proc(lambda2(f()))); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
 int op_not(int a) { return op_if(a, f(), t()); }
@@ -361,10 +361,10 @@ int id_ = -1;
 int id(void) { return id_; }
 
 int map_ = -1;
-int map(int list, int fun) { return call2(map_, fun, list); }
+int map(int list, int fun) { return call2(map_, list, fun); }
 
 int select_if_ = -1;
-int select_if(int list, int fun) { return call2(select_if_, fun, list); }
+int select_if(int list, int fun) { return call2(select_if_, list, fun); }
 
 int bits_to_bytes_ = -1;
 int bits_to_bytes(int bits) { return call(bits_to_bytes_, bits); }
@@ -394,13 +394,13 @@ void init(void)
   map_ = y_comb(lambda2(op_if(empty(var(0)),
                         f(),
                         pair(call(var(1), first(var(0))),
-                             call2(var(2), var(1), rest(var(0)))))));
+                             call2(var(2), rest(var(0)), var(1))))));
   select_if_ = y_comb(lambda2(op_if(empty(var(0)),
                               f(),
                               op_if(call(var(1), first(var(0))),
                                     pair(first(var(0)),
-                                         call2(var(2), var(1), rest(var(0)))),
-                                    call2(var(2), var(1), rest(var(0)))))));
+                                         call2(var(2), rest(var(0)), var(1))),
+                                    call2(var(2), rest(var(0)), var(1))))));
   bits_to_bytes_ = proc(map(var(0), proc(op_if(var(0), int_to_num('1'), int_to_num('0')))));
   bytes_to_bits_ = proc(map(var(0), proc(eq_num(var(0), int_to_num('1')))));
   select_binary_ = proc(select_if(var(0), proc(op_or(eq_num(var(0), int_to_num('0')),
