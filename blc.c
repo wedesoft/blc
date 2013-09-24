@@ -153,7 +153,7 @@ int proc_stack(int term, int stack)
   return retval;
 }
 
-int proc(int term) { return proc_stack(term, f_); }
+int proc(int term) { return proc_stack(term, f()); }
 
 int wrap(int unwrap, int context)
 {
@@ -198,7 +198,7 @@ int read_char(int in)
   else {
     int c = fgetc(file(in));
     if (c == EOF)
-      retval = f_;
+      retval = f();
     else
       retval = pair(int_to_num(c), input(file(in)));
     cells[in].input.used = retval;
@@ -274,18 +274,18 @@ int eval_env(int cell, int env, int cont)
   return retval;
 }
 
-int eval(int cell) { return eval_env(cell, f_, output_); }
+int eval(int cell) { return eval_env(cell, f(), output_); }
 
-int is_f(int cell) { return eval(op_if(cell, t_, f_)) == f_; }
+int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
 
-int first(int list) { return call(list, t_); }
-int rest(int list) { return call(list, f_); }
-int empty(int list) { return call2(list, proc(lambda2(f_)), t_); }
+int first(int list) { return call(list, t()); }
+int rest(int list) { return call(list, f()); }
+int empty(int list) { return call2(list, proc(lambda2(f())), t()); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
-int op_not(int a) { return op_if(a, f_, t_); }
-int op_and(int a, int b) { return op_if(a, b, f_); }
-int op_or(int a, int b) { return op_if(a, t_, b); }
+int op_not(int a) { return op_if(a, f(), t()); }
+int op_and(int a, int b) { return op_if(a, b, f()); }
+int op_or(int a, int b) { return op_if(a, t(), b); }
 int op_xor(int a, int b) { return op_if(a, op_not(b), b); }
 int eq_bool_ = -1;
 int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
@@ -293,7 +293,7 @@ int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
 int int_to_num(int integer)
 {
   assert(integer >= 0);
-  return integer == 0 ? f_ : pair(integer & 0x1 ? t_ : f_, int_to_num(integer >> 1));
+  return integer == 0 ? f() : pair(integer & 0x1 ? t() : f(), int_to_num(integer >> 1));
 }
 
 int num_to_int_(int number)
@@ -313,7 +313,7 @@ int y_comb(int fun) { return call(y_, proc(fun)); }
 
 int str_to_list(const char *str)
 {
-  return *str == '\0' ? f_ : pair(int_to_num(*str), str_to_list(str + 1));
+  return *str == '\0' ? f() : pair(int_to_num(*str), str_to_list(str + 1));
 }
 
 #define BUFSIZE 1024
@@ -392,11 +392,11 @@ void init(void)
                                   call2(var(2), rest(var(0)), rest(var(1)))))));
   id_ = proc(var(0));
   map_ = y_comb(lambda2(op_if(empty(var(0)),
-                        f_,
+                        f(),
                         pair(call(var(1), first(var(0))),
                              call2(var(2), var(1), rest(var(0)))))));
   select_if_ = y_comb(lambda2(op_if(empty(var(0)),
-                              f_,
+                              f(),
                               op_if(call(var(1), first(var(0))),
                                     pair(first(var(0)),
                                          call2(var(2), var(1), rest(var(0)))),
@@ -411,9 +411,9 @@ void init(void)
 void display(int cell)
 {
   typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
-  if (cell == t_)
+  if (cell == t())
     fputs("true", stderr);
-  else if (cell == f_)
+  else if (cell == f())
     fputs("false", stderr);
   else if (cell == pair_)
     fputs("pair", stderr);

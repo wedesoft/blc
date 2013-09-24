@@ -83,3 +83,4 @@ External Links
 * [Sitaram: Teach Yourself Scheme in Fixnum Days](http://download.plt-scheme.org/doc/300/pdf/t-y-scheme.pdf)
 * [Might: Yacc is dead - an update](http://matt.might.net/articles/parsing-with-derivatives/)
 * [Filinski: Declarative Continuations and Categorical Duality](http://www.diku.dk/hjemmesider/ansatte/andrzej/papers/DCaCD.ps.gz)
+* [Binary number](http://en.wikipedia.org/wiki/Binary\_number)
