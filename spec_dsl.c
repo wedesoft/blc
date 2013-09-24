@@ -66,17 +66,17 @@ void init_lib(void)
   odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
   shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
   shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
-  add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))), op_if(var(2), pair(t(), f()), f()),
-                              pair(op_xor(op_xor(odd(var(0)), odd(var(1))), var(2)),
+  add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
+                              op_if(var(2), pair(t(), f()), f()),
+                              call(lambda(pair(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
+                                               var(0))),
                                    call3(var(3),
                                          op_if(var(2),
                                                op_or(odd(var(0)), odd(var(1))),
                                                op_and(odd(var(0)), odd(var(1)))),
                                          shr(var(1)), shr(var(0)))))));
   sub_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
-                              op_if(var(2),
-                                    pair(t(), call3(var(3), var(2), shr(var(1)), shr(var(0)))),
-                                    f()),
+                              op_if(var(2), pair(t(), call3(var(3), var(2), shr(var(1)), shr(var(0)))), f()),
                               call(lambda(op_if(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
                                                 pair(t(), var(0)),
                                                 op_if(empty(var(0)), f(), pair(f(), var(0))))),
