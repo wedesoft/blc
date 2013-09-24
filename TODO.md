@@ -1,6 +1,7 @@
 TODO
 ====
 
+* use 'zip', 'map', and 'inject' to define ==, >=, ...?
 * proto-language with booleans, integers, strings, objects, inspect-methods
 * id = ->x.x
   id(true)

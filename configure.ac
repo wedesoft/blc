@@ -23,7 +23,7 @@ AC_ARG_ENABLE(debug,
 if test "x$enable_debug" == "xyes"; then
   AM_CFLAGS='-Wall -g -O0'
 else
-  AM_CFLAGS='-Wall -O -DNDEBUG'
+  AM_CFLAGS='-Wall -Os -DNDEBUG'
 fi
 AC_SUBST(AM_CFLAGS)
 

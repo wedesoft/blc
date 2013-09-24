@@ -19,46 +19,28 @@
 #include "blc.h"
 
 int even_;
-int even(int list)
-{
-  return call(even_, list);
-}
+int even(int list) { return call(even_, list); }
 
 int odd_;
-int odd(int list)
-{
-  return call(odd_, list);
-}
+int odd(int list) { return call(odd_, list); }
 
 int shr_;
-int shr(int list)
-{
-  return call(shr_, list);
-}
+int shr(int list) { return call(shr_, list); }
 
 int shl_;
-int shl(int list)
-{
-  return call(shl_, list);
-}
+int shl(int list) { return call(shl_, list); }
+
+int zip_;
+int zip(int a, int b) { return call2(zip_, b, a); }
 
 int add_;
-int add(int a, int b)
-{
-  return call3(add_, f(), b, a);
-}
+int add(int a, int b) { return call3(add_, f(), b, a); }
 
 int sub_;
-int sub(int a, int b)
-{
-  return call3(sub_, f(), b, a);
-}
+int sub(int a, int b) { return call3(sub_, f(), b, a); }
 
 int mul_;
-int mul(int a, int b)
-{
-  return call2(mul_, b, a);
-}
+int mul(int a, int b) { return call2(mul_, b, a); }
 
 void init_lib(void)
 {
@@ -66,6 +48,10 @@ void init_lib(void)
   odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
   shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
   shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
+  zip_ = y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+                              f(),
+                              pair(pair(odd(var(0)), odd(var(1))),
+                                   call2(var(2), shr(var(1)), shr(var(0)))))));
   add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
                               op_if(var(2), pair(t(), f()), f()),
                               call(lambda(pair(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
@@ -113,6 +99,12 @@ int main(void)
   // Shift left
   for (i=0; i<5; i++)
     assert(num_to_int(shl(int_to_num(i))) == (i << 1));
+  // Test zip
+  for (i=0; i<5; i++)
+    for (j=0; j<5; j++) {
+      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(first(var(0))))) == i);
+      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(rest(var(0))))) == j);
+    };
   // Integer addition
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)
