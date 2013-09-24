@@ -18,6 +18,12 @@
 #include <string.h>
 #include "blc.h"
 
+int even_;
+int even(int list)
+{
+  return call(even_, list);
+}
+
 int odd_;
 int odd(int list)
 {
@@ -56,6 +62,7 @@ int mul(int a, int b)
 
 void init_lib(void)
 {
+  even_ = proc(op_if(empty(var(0)), t(), op_not(first(var(0)))));
   odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
   shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
   shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
@@ -67,9 +74,17 @@ void init_lib(void)
                                                op_and(odd(var(0)), odd(var(1)))),
                                          shr(var(1)), shr(var(0)))))));
   sub_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
-                                           f(),
-                                    f())));
-
+                              op_if(var(2),
+                                    pair(t(), call3(var(3), var(2), shr(var(1)), shr(var(0)))),
+                                    f()),
+                              call(lambda(op_if(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
+                                                pair(t(), var(0)),
+                                                op_if(empty(var(0)), f(), pair(f(), var(0))))),
+                                   call3(var(3),
+                                         op_if(var(2),
+                                               op_or(even(var(0)), odd(var(1))),
+                                               op_and(even(var(0)), odd(var(1)))),
+                                         shr(var(1)), shr(var(0)))))));
   mul_ = y_comb(lambda2(op_if(empty(var(0)),
                               f(),
                               call(lambda(op_if(first(var(1)), add(var(2), var(0)), var(0))),
@@ -82,7 +97,12 @@ int main(void)
   init_lib();
   int n = cell(VAR);
   int i, j;
-  // Check for even/odd
+  // Test even
+  for (i=0; i<10; i+=2) {
+    assert(!is_f(even(int_to_num(i))));
+    assert( is_f(even(int_to_num(i + 1))));
+  };
+  // Test odd
   for (i=0; i<10; i+=2) {
     assert( is_f(odd(int_to_num(i))));
     assert(!is_f(odd(int_to_num(i + 1))));
@@ -98,11 +118,11 @@ int main(void)
     for (j=0; j<5; j++)
       assert(num_to_int(add(int_to_num(i), int_to_num(j))) == i + j);
   // Integer subtraction
-  for (i=0; i<10; i++) {
-    for (j=0; j<10; j++)
+  for (i=0; i<5; i++) {
+    assert(is_f(sub(int_to_num(i), int_to_num(i))));
+    for (j=0; j<5; j++)
       if (i >= j)
-        printf(" %2d(%2d)", num_to_int(sub(int_to_num(i), int_to_num(j))), i - j);
-    printf("\n");
+        assert(num_to_int(sub(int_to_num(i), int_to_num(j))) == i - j);
   };
   // Integer multiplication
   for (i=0; i<5; i++)
