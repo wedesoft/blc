@@ -39,31 +39,41 @@ int shl(int list)
 int add_;
 int add(int a, int b)
 {
-  return call(call(call(add_, f()), b), a);
+  return call3(add_, f(), b, a);
+}
+
+int sub_;
+int sub(int a, int b)
+{
+  return call3(sub_, f(), b, a);
 }
 
 int mul_;
 int mul(int a, int b)
 {
-  return call(call(mul_, b), a);
+  return call2(mul_, b, a);
 }
 
 void init_lib(void)
 {
-  odd_ = lambda(op_if(empty(var(0)), f(), first(var(0))));
-  shr_ = lambda(op_if(empty(var(0)), f(), rest(var(0))));
-  shl_ = lambda(op_if(empty(var(0)), f(), pair(f(), var(0))));
-  add_ = y_comb(lambda(lambda(lambda(op_if(op_and(empty(var(0)), empty(var(1))), op_if(var(2), pair(t(), f()), f()),
-                   pair(op_xor(op_xor(odd(var(0)), odd(var(1))), var(2)),
-                        call(call(call(var(3),
-                                       op_if(var(2),
-                                             op_or(odd(var(0)), odd(var(1))),
-                                             op_and(odd(var(0)), odd(var(1))))),
-                                  shr(var(1))), shr(var(0)))))))));
-  mul_ = y_comb(lambda(lambda(op_if(empty(var(0)),
-                                    f(),
-                                    call(lambda(op_if(first(var(1)), add(var(2), var(0)), var(0))),
-                                         shl(call(call(var(2), shr(var(0))), var(1))))))));
+  odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
+  shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
+  shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
+  add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))), op_if(var(2), pair(t(), f()), f()),
+                              pair(op_xor(op_xor(odd(var(0)), odd(var(1))), var(2)),
+                                   call3(var(3),
+                                         op_if(var(2),
+                                               op_or(odd(var(0)), odd(var(1))),
+                                               op_and(odd(var(0)), odd(var(1)))),
+                                         shr(var(1)), shr(var(0)))))));
+  sub_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
+                                           f(),
+                                    f())));
+
+  mul_ = y_comb(lambda2(op_if(empty(var(0)),
+                              f(),
+                              call(lambda(op_if(first(var(1)), add(var(2), var(0)), var(0))),
+                                   shl(call2(var(2), shr(var(0)), var(1)))))));
 }
 
 int main(void)
@@ -87,6 +97,13 @@ int main(void)
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)
       assert(num_to_int(add(int_to_num(i), int_to_num(j))) == i + j);
+  // Integer subtraction
+  for (i=0; i<10; i++) {
+    for (j=0; j<10; j++)
+      if (i >= j)
+        printf(" %2d(%2d)", num_to_int(sub(int_to_num(i), int_to_num(j))), i - j);
+    printf("\n");
+  };
   // Integer multiplication
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)

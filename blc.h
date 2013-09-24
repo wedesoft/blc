@@ -54,7 +54,11 @@ int used(int cell);
 
 int var(int idx);
 int lambda(int body);
+int lambda2(int body);
+int lambda3(int body);
 int call(int fun, int arg);
+int call2(int fun, int arg1, int arg2);
+int call3(int fun, int arg1, int arg2, int arg3);
 
 int f(void);
 int t(void);
