@@ -51,7 +51,7 @@ blc$(LFRAME).png: blca$(LFRAME).png
 	done
 
 blc.gif: blc$(LFRAME).png
-	$(CONVERT) blc??.png -delay 10 -colors 128 +dither $@
+	$(CONVERT) blc??.png -delay 4 -colors 32 +dither $@
 
 test: spec_blc.tmp spec_lambda.tmp spec_dsl.tmp
 
