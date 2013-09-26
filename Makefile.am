@@ -1,6 +1,8 @@
-SUFFIXES = .c .h .tmp .y .l
+SUFFIXES = .c .h .tmp .y .l .ini .pov .png .gif
 
 ACLOCAL_AMFLAGS = -I m4
+
+LFRAME = 99
 
 AM_YFLAGS = -d
 
@@ -28,11 +30,28 @@ spec_dsl_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
-noinst_DATA = README.html TODO.html
+noinst_DATA = README.html TODO.html blc.png blc.gif
 
 BUILT_SOURCES = lambda_bison.h
 
-EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh blc.ini blc.pov opensans.ttf
+
+blca.png: blc.ini blc.pov opensans.ttf
+	$(POVRAY) blc
+
+blca$(LFRAME).png: blc.ini blc.pov opensans.ttf
+	$(POVRAY) blcanim
+
+blc.png: blca.png
+	$(CONVERT) blca.png -background white -flatten blc.png
+
+blc$(LFRAME).png: blca$(LFRAME).png
+	for i in $(shell seq -f '%02g' 0 $(LFRAME)); do \
+		$(CONVERT) blca$$i.png -background white -flatten blc$$i.png; \
+	done
+
+blc.gif: blc$(LFRAME).png
+	$(CONVERT) blc??.png -delay 10 -colors 128 +dither $@
 
 test: spec_blc.tmp spec_lambda.tmp spec_dsl.tmp
 
@@ -48,7 +67,7 @@ spec_dsl.tmp: spec_dsl$(EXEEXT)
 .md.html:
 	$(PANDOC) -o $@ $< || echo "Install Pandoc to compile Markdown to HTML"
 
-CLEANFILES = *~ *.tmp *.html
+CLEANFILES = *.gif *.png *~ *.tmp *.html
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \

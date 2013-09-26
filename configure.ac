@@ -12,6 +12,8 @@ AC_CHECK_PROG(CAT,cat,cat)
 AC_CHECK_PROG(TOUCH,touch,touch)
 AC_CHECK_PROG(DIFF,diff,diff)
 AC_CHECK_PROG(PANDOC,pandoc,pandoc)
+AC_CHECK_PROG(POVRAY,povray,povray)
+AC_CHECK_PROG(CONVERT,convert,convert)
 AC_CHECK_HEADERS([assert.h stdio.h stdlib.h string.h])
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([fmemopen strcpy])

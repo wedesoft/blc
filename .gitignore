@@ -4,6 +4,8 @@
 *.o
 *.tmp
 *.html
+*.png
+*.gif
 aclocal.m4
 autom4te.cache
 blc
