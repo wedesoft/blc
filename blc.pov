@@ -39,7 +39,7 @@ union {
       < -0.5, -0.5, -0.5 >,
       <  0.5,  0.5,  0.5 >
     }
-    plane { < -1,  1, 0 >, -0.25 }
+    plane { < -1,  1, 0 >, -0.35 }
     difference {
       plane { <  1, -1,  0 >, -0.2 }
       plane { < -1,  0,  0 >, -0.2 }
@@ -112,6 +112,12 @@ union {
     }
     texture { T_Silver_5E }
   }
+  cylinder {
+    < 0.35, -0.35, -0.55 >,
+    < 0.35, -0.35,  0.55 >,
+    0.35
+    texture { T_Silver_5E }
+  }
   text {
     ttf "opensans.ttf" "λ" 0.18, 0
     scale < 2, 2, 1 >
@@ -123,5 +129,5 @@ union {
     finish { F_Glass10 }
     interior { I_Glass4 }
   }
-  rotate (z + y) * (360.0 * clock)
+  rotate (z + y) * (20.0 + 360.0 * clock)
 }
