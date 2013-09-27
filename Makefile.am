@@ -30,11 +30,13 @@ spec_dsl_LDADD =
 
 noinst_HEADERS = blc.h lambda.h
 
-noinst_DATA = README.html TODO.html blc.png blc.gif
+noinst_DATA = README.html TODO.html
 
 BUILT_SOURCES = lambda_bison.h
 
-EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh blc.ini blc.pov opensans.ttf
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh blc.ini blcanim.ini blc.pov opensans.ttf
+
+logo: blc.png blc.gif
 
 blca.png: blc.ini blc.pov opensans.ttf
 	$(POVRAY) blc
