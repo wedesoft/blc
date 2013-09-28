@@ -119,11 +119,23 @@ char *list_to_str_(int list);
 
 char *list_to_str(int list);
 
-int eq_num(int a, int b);
-
 int id(void);
 
 int map(int list, int fun);
+
+int even(int list);
+
+int odd(int list);
+
+int shr(int list);
+
+int shl(int list);
+
+int zip(int a, int b);
+
+int inject(int list, int start, int fun);
+
+int eq_num(int a, int b);
 
 int select_if(int list, int fun);
 

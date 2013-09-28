@@ -17,9 +17,7 @@
 #include <stdio.h>
 #include "blc.h"
 
-#define NVERBOSE
-
-#define MAX_CELLS 1048576
+#define MAX_CELLS 4000000
 
 typedef struct { int fun; int arg; } call_t;
 
@@ -206,10 +204,6 @@ int read_char(int in)
   return retval;
 }
 
-#ifndef NVERBOSE
-void display(int cell);
-#endif
-
 int eval_env(int cell, int env, int cont)
 {
   int retval;
@@ -354,14 +348,32 @@ char *list_to_buffer(int list, char *buffer, int bufsize)
 
 char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
 
-int eq_num_ = -1;
-int eq_num(int a, int b) { return call2(eq_num_, a, b); }
-
 int id_ = -1;
 int id(void) { return id_; }
 
 int map_ = -1;
 int map(int list, int fun) { return call2(map_, list, fun); }
+
+int even_;
+int even(int list) { return call(even_, list); }
+
+int odd_;
+int odd(int list) { return call(odd_, list); }
+
+int shr_;
+int shr(int list) { return call(shr_, list); }
+
+int shl_;
+int shl(int list) { return call(shl_, list); }
+
+int zip_;
+int zip(int a, int b) { return call2(zip_, a, b); }
+
+int inject_;
+int inject(int list, int start, int fun) { return call3(inject_, list, start, fun); }
+
+int eq_num_ = -1;
+int eq_num(int a, int b) { return call2(eq_num_, a, b); }
 
 int select_if_ = -1;
 int select_if(int list, int fun) { return call2(select_if_, list, fun); }
@@ -386,15 +398,25 @@ void init(void)
   eq_bool_ = proc(lambda(op_if(var(0), var(1), op_not(var(1)))));
   y_ = proc(call(lambda(call(var(1), call(var(0), var(0)))),
                  lambda(call(var(1), call(var(0), var(0))))));
-  eq_num_ = y_comb(lambda2(op_if(op_or(empty(var(0)), empty(var(1))),
-                           op_and(empty(var(0)), empty(var(1))),
-                           op_and(eq_bool(first(var(0)), first(var(1))),
-                                  call2(var(2), rest(var(0)), rest(var(1)))))));
   id_ = proc(var(0));
   map_ = y_comb(lambda2(op_if(empty(var(0)),
                         f(),
                         pair(call(var(1), first(var(0))),
                              call2(var(2), rest(var(0)), var(1))))));
+  even_ = proc(op_if(empty(var(0)), t(), op_not(first(var(0)))));
+  odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
+  shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
+  shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
+  zip_ = y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+                              f(),
+                              pair(pair(odd(var(0)), odd(var(1))),
+                                   call2(var(2), shr(var(0)), shr(var(1)))))));
+  inject_ = y_comb(lambda3(op_if(empty(var(0)),
+                                 var(1),
+                                 call3(var(3), rest(var(0)), call2(var(2), var(1), first(var(0))), var(2)))));
+  eq_num_ = proc(lambda(inject(zip(var(0), var(1)),
+                               t(),
+                               proc(lambda(op_and(var(0), eq_bool(first(var(1)), rest(var(1)))))))));
   select_if_ = y_comb(lambda2(op_if(empty(var(0)),
                               f(),
                               op_if(call(var(1), first(var(0))),
@@ -406,52 +428,6 @@ void init(void)
   select_binary_ = proc(select_if(var(0), proc(op_or(eq_num(var(0), int_to_num('0')),
                                                      eq_num(var(0), int_to_num('1'))))));
 }
-
-#ifndef NVERBOSE
-void display(int cell)
-{
-  typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
-  if (cell == t())
-    fputs("true", stderr);
-  else if (cell == f())
-    fputs("false", stderr);
-  else if (cell == pair_)
-    fputs("pair", stderr);
-  else
-    switch (type(cell)) {
-    case VAR:
-      fprintf(stderr, "var(%d)", idx(cell));
-      break;
-    case LAMBDA:
-      fputs("lambda(", stderr);
-      display(body(cell));
-      fputs(")", stderr);
-      break;
-    case CALL:
-      fputs("call(", stderr);
-      display(fun(cell));
-      fputs(", ", stderr);
-      display(arg(cell));
-      fputs(")", stderr);
-      break;
-    case PROC:
-      fputs("proc(", stderr);
-      display(term(cell));
-      fputs(")", stderr);
-      break;
-    case WRAP:
-      fputs("wrap(", stderr);
-      display(unwrap(cell));
-      fputs(")", stderr);
-      break;
-    case INPUT:
-      fputs("input(...)", stderr);
-      break;
-    default:
-      assert(0);
-    };
-}
-#endif
 
 FILE *tmp_ = NULL;
 

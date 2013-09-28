@@ -18,28 +18,6 @@
 #include <string.h>
 #include "blc.h"
 
-int even_;
-int even(int list) { return call(even_, list); }
-
-int odd_;
-int odd(int list) { return call(odd_, list); }
-
-int shr_;
-int shr(int list) { return call(shr_, list); }
-
-int shl_;
-int shl(int list) { return call(shl_, list); }
-
-int zip_;
-int zip(int a, int b) { return call2(zip_, a, b); }
-
-int inject_;
-int inject_with(int list, int start, int fun) { return call3(inject_, list, start, fun); }
-int inject(int list, int fun)
-{
-  return op_if(empty(list), f(), inject_with(rest(list), first(list), fun));
-}
-
 int add_;
 int add(int a, int b) { return call3(add_, a, b, f()); }
 
@@ -51,17 +29,6 @@ int mul(int a, int b) { return call2(mul_, a, b); }
 
 void init_lib(void)
 {
-  even_ = proc(op_if(empty(var(0)), t(), op_not(first(var(0)))));
-  odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
-  shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
-  shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
-  zip_ = y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
-                              f(),
-                              pair(pair(odd(var(0)), odd(var(1))),
-                                   call2(var(2), shr(var(0)), shr(var(1)))))));
-  inject_ = y_comb(lambda3(op_if(empty(var(0)),
-                                 var(1),
-                                 call3(var(3), rest(var(0)), call2(var(2), var(1), first(var(0))), var(2)))));
   add_ = y_comb(lambda3(op_if(op_and(empty(var(0)), empty(var(1))),
                               op_if(var(2), pair(t(), f()), f()),
                               call(lambda(pair(op_xor(op_xor(odd(var(1)), odd(var(2))), var(3)),
@@ -93,37 +60,6 @@ int main(void)
   init_lib();
   int n = cell(VAR);
   int i, j;
-  // Test even
-  for (i=0; i<10; i+=2) {
-    assert(!is_f(even(int_to_num(i))));
-    assert( is_f(even(int_to_num(i + 1))));
-  };
-  // Test odd
-  for (i=0; i<10; i+=2) {
-    assert( is_f(odd(int_to_num(i))));
-    assert(!is_f(odd(int_to_num(i + 1))));
-  };
-  // Shift right
-  for (i=0; i<5; i++)
-    assert(num_to_int(shr(int_to_num(i))) == (i >> 1));
-  // Shift left
-  for (i=0; i<5; i++)
-    assert(num_to_int(shl(int_to_num(i))) == (i << 1));
-  // Test zip
-  for (i=0; i<5; i++)
-    for (j=0; j<5; j++) {
-      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(first(var(0))))) == i);
-      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(rest(var(0))))) == j);
-    };
-  // Test injection
-  assert(!is_f(inject_with(pair(t(), pair(t(), pair(t(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
-  assert(is_f(inject_with(pair(t(), pair(t(), pair(f(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
-  assert(!is_f(inject_with(pair(f(), pair(f(), pair(t(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
-  assert(is_f(inject_with(pair(f(), pair(f(), pair(f(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
-  assert(!is_f(inject(pair(t(), pair(t(), pair(t(), f()))), proc(lambda(op_and(var(0), var(1)))))));
-  assert(is_f(inject(pair(t(), pair(t(), pair(f(), f()))), proc(lambda(op_and(var(0), var(1)))))));
-  assert(!is_f(inject(pair(f(), pair(f(), pair(t(), f()))), proc(lambda(op_or(var(0), var(1)))))));
-  assert(is_f(inject(pair(f(), pair(f(), pair(f(), f()))), proc(lambda(op_or(var(0), var(1)))))));
   // Integer addition
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)

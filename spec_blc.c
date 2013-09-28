@@ -21,6 +21,7 @@
 int main(void)
 {
   init();
+  int i, j;
   int n = cell(VAR);
   // variable
   assert(type(var(0)) == VAR);
@@ -134,13 +135,6 @@ int main(void)
   assert(num_to_int_(first_(str_to_list("s"))) == 's');
   assert(!strcmp(list_to_str_(str_to_list("str")), "str"));
   assert(!strcmp(list_to_str(call(lambda(pair(var(0), pair(var(0), f()))), int_to_num('x'))), "xx"));
-  // number comparison
-  assert(is_f(eq_num(int_to_num(5), int_to_num(7))));
-  assert(is_f(eq_num(int_to_num(7), int_to_num(5))));
-  assert(is_f(eq_num(int_to_num(7), int_to_num(13))));
-  assert(is_f(eq_num(int_to_num(13), int_to_num(7))));
-  assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
-  assert(!is_f(eq_num(int_to_num(7), int_to_num(7))));
   // identity function
   assert(is_f(call(id(), f())));
   assert(!is_f(call(id(), t())));
@@ -153,6 +147,40 @@ int main(void)
   assert(is_f(at(map(pair(t(), f()), not_fun), 0)));
   assert(!is_f(at(map(pair(f(), pair(f(), f())), not_fun), 1)));
   assert(is_f(at(map(pair(f(), pair(t(), f())), not_fun), 1)));
+  // Test even
+  for (i=0; i<10; i+=2) {
+    assert(!is_f(even(int_to_num(i))));
+    assert( is_f(even(int_to_num(i + 1))));
+  };
+  // Test odd
+  for (i=0; i<10; i+=2) {
+    assert( is_f(odd(int_to_num(i))));
+    assert(!is_f(odd(int_to_num(i + 1))));
+  };
+  // Shift right
+  for (i=0; i<5; i++)
+    assert(num_to_int(shr(int_to_num(i))) == (i >> 1));
+  // Shift left
+  for (i=0; i<5; i++)
+    assert(num_to_int(shl(int_to_num(i))) == (i << 1));
+  // Test zip
+  for (i=0; i<5; i++)
+    for (j=0; j<5; j++) {
+      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(first(var(0))))) == i);
+      assert(num_to_int(map(zip(int_to_num(i), int_to_num(j)), proc(rest(var(0))))) == j);
+    };
+  // Test injection
+  assert(!is_f(inject(pair(t(), pair(t(), pair(t(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
+  assert(is_f(inject(pair(t(), pair(t(), pair(f(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
+  assert(!is_f(inject(pair(f(), pair(f(), pair(t(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
+  assert(is_f(inject(pair(f(), pair(f(), pair(f(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
+  // number comparison
+  assert(is_f(eq_num(int_to_num(5), int_to_num(7))));
+  assert(is_f(eq_num(int_to_num(7), int_to_num(5))));
+  assert(is_f(eq_num(int_to_num(7), int_to_num(13))));
+  assert(is_f(eq_num(int_to_num(13), int_to_num(7))));
+  assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
+  assert(!is_f(eq_num(int_to_num(7), int_to_num(7))));
   // select_if
   assert(!strcmp(list_to_str(select_if(str_to_list("-"), lambda(eq_num(int_to_num('+'), var(0))))), ""));
   assert(!strcmp(list_to_str(select_if(str_to_list("+"), lambda(eq_num(int_to_num('+'), var(0))))), "+"));
