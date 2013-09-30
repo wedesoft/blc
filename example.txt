@@ -38,8 +38,8 @@ eval  = (Y
       (if head2
         (eval (eval tail2 environment) environment)
         (->environment.(eval tail2 environment))))))))
-env   = (pair (parse input) (pair output null))
+env = (pair (parse input) null)
 
-(first (rest (rest (rest (rest (first(parse input)))))))
+(pair (first (rest (rest (rest (rest (first (parse input))))))) false)
 
 01 10 10
