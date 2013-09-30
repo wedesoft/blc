@@ -1,8 +1,7 @@
 TODO
 ====
 
-* Earley parser?
-* object system
+* primitive DSL
 * better garbage collector? reflective?
 * meta-circular
 * JIT
