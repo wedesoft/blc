@@ -174,6 +174,13 @@ int main(void)
   assert(is_f(inject(pair(t(), pair(t(), pair(f(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
   assert(!is_f(inject(pair(f(), pair(f(), pair(t(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
   assert(is_f(inject(pair(f(), pair(f(), pair(f(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
+  assert(num_to_int(inject(int_to_num(11), f(), proc(lambda(pair(var(1), var(0)))))) == 13);
+  // Test left fold
+  assert(!is_f(foldleft(pair(t(), pair(t(), pair(t(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
+  assert(is_f(foldleft(pair(t(), pair(t(), pair(f(), f()))), t(), proc(lambda(op_and(var(0), var(1)))))));
+  assert(!is_f(foldleft(pair(f(), pair(f(), pair(t(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
+  assert(is_f(foldleft(pair(f(), pair(f(), pair(f(), f()))), f(), proc(lambda(op_or(var(0), var(1)))))));
+  assert(num_to_int(foldleft(int_to_num(11), f(), proc(lambda(pair(var(1), var(0)))))) == 11);
   // number comparison
   assert(is_f(eq_num(int_to_num(5), int_to_num(7))));
   assert(is_f(eq_num(int_to_num(7), int_to_num(5))));

@@ -135,6 +135,8 @@ int zip(int a, int b);
 
 int inject(int list, int start, int fun);
 
+int foldleft(int list, int start, int fun);
+
 int eq_num(int a, int b);
 
 int select_if(int list, int fun);

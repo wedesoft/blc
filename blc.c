@@ -372,6 +372,9 @@ int zip(int a, int b) { return call2(zip_, a, b); }
 int inject_;
 int inject(int list, int start, int fun) { return call3(inject_, list, start, fun); }
 
+int foldleft_;
+int foldleft(int list, int start, int fun) { return call3(foldleft_, list, start, fun); }
+
 int eq_num_ = -1;
 int eq_num(int a, int b) { return call2(eq_num_, a, b); }
 
@@ -414,15 +417,17 @@ void init(void)
   inject_ = y_comb(lambda3(op_if(empty(var(0)),
                                  var(1),
                                  call3(var(3), rest(var(0)), call2(var(2), var(1), first(var(0))), var(2)))));
+  foldleft_ = y_comb(lambda3(op_if(empty(var(0)),
+                                   var(1),
+                                   call2(var(2), call3(var(3), rest(var(0)), var(1), var(2)), first(var(0))))));
   eq_num_ = proc(lambda(inject(zip(var(0), var(1)),
                                t(),
                                proc(lambda(op_and(var(0), eq_bool(first(var(1)), rest(var(1)))))))));
-  select_if_ = y_comb(lambda2(op_if(empty(var(0)),
-                              f(),
-                              op_if(call(var(1), first(var(0))),
-                                    pair(first(var(0)),
-                                         call2(var(2), rest(var(0)), var(1))),
-                                    call2(var(2), rest(var(0)), var(1))))));
+  select_if_ = proc(lambda(foldleft(var(0),
+                                    f(),
+                                    lambda(lambda(op_if(call(var(3), var(1)),
+                                                        pair(var(1), var(0)),
+                                                        var(0)))))));
   bits_to_bytes_ = proc(map(var(0), proc(op_if(var(0), int_to_num('1'), int_to_num('0')))));
   bytes_to_bits_ = proc(map(var(0), proc(eq_num(var(0), int_to_num('1')))));
   select_binary_ = proc(select_if(var(0), proc(op_or(eq_num(var(0), int_to_num('0')),
