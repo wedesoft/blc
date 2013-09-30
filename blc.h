@@ -115,9 +115,9 @@ int y_comb(int fun);
 
 int str_to_list(const char *str);
 
-char *list_to_str_(int list);
+const char *list_to_str_(int list);
 
-char *list_to_str(int list);
+const char *list_to_str(int list);
 
 int id(void);
 

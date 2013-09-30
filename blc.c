@@ -328,9 +328,9 @@ char *list_to_buffer_(int list, char *buffer, int bufsize)
   return buffer;
 }
 
-char *list_to_str_(int list) { return list_to_buffer_(list, buffer, BUFSIZE); }
+const char *list_to_str_(int list) { return list_to_buffer_(list, buffer, BUFSIZE); }
 
-char *list_to_buffer(int list, char *buffer, int bufsize)
+const char *list_to_buffer(int list, char *buffer, int bufsize)
 {
   if (bufsize <= 1) {
     fputs("Buffer too small!\n", stderr);
@@ -346,7 +346,7 @@ char *list_to_buffer(int list, char *buffer, int bufsize)
   return buffer;
 }
 
-char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
+const char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
 
 int id_ = -1;
 int id(void) { return id_; }

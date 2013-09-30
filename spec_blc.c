@@ -18,6 +18,11 @@
 #include <string.h>
 #include "blc.h"
 
+const char *repl(const char *input)
+{
+  return list_to_str(bits_to_bytes(first_(read_expr(bytes_to_bits(str_to_list(input))))));
+}
+
 int main(void)
 {
   init();
@@ -228,6 +233,11 @@ int main(void)
   assert(idx(body(fun(first_(read_expr(bytes_to_bits(str_to_list("01001101110"))))))) == 1);
   assert(idx(arg(first_(read_expr(bytes_to_bits(str_to_list("01001101110")))))) == 2);
   assert(!is_f(empty(rest_(read_expr(bytes_to_bits(str_to_list("0100100010")))))));
+  // evaluation of input
+  assert(!strcmp(repl("000010"), ""));
+  assert(!strcmp(repl("00010110000010000010"), "0"));
+  assert(!strcmp(repl("000101100000110000010"), "1"));
+  assert(!strcmp(repl("00010110000011000010110000010000010"), "10"));
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
   return 0;
