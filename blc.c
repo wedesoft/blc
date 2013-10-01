@@ -1,4 +1,4 @@
-/* BLC - Binary Lambda Calculus VM
+/* BLC - Binary Lambda Calculus interpreter
  * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
@@ -392,46 +392,51 @@ int select_binary(int list) { return call(select_binary_, list); }
 
 void init(void)
 {
+  int v0 = var(0);
+  int v1 = var(1);
+  int v2 = var(2);
+  int v3 = var(3);
   f_ = cell(PROC);
-  cells[f_].proc.term = proc(var(0));
+  cells[f_].proc.term = proc(v0);
   cells[f_].proc.stack = f_;
-  t_ = proc(lambda(var(1)));
+  t_ = proc(lambda(v1));
   output_ = cell(OUTPUT);
-  pair_ = proc(lambda2(op_if(var(0), var(1), var(2))));
-  eq_bool_ = proc(lambda(op_if(var(0), var(1), op_not(var(1)))));
-  y_ = proc(call(lambda(call(var(1), call(var(0), var(0)))),
-                 lambda(call(var(1), call(var(0), var(0))))));
-  id_ = proc(var(0));
-  map_ = y_comb(lambda2(op_if(empty(var(0)),
+  pair_ = proc(lambda2(op_if(v0, v1, v2)));
+  eq_bool_ = proc(lambda(op_if(v0, v1, op_not(v1))));
+  y_ = proc(call(lambda(call(v1, call(v0, v0))),
+                 lambda(call(v1, call(v0, v0)))));
+  id_ = proc(v0);
+  map_ = y_comb(lambda2(op_if(empty(v0),
                         f(),
-                        pair(call(var(1), first(var(0))),
-                             call2(var(2), rest(var(0)), var(1))))));
-  even_ = proc(op_if(empty(var(0)), t(), op_not(first(var(0)))));
-  odd_ = proc(op_if(empty(var(0)), f(), first(var(0))));
-  shr_ = proc(op_if(empty(var(0)), f(), rest(var(0))));
-  shl_ = proc(op_if(empty(var(0)), f(), pair(f(), var(0))));
-  zip_ = y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+                        pair(call(v1, first(v0)),
+                             call2(v2, rest(v0), v1)))));
+  even_ = proc(op_if(empty(v0), t(), op_not(first(v0))));
+  odd_ = proc(op_if(empty(v0), f(), first(v0)));
+  shr_ = proc(op_if(empty(v0), f(), rest(v0)));
+  shl_ = proc(op_if(empty(v0), f(), pair(f(), v0)));
+  zip_ = y_comb(lambda2(op_if(op_and(empty(v0), empty(v1)),
                               f(),
-                              pair(pair(odd(var(0)), odd(var(1))),
-                                   call2(var(2), shr(var(0)), shr(var(1)))))));
-  inject_ = y_comb(lambda3(op_if(empty(var(0)),
-                                 var(1),
-                                 call3(var(3), rest(var(0)), call2(var(2), var(1), first(var(0))), var(2)))));
-  foldleft_ = y_comb(lambda3(op_if(empty(var(0)),
-                                   var(1),
-                                   call2(var(2), call3(var(3), rest(var(0)), var(1), var(2)), first(var(0))))));
-  eq_num_ = proc(lambda(inject(zip(var(0), var(1)),
+                              pair(pair(odd(v0), odd(v1)),
+                                   call2(v2, shr(v0), shr(v1))))));
+  inject_ = y_comb(lambda3(op_if(empty(v0),
+                                 v1,
+                                 call3(v3, rest(v0), call2(v2, v1, first(v0)), v2))));
+  foldleft_ = y_comb(lambda3(op_if(empty(v0),
+                                   v1,
+                                   call2(v2, call3(v3, rest(v0), v1, v2), first(v0)))));
+  eq_num_ = proc(lambda(inject(zip(v0, v1),
                                t(),
-                               proc(lambda(op_and(var(0), eq_bool(first(var(1)), rest(var(1)))))))));
-  select_if_ = proc(lambda(foldleft(var(0),
+                               proc(lambda(op_and(v0, eq_bool(first(v1), rest(v1))))))));
+  select_if_ = proc(lambda(foldleft(v0,
                                     f(),
-                                    lambda(lambda(op_if(call(var(3), var(1)),
-                                                        pair(var(1), var(0)),
-                                                        var(0)))))));
-  bits_to_bytes_ = proc(map(var(0), proc(op_if(var(0), int_to_num('1'), int_to_num('0')))));
-  bytes_to_bits_ = proc(map(var(0), proc(eq_num(var(0), int_to_num('1')))));
-  select_binary_ = proc(select_if(var(0), proc(op_or(eq_num(var(0), int_to_num('0')),
-                                                     eq_num(var(0), int_to_num('1'))))));
+                                    lambda(lambda(op_if(call(v3, v1),
+                                                        pair(v1, v0),
+                                                        v0))))));
+  int zero = int_to_num('0');
+  int one = int_to_num('1');
+  bits_to_bytes_ = proc(map(v0, proc(op_if(v0, one, zero))));
+  bytes_to_bits_ = proc(map(v0, proc(eq_num(v0, one))));
+  select_binary_ = proc(select_if(v0, proc(op_or(eq_num(v0, zero), eq_num(v0, one)))));
 }
 
 FILE *tmp_ = NULL;

@@ -1,4 +1,4 @@
-/* BLC - Binary Lambda Calculus VM
+/* BLC - Binary Lambda Calculus interpreter
  * Copyright (C) 2013  Jan Wedekind
  *
  * This program is free software: you can redistribute it and/or modify
