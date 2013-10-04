@@ -30,15 +30,15 @@ int main(void)
   int n = cell(VAR);
   // variable
   assert(type(var(0)) == VAR);
-  assert(is_var(var(0)));
+  assert(is_type(var(0), VAR));
   assert(idx(var(1)) == 1);
   // lambda (function)
   assert(type(lambda(var(0))) == LAMBDA);
-  assert(is_lambda(lambda(var(0))));
+  assert(is_type(lambda(var(0)), LAMBDA));
   assert(idx(body(lambda(var(1)))) == 1);
   // call
   assert(type(call(lambda(var(0)), var(0))) == CALL);
-  assert(is_call(call(lambda(var(0)), var(0))));
+  assert(is_type(call(lambda(var(0)), var(0)), CALL));
   assert(idx(body(fun(call(lambda(var(1)), var(2))))) == 1);
   assert(idx(arg(call(lambda(var(1)), var(2)))) == 2);
   // false and true
@@ -59,17 +59,29 @@ int main(void)
   assert(idx(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 2)) == 3);
   // procs (closures)
   assert(type(proc(lambda(var(0)))) == PROC);
-  assert(is_proc(proc(lambda(var(0)))));
+  assert(is_type(proc(lambda(var(0))), PROC));
   assert(idx(term(proc(var(0)))) == 0);
   assert(is_f_(stack(proc_stack(var(0), f()))));
   // output continuation
   assert(type(output()) == OUTPUT);
-  assert(is_output(output()));
+  assert(is_type(output(), OUTPUT));
   // memoization
   assert(type(memoize(var(0), wrap(f(), f()))) == MEMOIZE);
-  assert(is_memoize(memoize(var(0), wrap(f(), f()))));
-  assert(is_wrap(target(memoize(var(0), wrap(f(), f())))));
+  assert(is_type(memoize(var(0), wrap(f(), f())), MEMOIZE));
+  assert(is_type(target(memoize(var(0), wrap(f(), f()))), WRAP));
   assert(idx(value(memoize(var(0), wrap(f(), f())))) == 0);
+  // booleans
+  assert(is_f_(f()));
+  assert(!is_f_(t()));
+  fputc('\n', stderr);
+  //eval(id()); fputc('\n', stderr);
+  eval(call(id(), id())); fputc('\n', stderr);
+  //eval(f()); fputc('\n', stderr);
+  //eval(t()); fputc('\n', stderr);
+  //eval(call(call(f(), t()), f())); fputc('\n', stderr);
+#if 0
+  assert(is_f(f()));
+  assert(!is_f(t()));
   // evaluation of lambdas
   assert(is_proc(eval(lambda(var(0)))));
   assert(idx(term(eval(lambda(var(1))))) == 1);
@@ -238,6 +250,7 @@ int main(void)
   assert(!strcmp(repl("00010110000010000010"), "0"));
   assert(!strcmp(repl("000101100000110000010"), "1"));
   assert(!strcmp(repl("00010110000011000010110000010000010"), "10"));
+#endif
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
   return 0;

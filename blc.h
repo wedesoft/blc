@@ -29,14 +29,7 @@ int cell(int type);
 
 int type(int cell);
 
-int is_var(int cell);
-int is_lambda(int cell);
-int is_call(int cell);
-int is_proc(int cell);
-int is_wrap(int cell);
-int is_memoize(int cell);
-int is_input(int cell);
-int is_output(int cell);
+int is_type(int cell, int t);
 
 int idx(int cell);
 int body(int cell);
@@ -87,8 +80,6 @@ int input(FILE *file);
 int output(void);
 
 int int_to_num(int integer);
-
-int eval_env(int cell, int env, int cont);
 
 int eval(int cell);
 

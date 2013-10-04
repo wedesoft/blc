@@ -60,28 +60,21 @@ void check_cell(int cell) { assert(cell >= 0 && cell < MAX_CELLS); }
 
 int type(int cell) { check_cell(cell); return cells[cell].type; }
 
-int is_var(int cell) { return type(cell) == VAR; }
-int is_lambda(int cell) { return type(cell) == LAMBDA; }
-int is_call(int cell) { return type(cell) == CALL; }
-int is_proc(int cell) { return type(cell) == PROC; }
-int is_wrap(int cell) { return type(cell) == WRAP; }
-int is_memoize(int cell) { return type(cell) == MEMOIZE; }
-int is_input(int cell) { return type(cell) == INPUT; }
-int is_output(int cell) { return type(cell) == OUTPUT; }
+int is_type(int cell, int t) { return type(cell) == t; }
 
-int idx(int cell) { assert(is_var(cell)); return cells[cell].idx; }
-int body(int cell) { assert(is_lambda(cell)); return cells[cell].body; }
-int fun(int cell) { assert(is_call(cell)); return cells[cell].call.fun; }
-int arg(int cell) { assert(is_call(cell)); return cells[cell].call.arg; }
-int term(int cell) { assert(is_proc(cell)); return cells[cell].proc.term; }
-int stack(int cell) { assert(is_proc(cell)); return cells[cell].proc.stack; }
-int unwrap(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.unwrap; }
-int context(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.context; }
-int cache(int cell) { assert(is_wrap(cell)); return cells[cell].wrap.cache; }
-int value(int cell) { assert(is_memoize(cell)); return cells[cell].memoize.value; }
-int target(int cell) { assert(is_memoize(cell)); return cells[cell].memoize.target; }
-FILE *file(int cell) { assert(is_input(cell)); return cells[cell].input.file; }
-int used(int cell) { assert(is_input(cell)); return cells[cell].input.used; }
+int idx(int cell) { assert(is_type(cell, VAR)); return cells[cell].idx; }
+int body(int cell) { assert(is_type(cell, LAMBDA)); return cells[cell].body; }
+int fun(int cell) { assert(is_type(cell, CALL)); return cells[cell].call.fun; }
+int arg(int cell) { assert(is_type(cell, CALL)); return cells[cell].call.arg; }
+int term(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.term; }
+int stack(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.stack; }
+int unwrap(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.unwrap; }
+int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.context; }
+int cache(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.cache; }
+int value(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.value; }
+int target(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.target; }
+FILE *file(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.file; }
+int used(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.used; }
 
 int var(int idx)
 {
@@ -117,9 +110,9 @@ int t(void) { return t_; }
 
 int is_f_(int cell)
 {
-  return is_proc(cell) &&
-         is_proc(term(cell)) &&
-         is_var(term(term(cell))) &&
+  return is_type(cell, PROC) &&
+         is_type(term(cell), PROC) &&
+         is_type(term(term(cell)), VAR) &&
          idx(term(term(cell))) == 0;
 }
 
@@ -164,7 +157,7 @@ int wrap(int unwrap, int context)
 
 int store(int cell, int value)
 {
-  assert(is_wrap(cell));
+  assert(is_type(cell, WRAP));
   cells[cell].wrap.cache = value;
   return value;
 }
@@ -204,6 +197,189 @@ int read_char(int in)
   return retval;
 }
 
+void display(int cell)
+{
+  switch (type(cell)) {
+  case VAR:
+    fprintf(stderr, "var(%d)", idx(cell));
+    break;
+  case LAMBDA:
+    fputs("lambda(", stderr);
+    display(body(cell));
+    fputs(")", stderr);
+    break;
+  case CALL:
+    fputs("call(", stderr);
+    display(fun(cell));
+    fputs(", ", stderr);
+    display(arg(cell));
+    fputs(")", stderr);
+    break;
+  case PROC:
+    fputs("proc(", stderr);
+    display(term(cell));
+    fputs(")", stderr);
+    break;
+  case WRAP:
+    fputs("wrap(", stderr);
+    display(unwrap(cell));
+    fputs(")", stderr);
+    break;
+  case INPUT:
+    fputs("input", stderr);
+    break;
+  case OUTPUT:
+    fputs("output", stderr);
+    break;
+  default:
+    assert(0);
+  };
+}
+
+
+int xxx(int cell, int index)
+{
+  int retval;
+  switch (type(cell)) {
+  case VAR:
+    retval = var(idx(cell) + (idx(cell) >= index ? 1 : 0));
+    break;
+  case LAMBDA:
+    retval = lambda(xxx(body(cell), index + 1));
+    break;
+  case CALL:
+    retval = call(xxx(fun(cell), index), xxx(arg(cell), index));
+    break;
+  case PROC:
+    retval = lambda(xxx(term(cell), index + 1));
+    // retval = cell;
+    break;
+  case INPUT:
+    retval = cell;
+    break;
+  case OUTPUT:
+    retval = cell;
+    break;
+  default:// WRAP, MEMOIZE
+    assert(0);
+  };
+  return retval;
+}
+
+/*
+(define (M expr)
+  (match expr
+    [`(λ (,var) ,expr)
+      ; =>
+      (define $k (gensym '$k))
+     `(λ (,var ,$k) ,(T expr $k))]
+    
+    [(? symbol?)  #;=>  expr]))
+
+(define (T expr cont)
+  (match expr
+    [`(λ . ,_)     `(,cont ,(M expr))]
+    [ (? symbol?)  `(,cont ,(M expr))]
+    [`(,f ,e)    
+      ; =>
+      (define $f (gensym '$f))
+      (define $e (gensym '$e))
+      (T f `(λ (,$f)
+              ,(T e `(λ (,$e)
+                       (,$f ,$e ,cont)))))]))
+*/
+
+int cps(int cell, int cont)
+{
+  int retval;
+  switch (type(cell)) {
+  case VAR:
+    retval = call(cont, cell);
+    break;
+  case LAMBDA:
+    retval = call(cont, lambda(lambda(cps(xxx(body(cell), 0), var(0)))));
+    break;
+  case CALL:
+    retval = cps(fun(cell), lambda(cps(xxx(arg(cell), 0), lambda(call2(var(1), var(0), xxx(xxx(cont, 0), 0))))));
+    break;
+  case PROC:
+    retval = call(cont, lambda(lambda(cps(xxx(term(cell), 0), var(0)))));
+    break;
+  case INPUT:
+    retval = call(cont, cell);
+    break;
+  default:// WRAP, MEMOIZE, OUTPUT
+    assert(0);
+  };
+  return retval;
+}
+
+int eval_env(int cell, int env)
+{
+  int retval;
+  int quit = 0;
+  int arg1;
+  int arg2;
+  while (!quit) {
+    display(cell); fputs("\n", stderr);
+    switch (type(cell)) {
+    case VAR:
+      cell = at_(env, idx(cell));
+      break;
+    case CALL:
+      switch (type(fun(cell))) {
+      case VAR:
+        cell = call(at_(env, idx(fun(cell))), arg(cell));
+        break;
+      case LAMBDA:
+        printf("body: %d\n", type(body(fun(cell))));
+        cell = body(fun(cell));
+        env = pair(wrap(arg(cell), env), env);
+        break;
+      case CALL:
+        assert(is_type(fun(fun(cell)), VAR));
+        arg1 = wrap(arg(fun(cell)), env);
+        arg2 = wrap(arg(cell), env);
+        cell = at_(env, idx(fun(fun(cell))));
+        env = pair(arg1, pair(arg2, context(cell)));
+        cell = body(body(unwrap(cell)));
+        break;
+      case WRAP:
+        env = context(fun(cell));
+        cell = call(unwrap(fun(cell)), arg(cell));
+        break;
+      case OUTPUT:
+        retval = arg(cell);
+        // retval = unwrap(at_(env, idx(arg(cell))));
+        quit = 1;
+        break;
+      default:
+        // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
+        printf("fun: %d\n", type(fun(cell)));
+        assert(0);
+      };
+      break;
+    case WRAP:
+      env = context(cell);
+      cell = unwrap(cell);
+      break;
+    default:
+      // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
+      printf("%d\n", type(cell));
+      assert(0);
+    };
+  };
+  fprintf(stderr, "-> "); display(retval); fputc('\n', stderr);
+  return retval;
+}
+
+int eval(int cell)
+{
+  display(cell); fputc('\n', stderr);
+  return eval_env(cps(cell, output()), f());
+}
+
+/*
 int eval_env(int cell, int env, int cont)
 {
   int retval;
@@ -267,8 +443,7 @@ int eval_env(int cell, int env, int cont)
   };
   return retval;
 }
-
-int eval(int cell) { return eval_env(cell, f(), output_); }
+*/
 
 int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
 
@@ -513,7 +688,9 @@ int read_expr(int in)
 
 void write_expression(int expr, int env, FILE *stream)
 {
-  int list = eval_env(bits_to_bytes(expr), env, output_);
+  // int list = eval_env(bits_to_bytes(expr), env, output_);
+  int list = eval_env(bits_to_bytes(expr), env);
+  assert(0);
   while (is_f(empty(list))) {
     fputc(num_to_int(first(list)), stream);
     list = eval(rest(list));
