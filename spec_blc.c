@@ -71,14 +71,15 @@ int main(void)
   assert(is_type(target(memoize(var(0), wrap(f(), f()))), WRAP));
   assert(idx(value(memoize(var(0), wrap(f(), f())))) == 0);
   // booleans
-  assert(is_f_(f()));
-  assert(!is_f_(t()));
-  fputc('\n', stderr);
+  //assert(is_f_(f()));
+  //assert(!is_f_(t()));
+  //fputc('\n', stderr);
   //eval(id()); fputc('\n', stderr);
-  eval(call(id(), id())); fputc('\n', stderr);
-  //eval(f()); fputc('\n', stderr);
-  //eval(t()); fputc('\n', stderr);
-  //eval(call(call(f(), t()), f())); fputc('\n', stderr);
+  //eval(call(id(), id())); fputc('\n', stderr);
+  eval(f()); fputc('\n', stderr);
+  eval(t()); fputc('\n', stderr);
+  eval(call(call(f(), f()), f())); fputc('\n', stderr);
+  eval(call(call(f(), f()), t())); fputc('\n', stderr);
 #if 0
   assert(is_f(f()));
   assert(!is_f(t()));

@@ -40,6 +40,9 @@ typedef struct {
     memoize_t memoize;
     input_t input;
   };
+#ifndef NDEBUG
+  const char *tag;
+#endif
 } cell_t;
 
 cell_t cells[MAX_CELLS];
@@ -56,7 +59,15 @@ int cell(int type)
   return retval;
 }
 
-void check_cell(int cell) { assert(cell >= 0 && cell < MAX_CELLS); }
+#ifndef NDEBUG
+int tag(int cell, const char *value)
+{
+  cells[cell].tag = value;
+  return cell;
+}
+#endif
+
+static void check_cell(int cell) { assert(cell >= 0 && cell < MAX_CELLS); }
 
 int type(int cell) { check_cell(cell); return cells[cell].type; }
 
@@ -80,6 +91,9 @@ int var(int idx)
 {
   int retval = cell(VAR);
   cells[retval].idx = idx;
+#ifndef NDEBUG
+  cells[retval].tag = NULL;
+#endif
   return retval;
 }
 
@@ -197,47 +211,53 @@ int read_char(int in)
   return retval;
 }
 
+#ifndef NDEBUG
 void display(int cell)
 {
-  switch (type(cell)) {
-  case VAR:
-    fprintf(stderr, "var(%d)", idx(cell));
-    break;
-  case LAMBDA:
-    fputs("lambda(", stderr);
-    display(body(cell));
-    fputs(")", stderr);
-    break;
-  case CALL:
-    fputs("call(", stderr);
-    display(fun(cell));
-    fputs(", ", stderr);
-    display(arg(cell));
-    fputs(")", stderr);
-    break;
-  case PROC:
-    fputs("proc(", stderr);
-    display(term(cell));
-    fputs(")", stderr);
-    break;
-  case WRAP:
-    fputs("wrap(", stderr);
-    display(unwrap(cell));
-    fputs(")", stderr);
-    break;
-  case INPUT:
-    fputs("input", stderr);
-    break;
-  case OUTPUT:
-    fputs("output", stderr);
-    break;
-  default:
-    assert(0);
+  if (cells[cell].tag)
+    fprintf(stderr, "%s", cells[cell].tag);
+  else {
+    switch (type(cell)) {
+    case VAR:
+      fprintf(stderr, "var(%d)", idx(cell));
+      break;
+    case LAMBDA:
+      fputs("lambda(", stderr);
+      display(body(cell));
+      fputs(")", stderr);
+      break;
+    case CALL:
+      fputs("call(", stderr);
+      display(fun(cell));
+      fputs(", ", stderr);
+      display(arg(cell));
+      fputs(")", stderr);
+      break;
+    case PROC:
+      fputs("proc(", stderr);
+      display(term(cell));
+      fputs(")", stderr);
+      break;
+    case WRAP:
+      fputs("wrap(", stderr);
+      display(unwrap(cell));
+      fputs(")", stderr);
+      break;
+    case INPUT:
+      fputs("input", stderr);
+      break;
+    case OUTPUT:
+      fputs("output", stderr);
+      break;
+    default:
+      assert(0);
+    };
   };
 }
+#endif
 
 
-int xxx(int cell, int index)
+int reindex(int cell, int index)
 {
   int retval;
   switch (type(cell)) {
@@ -245,14 +265,13 @@ int xxx(int cell, int index)
     retval = var(idx(cell) + (idx(cell) >= index ? 1 : 0));
     break;
   case LAMBDA:
-    retval = lambda(xxx(body(cell), index + 1));
+    retval = lambda(reindex(body(cell), index + 1));
     break;
   case CALL:
-    retval = call(xxx(fun(cell), index), xxx(arg(cell), index));
+    retval = call(reindex(fun(cell), index), reindex(arg(cell), index));
     break;
   case PROC:
-    retval = lambda(xxx(term(cell), index + 1));
-    // retval = cell;
+    retval = lambda(reindex(term(cell), index + 1));
     break;
   case INPUT:
     retval = cell;
@@ -266,29 +285,6 @@ int xxx(int cell, int index)
   return retval;
 }
 
-/*
-(define (M expr)
-  (match expr
-    [`(λ (,var) ,expr)
-      ; =>
-      (define $k (gensym '$k))
-     `(λ (,var ,$k) ,(T expr $k))]
-    
-    [(? symbol?)  #;=>  expr]))
-
-(define (T expr cont)
-  (match expr
-    [`(λ . ,_)     `(,cont ,(M expr))]
-    [ (? symbol?)  `(,cont ,(M expr))]
-    [`(,f ,e)    
-      ; =>
-      (define $f (gensym '$f))
-      (define $e (gensym '$e))
-      (T f `(λ (,$f)
-              ,(T e `(λ (,$e)
-                       (,$f ,$e ,cont)))))]))
-*/
-
 int cps(int cell, int cont)
 {
   int retval;
@@ -297,13 +293,13 @@ int cps(int cell, int cont)
     retval = call(cont, cell);
     break;
   case LAMBDA:
-    retval = call(cont, lambda(lambda(cps(xxx(body(cell), 0), var(0)))));
+    retval = call(cont, lambda(lambda(cps(reindex(body(cell), 0), var(0)))));
     break;
   case CALL:
-    retval = cps(fun(cell), lambda(cps(xxx(arg(cell), 0), lambda(call2(var(1), var(0), xxx(xxx(cont, 0), 0))))));
+    retval = cps(fun(cell), lambda(cps(reindex(arg(cell), 0), lambda(call(call(var(1), var(0)), reindex(reindex(cont, 0), 0))))));
     break;
   case PROC:
-    retval = call(cont, lambda(lambda(cps(xxx(term(cell), 0), var(0)))));
+    retval = call(cont, lambda(lambda(cps(reindex(term(cell), 0), var(0)))));
     break;
   case INPUT:
     retval = call(cont, cell);
@@ -318,54 +314,79 @@ int eval_env(int cell, int env)
 {
   int retval;
   int quit = 0;
-  int arg1;
-  int arg2;
   while (!quit) {
     display(cell); fputs("\n", stderr);
-    switch (type(cell)) {
+    assert(is_type(cell, CALL));
+    int cont = fun(cell);
+    int expr = arg(cell);
+    switch (type(cont)) {
     case VAR:
-      cell = at_(env, idx(cell));
+      cell = call(at_(env, idx(cont)), expr);
       break;
-    case CALL:
-      switch (type(fun(cell))) {
+    case LAMBDA:
+      cell = call(proc_stack(body(cont), env), expr);
+      break;
+    case CALL: {
+      int cont2 = fun(cont);
+      int expr2 = arg(cont);
+      switch (type(cont2)) {
       case VAR:
-        cell = call(at_(env, idx(fun(cell))), arg(cell));
+        cell = call(call(at_(env, idx(cont2)), expr2), expr);
         break;
       case LAMBDA:
-        printf("body: %d\n", type(body(fun(cell))));
-        cell = body(fun(cell));
-        env = pair(wrap(arg(cell), env), env);
+        cell = call(call(proc_stack(body(cont2), env), expr2), expr);
         break;
-      case CALL:
-        assert(is_type(fun(fun(cell)), VAR));
-        arg1 = wrap(arg(fun(cell)), env);
-        arg2 = wrap(arg(cell), env);
-        cell = at_(env, idx(fun(fun(cell))));
-        env = pair(arg1, pair(arg2, context(cell)));
-        cell = body(body(unwrap(cell)));
+      case PROC:
+        env = pair(wrap(expr2, env), stack(cont2));
+        cell = call(term(cont2), expr);
         break;
       case WRAP:
-        env = context(fun(cell));
-        cell = call(unwrap(fun(cell)), arg(cell));
-        break;
-      case OUTPUT:
-        retval = arg(cell);
-        // retval = unwrap(at_(env, idx(arg(cell))));
-        quit = 1;
+        cell = call(call(unwrap(cont2), wrap(expr2, env)), wrap(expr, env));
+        env = context(cont2);
         break;
       default:
         // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
-        printf("fun: %d\n", type(fun(cell)));
+        printf("fun(cont): %d ", type(cont2));
+        printf("(cont: %d, ", type(cont));
+        printf("expr: %d)\n", type(expr));
+        assert(0);
+      };
+      break; }
+    case PROC:
+      env = pair(wrap(expr, env), stack(cont));
+      cell = term(cont);
+      break;
+    case WRAP:
+      cell = call(unwrap(cont), wrap(expr, env));
+      env = context(cont);
+      break;
+    case OUTPUT:
+      switch (type(expr)) {
+      case VAR:
+        cell = call(cont, at_(env, idx(expr)));
+        break;
+      case LAMBDA:
+        cell = call(cont, proc_stack(body(expr), env));
+        break;
+      case PROC:
+        retval = expr;
+        quit = 1;
+        break;
+      case WRAP:
+        env = context(expr);
+        cell = call(cont, unwrap(expr));
+        break;
+      default:
+        // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
+        printf("expr: %d ", type(expr));
+        printf("(cont: %d)\n", type(cont));
         assert(0);
       };
       break;
-    case WRAP:
-      env = context(cell);
-      cell = unwrap(cell);
-      break;
     default:
       // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
-      printf("%d\n", type(cell));
+      printf("cont: %d ", type(cont));
+      printf("(expr: %d)\n", type(expr));
       assert(0);
     };
   };
@@ -378,72 +399,6 @@ int eval(int cell)
   display(cell); fputc('\n', stderr);
   return eval_env(cps(cell, output()), f());
 }
-
-/*
-int eval_env(int cell, int env, int cont)
-{
-  int retval;
-  int quit = 0;
-  while (!quit) {
-    switch (type(cell)) {
-    case VAR:
-      cell = at_(env, idx(cell));
-      break;
-    case LAMBDA:
-      cell = proc_stack(body(cell), env);
-      break;
-    case CALL:
-      cont = lambda(call2(var(0), wrap(arg(cell), env), cont));
-      cell = fun(cell);
-      break;
-    case WRAP:
-      if (cache(cell) != cell)
-        cell = cache(cell);
-      else {
-        cont = lambda(call(memoize(var(0), cell), cont));
-        env = context(cell);
-        cell = unwrap(cell);
-      };
-      break;
-    case INPUT:
-      cell = read_char(cell);
-      break;
-    case PROC:
-      switch (type(cont)) {
-      case VAR:
-        assert(idx(cont) == 0);
-        cont = first_(env);
-        env = rest_(env);
-        cell = term(cell);
-        break;
-      case LAMBDA:
-        env = stack(cell);
-        cont = body(cont);
-        break;
-      case CALL:
-        env = pair(arg(cont), env);
-        cont = fun(cont);
-        break;
-      case MEMOIZE:
-        store(target(cont), cell);
-        cont = value(cont);
-        cell = proc(cell);
-        break;
-      case OUTPUT:
-        retval = cell;
-        quit = 1;
-        break;
-      default:
-        assert(0);
-      };
-      break;
-    default:
-      assert(0);
-    };
-  };
-  return retval;
-}
-*/
 
 int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
 

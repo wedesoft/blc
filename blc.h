@@ -27,6 +27,10 @@ typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT } type_t;
 
 int cell(int type);
 
+#ifndef NDEBUG
+int tag(int cell, const char *value);
+#endif
+
 int type(int cell);
 
 int is_type(int cell, int t);
