@@ -42,8 +42,8 @@ int main(void)
   assert(idx(body(fun(call(lambda(var(1)), var(2))))) == 1);
   assert(idx(arg(call(lambda(var(1)), var(2)))) == 2);
   // false and true
-  assert(idx(term(term(f()))) == 0);
-  assert(idx(body(term(t()))) == 1);
+  assert(idx(body(body(f()))) == 0);
+  assert(idx(body(body(t()))) == 1);
   assert(is_f_(f()));
   assert(!is_f_(t()));
   // conditional
@@ -71,18 +71,11 @@ int main(void)
   assert(is_type(target(memoize(var(0), wrap(f(), f()))), WRAP));
   assert(idx(value(memoize(var(0), wrap(f(), f())))) == 0);
   // booleans
-  //assert(is_f_(f()));
-  //assert(!is_f_(t()));
-  //fputc('\n', stderr);
-  //eval(id()); fputc('\n', stderr);
-  //eval(call(id(), id())); fputc('\n', stderr);
-  eval(f()); fputc('\n', stderr);
-  eval(t()); fputc('\n', stderr);
-  eval(call(call(f(), f()), f())); fputc('\n', stderr);
-  eval(call(call(f(), f()), t())); fputc('\n', stderr);
+  assert(is_f_(f()));
+  assert(!is_f_(t()));
+  assert(is_f(cps(f(), output()));
+  //assert(!is_f(t()));
 #if 0
-  assert(is_f(f()));
-  assert(!is_f(t()));
   // evaluation of lambdas
   assert(is_proc(eval(lambda(var(0)))));
   assert(idx(term(eval(lambda(var(1))))) == 1);

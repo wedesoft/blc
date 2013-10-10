@@ -124,10 +124,10 @@ int t(void) { return t_; }
 
 int is_f_(int cell)
 {
-  return is_type(cell, PROC) &&
-         is_type(term(cell), PROC) &&
-         is_type(term(term(cell)), VAR) &&
-         idx(term(term(cell))) == 0;
+  return is_type(cell, LAMBDA) &&
+         is_type(body(cell), LAMBDA) &&
+         is_type(body(body(cell)), VAR) &&
+         idx(body(body(cell))) == 0;
 }
 
 int op_if(int condition, int consequent, int alternative)
@@ -270,17 +270,15 @@ int reindex(int cell, int index)
   case CALL:
     retval = call(reindex(fun(cell), index), reindex(arg(cell), index));
     break;
-  case PROC:
-    retval = lambda(reindex(term(cell), index + 1));
-    break;
   case INPUT:
     retval = cell;
     break;
   case OUTPUT:
     retval = cell;
     break;
-  default:// WRAP, MEMOIZE
-    assert(0);
+  default:// PROC, WRAP, MEMOIZE
+    fputs("Software error in reindex function!\n", stderr);
+    exit(1);
   };
   return retval;
 }
@@ -305,7 +303,8 @@ int cps(int cell, int cont)
     retval = call(cont, cell);
     break;
   default:// WRAP, MEMOIZE, OUTPUT
-    assert(0);
+    fputs("Software error in cps function!\n", stderr);
+    exit(1);
   };
   return retval;
 }
@@ -315,7 +314,9 @@ int eval_env(int cell, int env)
   int retval;
   int quit = 0;
   while (!quit) {
+#ifndef NDEBUG
     display(cell); fputs("\n", stderr);
+#endif
     assert(is_type(cell, CALL));
     int cont = fun(cell);
     int expr = arg(cell);
@@ -390,21 +391,26 @@ int eval_env(int cell, int env)
       assert(0);
     };
   };
+#ifndef NDEBUG
   fprintf(stderr, "-> "); display(retval); fputc('\n', stderr);
+#endif
   return retval;
 }
 
 int eval(int cell)
 {
+#ifndef NDEBUG
   display(cell); fputc('\n', stderr);
-  return eval_env(cps(cell, output()), f());
+#endif
+  // return eval_env(cps(cell, output()), f());
+  return eval_env(cell, f());
 }
 
 int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
-int empty(int list) { return call2(list, t(), proc(lambda2(f()))); }
+int empty(int list) { return call2(list, t(), lambda3(f())); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
 int op_not(int a) { return op_if(a, f(), t()); }
@@ -433,7 +439,7 @@ int num_to_int(int number)
 
 int y_ = -1;
 
-int y_comb(int fun) { return call(y_, proc(fun)); }
+int y_comb(int fun) { return call(y_, lambda(fun)); }
 
 int str_to_list(const char *str)
 {
@@ -526,24 +532,22 @@ void init(void)
   int v1 = var(1);
   int v2 = var(2);
   int v3 = var(3);
-  f_ = cell(PROC);
-  cells[f_].proc.term = proc(v0);
-  cells[f_].proc.stack = f_;
-  t_ = proc(lambda(v1));
+  f_ = lambda2(v0);
+  t_ = lambda2(v1);
   output_ = cell(OUTPUT);
-  pair_ = proc(lambda2(op_if(v0, v1, v2)));
-  eq_bool_ = proc(lambda(op_if(v0, v1, op_not(v1))));
-  y_ = proc(call(lambda(call(v1, call(v0, v0))),
-                 lambda(call(v1, call(v0, v0)))));
-  id_ = proc(v0);
+  pair_ = lambda3(op_if(v0, v1, v2));
+  eq_bool_ = lambda2(op_if(v0, v1, op_not(v1)));
+  y_ = lambda(call(lambda(call(v1, call(v0, v0))),
+                   lambda(call(v1, call(v0, v0)))));
+  id_ = lambda(v0);
   map_ = y_comb(lambda2(op_if(empty(v0),
                         f(),
                         pair(call(v1, first(v0)),
                              call2(v2, rest(v0), v1)))));
-  even_ = proc(op_if(empty(v0), t(), op_not(first(v0))));
-  odd_ = proc(op_if(empty(v0), f(), first(v0)));
-  shr_ = proc(op_if(empty(v0), f(), rest(v0)));
-  shl_ = proc(op_if(empty(v0), f(), pair(f(), v0)));
+  even_ = lambda(op_if(empty(v0), t(), op_not(first(v0))));
+  odd_ = lambda(op_if(empty(v0), f(), first(v0)));
+  shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
+  shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
   zip_ = y_comb(lambda2(op_if(op_and(empty(v0), empty(v1)),
                               f(),
                               pair(pair(odd(v0), odd(v1)),
@@ -554,9 +558,9 @@ void init(void)
   foldleft_ = y_comb(lambda3(op_if(empty(v0),
                                    v1,
                                    call2(v2, call3(v3, rest(v0), v1, v2), first(v0)))));
-  eq_num_ = proc(lambda(inject(zip(v0, v1),
-                               t(),
-                               proc(lambda(op_and(v0, eq_bool(first(v1), rest(v1))))))));
+  eq_num_ = lambda2(inject(zip(v0, v1),
+                           t(),
+                           lambda2(op_and(v0, eq_bool(first(v1), rest(v1))))));
   select_if_ = proc(lambda(foldleft(v0,
                                     f(),
                                     lambda(lambda(op_if(call(v3, v1),
