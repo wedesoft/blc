@@ -256,7 +256,6 @@ void display(int cell)
 }
 #endif
 
-
 int reindex(int cell, int index)
 {
   int retval;
@@ -266,6 +265,9 @@ int reindex(int cell, int index)
     break;
   case LAMBDA:
     retval = lambda(reindex(body(cell), index + 1));
+    break;
+  case PROC:
+    retval = cell;
     break;
   case CALL:
     retval = call(reindex(fun(cell), index), reindex(arg(cell), index));
@@ -277,32 +279,51 @@ int reindex(int cell, int index)
     retval = cell;
     break;
   default:// PROC, WRAP, MEMOIZE
+    fprintf(stderr, "%d\n", type(cell));
     fputs("Software error in reindex function!\n", stderr);
     exit(1);
   };
   return retval;
 }
 
-int cps(int cell, int cont)
+int cps_expr(int cell, int cont);
+
+int cps_atom(int cell)
 {
   int retval;
   switch (type(cell)) {
   case VAR:
-    retval = call(cont, cell);
+    retval = cell;
     break;
   case LAMBDA:
-    retval = call(cont, lambda(lambda(cps(reindex(body(cell), 0), var(0)))));
-    break;
-  case CALL:
-    retval = cps(fun(cell), lambda(cps(reindex(arg(cell), 0), lambda(call(call(var(1), var(0)), reindex(reindex(cont, 0), 0))))));
+    retval = lambda(lambda(cps_expr(reindex(body(cell), 0), var(0))));
     break;
   case PROC:
-    retval = call(cont, lambda(lambda(cps(reindex(term(cell), 0), var(0)))));
+    retval = cell;
     break;
-  case INPUT:
-    retval = call(cont, cell);
+  default:
+    fputs("Software error in cps function!\n", stderr);
+    exit(1);
+  };
+  return retval;
+}
+
+int cps_expr(int cell, int cont)
+{
+  int retval;
+  switch (type(cell)) {
+  case VAR:
+  case LAMBDA:
+  case PROC:
+    retval = call(cont, cps_atom(cell));
     break;
-  default:// WRAP, MEMOIZE, OUTPUT
+  case CALL:
+    retval = cps_expr(fun(cell),
+                      lambda(cps_expr(reindex(arg(cell), 0),
+                                      lambda(call(call(var(1), var(0)),
+                                                       reindex(reindex(cont, 0), 0))))));
+    break;
+  default:
     fputs("Software error in cps function!\n", stderr);
     exit(1);
   };
@@ -402,11 +423,15 @@ int eval(int cell)
 #ifndef NDEBUG
   display(cell); fputc('\n', stderr);
 #endif
-  // return eval_env(cps(cell, output()), f());
-  return eval_env(cell, f());
+  return eval_env(cps_expr(cell, output()), f());
+  // return eval_env(cell, f());
 }
 
-int is_f(int cell) { return eval(op_if(cell, t(), f())) == f(); }
+int is_f(int cell)
+{
+  int cps_f = eval(f());
+  return eval(op_if(cell, t(), cps_f)) == cps_f;
+}
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }

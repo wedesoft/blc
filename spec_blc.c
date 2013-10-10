@@ -73,8 +73,8 @@ int main(void)
   // booleans
   assert(is_f_(f()));
   assert(!is_f_(t()));
-  assert(is_f(cps(f(), output()));
-  //assert(!is_f(t()));
+  assert(is_f(f()));
+  assert(!is_f(t()));
 #if 0
   // evaluation of lambdas
   assert(is_proc(eval(lambda(var(0)))));
