@@ -83,6 +83,12 @@ int input(FILE *file);
 
 int output(void);
 
+int reindex(int cell, int index);
+
+int cps_atom(int cell);
+
+int cps_expr(int cell, int cont);
+
 int int_to_num(int integer);
 
 int eval(int cell);

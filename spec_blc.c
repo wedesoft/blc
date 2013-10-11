@@ -18,6 +18,45 @@
 #include <string.h>
 #include "blc.h"
 
+int equal(int a, int b)
+{
+  int retval;
+  if (a == b)
+    retval = 1;
+  else if (type(a) == type(b)) {
+    switch (type(a)) {
+    case VAR:
+      retval = idx(a) == idx(b);
+      break;
+    case LAMBDA:
+      retval = equal(body(a), body(b));
+      break;
+    case CALL:
+      retval = equal(fun(a), fun(b)) && equal(arg(a), arg(b));
+      break;
+    case PROC:
+      retval = equal(term(a), term(b)) && equal(stack(a), stack(b));
+      break;
+    case WRAP:
+      retval = equal(unwrap(a), unwrap(b)) && equal(context(a), context(b));
+      break;
+    case MEMOIZE:
+      retval = equal(value(a), value(b)) && target(a) == target(b);
+      break;
+    case INPUT:
+      retval = file(a) == file(b) && used(a) == used(b);
+      break;
+    case OUTPUT:
+      retval = 1;
+      break;
+    default:
+      assert(0);
+    }
+  } else
+    retval = 0;
+  return retval;
+}
+
 const char *repl(const char *input)
 {
   return list_to_str(bits_to_bytes(first_(read_expr(bytes_to_bits(str_to_list(input))))));
@@ -35,69 +74,75 @@ int main(void)
   // lambda (function)
   assert(type(lambda(var(0))) == LAMBDA);
   assert(is_type(lambda(var(0)), LAMBDA));
-  assert(idx(body(lambda(var(1)))) == 1);
+  assert(equal(body(lambda(var(0))), var(0)));
   // call
   assert(type(call(lambda(var(0)), var(0))) == CALL);
   assert(is_type(call(lambda(var(0)), var(0)), CALL));
-  assert(idx(body(fun(call(lambda(var(1)), var(2))))) == 1);
-  assert(idx(arg(call(lambda(var(1)), var(2)))) == 2);
-  // false and true
-  assert(idx(body(body(f()))) == 0);
-  assert(idx(body(body(t()))) == 1);
-  assert(is_f_(f()));
-  assert(!is_f_(t()));
+  assert(equal(fun(call(lambda(var(1)), var(2))), lambda(var(1))));
+  assert(equal(arg(call(lambda(var(1)), var(2))), var(2)));
   // conditional
-  assert(idx(fun(fun(op_if(var(1), var(2), var(3))))) == 1);
-  assert(idx(arg(fun(op_if(var(1), var(2), var(3))))) == 2);
-  assert(idx(arg(op_if(var(1), var(2), var(3)))) == 3);
+  assert(equal(op_if(var(1), var(2), var(3)), call(call(var(1), var(2)), var(3))));
   // lists (pairs)
   assert(!is_f_(pair(t(), f())));
-  assert(idx(first_(pair(var(1), f()))) == 1);
+  assert(equal(first_(pair(var(1), f())), var(1)));
   assert(is_f_(rest_(pair(var(1), f()))));
-  assert(idx(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 0)) == 1);
-  assert(idx(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 1)) == 2);
-  assert(idx(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 2)) == 3);
+  assert(equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 0), var(1)));
+  assert(equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 1), var(2)));
+  assert(equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 2), var(3)));
   // procs (closures)
   assert(type(proc(lambda(var(0)))) == PROC);
   assert(is_type(proc(lambda(var(0))), PROC));
-  assert(idx(term(proc(var(0)))) == 0);
-  assert(is_f_(stack(proc_stack(var(0), f()))));
+  assert(equal(term(proc(var(0))), var(0)));
+  assert(is_f_(stack(proc(var(0)))));
+  assert(equal(stack(proc_stack(var(0), pair(t(), f()))), pair(t(), f())));
   // output continuation
   assert(type(output()) == OUTPUT);
   assert(is_type(output(), OUTPUT));
   // memoization
   assert(type(memoize(var(0), wrap(f(), f()))) == MEMOIZE);
   assert(is_type(memoize(var(0), wrap(f(), f())), MEMOIZE));
-  assert(is_type(target(memoize(var(0), wrap(f(), f()))), WRAP));
-  assert(idx(value(memoize(var(0), wrap(f(), f())))) == 0);
+  assert(equal(value(memoize(var(0), wrap(f(), f()))), var(0)));
+  assert(equal(target(memoize(var(0), wrap(f(), f()))), wrap(f(), f())));
   // booleans
   assert(is_f_(f()));
   assert(!is_f_(t()));
   assert(is_f(f()));
   assert(!is_f(t()));
-#if 0
+  // changing indices
+  assert(equal(reindex(var(1), 2), var(1)));
+  assert(equal(reindex(var(2), 2), var(3)));
+  assert(equal(reindex(lambda(var(0)), 0), lambda(var(0))));
+  assert(equal(reindex(lambda(var(1)), 0), lambda(var(2))));
+  assert(equal(reindex(call(var(0), var(1)), 0), call(var(1), var(2))));
+  // converting atoms to continuation-passing-style
+  assert(equal(cps_atom(var(3)), var(3)));
+  assert(equal(cps_atom(lambda(var(0))), lambda(lambda(call(var(0), var(1))))));
+  assert(equal(cps_atom(proc(var(0))), proc(var(0))));
+  // converting expressions to continuation-passing-style
+  assert(equal(cps_expr(var(2), output()), call(output(), var(2))));
+  assert(equal(cps_expr(lambda(var(0)), output()), call(output(), lambda(lambda(call(var(0), var(1)))))));
+  assert(equal(cps_expr(proc(var(0)), output()), call(output(), proc(var(0)))));
+  assert(equal(cps_expr(call(var(0), var(1)), output()),
+               call(lambda(call(lambda(call(call(var(1), var(0)), output())), var(2))), var(0))));
   // evaluation of lambdas
-  assert(is_proc(eval(lambda(var(0)))));
-  assert(idx(term(eval(lambda(var(1))))) == 1);
-  assert(is_f_(stack(eval(lambda(var(0))))));
+  assert(equal(eval(lambda(var(0))), proc(lambda(call(var(0), var(1))))));
   // wraps
   assert(type(wrap(var(0), pair(f(), f()))) == WRAP);
-  assert(is_wrap(wrap(var(0), pair(f(), f()))));
-  assert(idx(unwrap(wrap(var(0), pair(f(), f())))) == 0);
-  assert(is_f_(context(wrap(var(0), f()))));
+  assert(is_type(wrap(var(0), pair(f(), f())), WRAP));
+  assert(equal(unwrap(wrap(var(0), pair(f(), f()))), var(0)));
+  assert(equal(context(wrap(var(0), pair(f(), f()))), pair(f(), f())));
   // evaluation of variables
   assert(is_f(wrap(var(1), pair(f(), pair(f(), f())))));
   assert(!is_f(wrap(var(1), pair(f(), pair(t(), f())))));
   // evaluation of calls
   assert(is_f(call(lambda(var(0)), f())));
   assert(!is_f(call(lambda(var(0)), t())));
-  assert(is_f(wrap(call(lambda(var(0)), var(1)), pair(f(), pair(f(), f())))));
-  assert(!is_f(wrap(call(lambda(var(0)), var(1)), pair(f(), pair(t(), f())))));
-  assert(is_f(wrap(call(lambda(var(1)), f()), pair(f(), f()))));
-  assert(!is_f(wrap(call(lambda(var(1)), f()), pair(t(), f()))));
+  assert(is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), f()), f())));
+  assert(!is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), t()), f())));
+  assert(is_f(call(lambda(call(lambda(var(1)), f())), f())));
+  assert(!is_f(call(lambda(call(lambda(var(1)), f())), t())));
   // evaluation of lists (pairs)
   assert(is_f(first(pair(f(), f()))));
-  assert(!is_f(first(pair(t(), f()))));
   assert(is_f(rest(pair(f(), f()))));
   assert(!is_f(rest(pair(f(), t()))));
   assert(!is_f(empty(f())));
@@ -134,21 +179,23 @@ int main(void)
   assert(!is_f_(at_(int_to_num(2), 1)));
   assert(num_to_int_(int_to_num(123)) == 123);
   assert(num_to_int(first(pair(int_to_num(123), f()))) == 123);
-  // Y-combinator
-  int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
-  assert(is_f(call(last, pair(f(), f()))));
-  assert(!is_f(call(last, pair(t(), f()))));
-  assert(is_f(call(last, pair(f(), pair(f(), f())))));
-  assert(!is_f(call(last, pair(f(), pair(t(), f())))));
+  // identity function
+  assert(is_f(call(id(), f())));
+  assert(!is_f(call(id(), t())));
   // strings
   assert(is_f_(str_to_list("")));
   assert(!is_f_(str_to_list("s")));
   assert(num_to_int_(first_(str_to_list("s"))) == 's');
   assert(!strcmp(list_to_str_(str_to_list("str")), "str"));
   assert(!strcmp(list_to_str(call(lambda(pair(var(0), pair(var(0), f()))), int_to_num('x'))), "xx"));
-  // identity function
-  assert(is_f(call(id(), f())));
-  assert(!is_f(call(id(), t())));
+#if 0
+  // Y-combinator
+  int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
+  display(eval(call(last, pair(f(), f()))));
+  // assert(is_f(call(last, pair(f(), f()))));
+  assert(!is_f(call(last, pair(t(), f()))));
+  assert(is_f(call(last, pair(f(), pair(f(), f())))));
+  assert(!is_f(call(last, pair(f(), pair(t(), f())))));
   // map
   assert(is_f(map(f(), id())));
   assert(is_f(at(map(pair(f(), f()), id()), 0)));

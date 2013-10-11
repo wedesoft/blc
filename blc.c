@@ -124,10 +124,11 @@ int t(void) { return t_; }
 
 int is_f_(int cell)
 {
-  return is_type(cell, LAMBDA) &&
+  return cell == f();
+  /* return is_type(cell, LAMBDA) &&
          is_type(body(cell), LAMBDA) &&
          is_type(body(body(cell)), VAR) &&
-         idx(body(body(cell))) == 0;
+         idx(body(body(cell))) == 0; */
 }
 
 int op_if(int condition, int consequent, int alternative)
@@ -159,6 +160,14 @@ int proc_stack(int term, int stack)
 }
 
 int proc(int term) { return proc_stack(term, f()); }
+
+int proc_self(int term)
+{
+  int retval = cell(PROC);
+  cells[retval].proc.term = term;
+  cells[retval].proc.stack = term;
+  return retval;
+}
 
 int wrap(int unwrap, int context)
 {
@@ -244,10 +253,10 @@ void display(int cell)
       fputs(")", stderr);
       break;
     case INPUT:
-      fputs("input", stderr);
+      fputs("input()", stderr);
       break;
     case OUTPUT:
-      fputs("output", stderr);
+      fputs("output()", stderr);
       break;
     default:
       assert(0);
@@ -278,9 +287,8 @@ int reindex(int cell, int index)
   case OUTPUT:
     retval = cell;
     break;
-  default:// PROC, WRAP, MEMOIZE
-    fprintf(stderr, "%d\n", type(cell));
-    fputs("Software error in reindex function!\n", stderr);
+  default:
+    fprintf(stderr, "Unexpected type %d in function 'reindex'!\n", type(cell));
     exit(1);
   };
   return retval;
@@ -293,16 +301,15 @@ int cps_atom(int cell)
   int retval;
   switch (type(cell)) {
   case VAR:
+  case PROC:
+  case WRAP:
     retval = cell;
     break;
   case LAMBDA:
     retval = lambda(lambda(cps_expr(reindex(body(cell), 0), var(0))));
     break;
-  case PROC:
-    retval = cell;
-    break;
   default:
-    fputs("Software error in cps function!\n", stderr);
+    fprintf(stderr, "Unexpected type %d in function 'cps_atom'!\n", type(cell));
     exit(1);
   };
   return retval;
@@ -315,6 +322,7 @@ int cps_expr(int cell, int cont)
   case VAR:
   case LAMBDA:
   case PROC:
+  case WRAP:
     retval = call(cont, cps_atom(cell));
     break;
   case CALL:
@@ -324,7 +332,7 @@ int cps_expr(int cell, int cont)
                                                        reindex(reindex(cont, 0), 0))))));
     break;
   default:
-    fputs("Software error in cps function!\n", stderr);
+    fprintf(stderr, "Unexpected type %d in function 'cps_expr'!\n", type(cell));
     exit(1);
   };
   return retval;
@@ -334,36 +342,37 @@ int eval_env(int cell, int env)
 {
   int retval;
   int quit = 0;
+  int cont = fun(cell);
+  int expr = arg(cell);
   while (!quit) {
 #ifndef NDEBUG
-    display(cell); fputs("\n", stderr);
+    display(arg(cell)); fputs("\n", stderr);
 #endif
     assert(is_type(cell, CALL));
-    int cont = fun(cell);
-    int expr = arg(cell);
     switch (type(cont)) {
     case VAR:
-      cell = call(at_(env, idx(cont)), expr);
+      cont = at_(env, idx(cont));
       break;
     case LAMBDA:
-      cell = call(proc_stack(body(cont), env), expr);
+      cont = proc_stack(body(cont), env);
       break;
     case CALL: {
       int cont2 = fun(cont);
       int expr2 = arg(cont);
       switch (type(cont2)) {
       case VAR:
-        cell = call(call(at_(env, idx(cont2)), expr2), expr);
+        cont = call(at_(env, idx(cont2)), expr2);
         break;
       case LAMBDA:
-        cell = call(call(proc_stack(body(cont2), env), expr2), expr);
+        cont = call(proc_stack(body(cont2), env), expr2);
         break;
       case PROC:
         env = pair(wrap(expr2, env), stack(cont2));
-        cell = call(term(cont2), expr);
+        cont = term(cont2);
         break;
       case WRAP:
-        cell = call(call(unwrap(cont2), wrap(expr2, env)), wrap(expr, env));
+        cont = call(unwrap(cont2), wrap(expr2, env));
+        expr = wrap(expr, env);
         env = context(cont2);
         break;
       default:
@@ -376,19 +385,21 @@ int eval_env(int cell, int env)
       break; }
     case PROC:
       env = pair(wrap(expr, env), stack(cont));
-      cell = term(cont);
+      expr = arg(term(cont));
+      cont = fun(term(cont));
       break;
     case WRAP:
-      cell = call(unwrap(cont), wrap(expr, env));
+      expr = wrap(expr, env);
       env = context(cont);
+      cont = unwrap(cont);
       break;
     case OUTPUT:
       switch (type(expr)) {
       case VAR:
-        cell = call(cont, at_(env, idx(expr)));
+        expr = at_(env, idx(expr));
         break;
       case LAMBDA:
-        cell = call(cont, proc_stack(body(expr), env));
+        expr = proc_stack(body(expr), env);
         break;
       case PROC:
         retval = expr;
@@ -396,7 +407,7 @@ int eval_env(int cell, int env)
         break;
       case WRAP:
         env = context(expr);
-        cell = call(cont, unwrap(expr));
+        expr = unwrap(expr);
         break;
       default:
         // VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, INPUT, OUTPUT
@@ -557,8 +568,8 @@ void init(void)
   int v1 = var(1);
   int v2 = var(2);
   int v3 = var(3);
-  f_ = lambda2(v0);
-  t_ = lambda2(v1);
+  f_ = proc_self(lambda(call(var(0), lambda(lambda(call(var(0), var(1)))))));
+  t_ = proc(lambda(call(var(0), lambda(lambda(call(var(0), var(3)))))));
   output_ = cell(OUTPUT);
   pair_ = lambda3(op_if(v0, v1, v2));
   eq_bool_ = lambda2(op_if(v0, v1, op_not(v1)));
