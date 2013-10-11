@@ -20,7 +20,7 @@ int main(void)
 {
   init();
   int expr = read_expr(bytes_to_bits(select_binary(input(stdin))));
-  write_expression(first_(expr), pair(rest_(expr), f()), stdout);
+  write_expression(first_(expr), rest_(expr), stdout);
   destroy();
   return 0;
 }

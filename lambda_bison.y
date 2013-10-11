@@ -114,8 +114,7 @@ init: { n_definitions = 0;
 
 run: /* empty */
    | expr { int expression = copy_definitions(previous_expr, $1, n_prev);
-            int environment = pair(bytes_to_bits(select_binary(input(yyin))), f());
-            write_expression(expression, environment, yyout);
+            write_expression(expression, bytes_to_bits(select_binary(input(yyin))), yyout);
             previous_expr = expression;
             n_prev = n_definitions; } run
    ;

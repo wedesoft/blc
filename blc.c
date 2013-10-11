@@ -338,12 +338,13 @@ int cps_expr(int cell, int cont)
   return retval;
 }
 
-int eval_env(int cell, int env)
+int eval_cps(int cell, int in)
 {
   int retval;
   int quit = 0;
   int cont = fun(cell);
   int expr = arg(cell);
+  int env = pair(in, f());
   while (!quit) {
 #ifndef NDEBUG
     fputs("expr: ", stderr); display(expr); fputs("\n", stderr);
@@ -436,8 +437,7 @@ int eval(int cell)
 #ifndef NDEBUG
   display(cell); fputc('\n', stderr);
 #endif
-  return eval_env(cps_expr(cell, output()), f());
-  // return eval_env(cell, f());
+  return eval_cps(cps_expr(cell, output()), f());
 }
 
 int is_f(int cell)
@@ -683,10 +683,9 @@ int read_expr(int in)
   return retval;
 }
 
-void write_expression(int expr, int env, FILE *stream)
+void write_expression(int expr, int in, FILE *stream)
 {
-  // int list = eval_env(bits_to_bytes(expr), env, output_);
-  int list = eval_env(bits_to_bytes(expr), env);
+  int list = eval_cps(bits_to_bytes(expr), in);
   assert(0);
   while (is_f(empty(list))) {
     fputc(num_to_int(first(list)), stream);

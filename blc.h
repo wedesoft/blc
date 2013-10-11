@@ -156,7 +156,7 @@ int str_to_input(const char *text);
 
 int read_expr(int in);
 
-void write_expression(int expr, int env, FILE *stream);
+void write_expression(int expr, int in, FILE *stream);
 
 #endif
 
