@@ -67,6 +67,7 @@ int main(void)
   init();
   int i, j;
   int n = cell(VAR);
+#if 0
   // variable
   assert(type(var(0)) == VAR);
   assert(is_type(var(0), VAR));
@@ -188,10 +189,11 @@ int main(void)
   assert(num_to_int_(first_(str_to_list("s"))) == 's');
   assert(!strcmp(list_to_str_(str_to_list("str")), "str"));
   assert(!strcmp(list_to_str(call(lambda(pair(var(0), pair(var(0), f()))), int_to_num('x'))), "xx"));
-#if 0
+#endif
   // Y-combinator
   int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
   display(eval(call(last, pair(f(), f()))));
+#if 0
   // assert(is_f(call(last, pair(f(), f()))));
   assert(!is_f(call(last, pair(t(), f()))));
   assert(is_f(call(last, pair(f(), pair(f(), f())))));

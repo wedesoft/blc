@@ -346,7 +346,9 @@ int eval_env(int cell, int env)
   int expr = arg(cell);
   while (!quit) {
 #ifndef NDEBUG
-    display(arg(cell)); fputs("\n", stderr);
+    fputs("expr: ", stderr); display(expr); fputs("\n", stderr);
+    fputs("cont: ", stderr); display(cont); fputs("\n", stderr);
+    fputs("\n", stderr);
 #endif
     assert(is_type(cell, CALL));
     switch (type(cont)) {
