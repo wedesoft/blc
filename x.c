@@ -209,12 +209,10 @@ int eval_(int cell, int env)
   while (!quit) {
     switch (type(cell)) {
     case VAR:
-      retval = eval_(at_(env, idx(cell)), env);
-      quit = 1;
+      cell = at_(env, idx(cell));
       break;
     case LAMBDA:
-      retval = eval_(proc(body(cell), env), env);
-      quit = 1;
+      cell = proc(body(cell), env);
       break;
     case CALL:
       tmp = eval_(fun(cell), env);
@@ -223,8 +221,8 @@ int eval_(int cell, int env)
       quit = 1;
       break;
     case WRAP:
-      retval = eval_(unwrap(cell), context(cell));
-      quit = 1;
+      env = context(cell);
+      cell = unwrap(cell);
       break;
     case PROC:
       retval = cell;
