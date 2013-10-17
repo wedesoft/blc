@@ -52,10 +52,13 @@ int cell(int type)
 {
   if (n_cells >= MAX_CELLS) {
     fputs("Out of memory!\n", stderr);
-    exit(1);
+    abort();
   };
   int retval = n_cells++;
   cells[retval].type = type;
+#ifndef NDEBUG
+  cells[retval].tag = NULL;
+#endif
   return retval;
 }
 
@@ -91,9 +94,6 @@ int var(int idx)
 {
   int retval = cell(VAR);
   cells[retval].idx = idx;
-#ifndef NDEBUG
-  cells[retval].tag = NULL;
-#endif
   return retval;
 }
 
@@ -146,7 +146,7 @@ int at_(int list, int i)
 {
   if (is_f_(list)) {
     fputs("Array out of range!\n", stderr);
-    exit(1);
+    abort();
   };
   return i > 0 ? at_(rest_(list), i - 1) : first_(list);
 }
@@ -171,6 +171,7 @@ int proc_self(int term)
 
 int wrap(int unwrap, int context)
 {
+  if (is_type(unwrap, WRAP)) return unwrap;
   int retval = cell(WRAP);
   cells[retval].wrap.unwrap = unwrap;
   cells[retval].wrap.context = context;
@@ -221,42 +222,42 @@ int read_char(int in)
 }
 
 #ifndef NDEBUG
-void display(int cell)
+void display(int cell, FILE *stream)
 {
   if (cells[cell].tag)
-    fprintf(stderr, "%s", cells[cell].tag);
+    fprintf(stream, "%s", cells[cell].tag);
   else {
     switch (type(cell)) {
     case VAR:
-      fprintf(stderr, "var(%d)", idx(cell));
+      fprintf(stream, "var(%d)", idx(cell));
       break;
     case LAMBDA:
-      fputs("lambda(", stderr);
-      display(body(cell));
-      fputs(")", stderr);
+      fputs("lambda(", stream);
+      display(body(cell), stream);
+      fputs(")", stream);
       break;
     case CALL:
-      fputs("call(", stderr);
-      display(fun(cell));
-      fputs(", ", stderr);
-      display(arg(cell));
-      fputs(")", stderr);
+      fputs("call(", stream);
+      display(fun(cell), stream);
+      fputs(", ", stream);
+      display(arg(cell), stream);
+      fputs(")", stream);
       break;
     case PROC:
-      fputs("proc(", stderr);
-      display(term(cell));
-      fputs(")", stderr);
+      fputs("proc(", stream);
+      display(term(cell), stream);
+      fputs(")", stream);
       break;
     case WRAP:
-      fputs("wrap(", stderr);
-      display(unwrap(cell));
-      fputs(")", stderr);
+      fputs("wrap(", stream);
+      display(unwrap(cell), stream);
+      fputs(")", stream);
       break;
     case INPUT:
-      fputs("input()", stderr);
+      fputs("input()", stream);
       break;
     case OUTPUT:
-      fputs("output()", stderr);
+      fputs("output()", stream);
       break;
     default:
       assert(0);
@@ -289,7 +290,7 @@ int reindex(int cell, int index)
     break;
   default:
     fprintf(stderr, "Unexpected type %d in function 'reindex'!\n", type(cell));
-    exit(1);
+    abort();
   };
   return retval;
 }
@@ -310,7 +311,7 @@ int cps_atom(int cell)
     break;
   default:
     fprintf(stderr, "Unexpected type %d in function 'cps_atom'!\n", type(cell));
-    exit(1);
+    abort();
   };
   return retval;
 }
@@ -320,36 +321,181 @@ int cps_expr(int cell, int cont)
   int retval;
   switch (type(cell)) {
   case VAR:
+    retval = call(cps_atom(cell), cont); // !!!
+    break;
   case LAMBDA:
   case PROC:
   case WRAP:
     retval = call(cont, cps_atom(cell));
     break;
   case CALL:
+    // arg: lambda(cps_expr(reindex(arg(cell), 0), var(0)));
+    retval = cps_expr(fun(cell),
+                      lambda(call(reindex(cont, 0), var(0))));
+#if 0
+    retval = cps_expr(fun(cell),
+                      lambda(call(call(var(0),
+                                       lambda(cps_expr(tag(reindex(reindex(arg(cell), 0), 0), "arg"), var(0)))),
+                                  reindex(cont, 0))));
+#endif
+#if 0
+    // this is not lazy evaluation!!!
     retval = cps_expr(fun(cell),
                       lambda(cps_expr(reindex(arg(cell), 0),
                                       lambda(call(call(var(1), var(0)),
                                                        reindex(reindex(cont, 0), 0))))));
+#endif
     break;
   default:
     fprintf(stderr, "Unexpected type %d in function 'cps_expr'!\n", type(cell));
-    exit(1);
+    abort();
+  };
+  return retval
+}
+
+// 0:VAR, 1:LAMBDA, 2:CALL, 3:PROC, 4:WRAP, 5:MEMOIZE, 6:INPUT, 7:OUTPUT
+// boolean: true or false
+// true: function accepting two arguments and returning first argument
+// false: function accepting two arguments and returning second argument
+// pair: function accepting bool and returning first or second element
+// list: false or pair with second element being a list
+// continuation: output (id?) or function mapping to output
+// environment: list of continuations
+// variable: function selecting n-th continuation from environment
+// input: list of booleans
+// lambda (after cps): capture environment, accept continuation and value to change environment
+// proc: accept continuation and add to internal stack
+
+int eval_atom(int cell, int env)
+{
+  int retval;
+  int quit = 0;
+  while (!quit) {
+#ifndef NDEBUG
+    fputs("eval_atom cell: ", stderr); display(cell, stderr); fputs("\n", stderr);
+    fputs("\n", stderr);
+#endif
+    switch (type(cell)) {
+    case VAR:
+      cell = at_(env, idx(cell));
+      break;
+    case LAMBDA:
+      cell = proc_stack(body(cell), env);
+      break;
+    case PROC:
+      retval = cell;
+      quit = 1;
+      break;
+    case WRAP:
+      env = context(cell);
+      cell = unwrap(cell);
+      break;
+    default:
+#ifndef NDEBUG
+      fputs("eval_atom: ", stderr); display(cell, stderr); fputc('\n', stderr);
+#endif
+      fprintf(stderr, "Unexpected type %d in function 'eval_atom'!\n", type(cell));
+      abort();
+    };
   };
   return retval;
 }
 
-int eval_cps(int cell, int in)
+int eval_expr(int cell, int in)
+{
+  int retval;
+  int quit = 0;
+  int env = f();
+  int tmp;
+  while (!quit) {
+#ifndef NDEBUG
+    fputs("eval_expr cell: ", stderr); display(cell, stderr); fputs("\n", stderr);
+    fputs("\n", stderr);
+#endif
+    switch (type(cell)) {
+    case CALL:
+      switch (type(fun(cell))) {
+      case VAR:
+        cell = call(at_(env, idx(fun(cell))), arg(cell));
+        break;
+      case LAMBDA:
+        cell = call(proc_stack(body(fun(cell)), env), arg(cell));
+        break;
+      case CALL:
+        switch (type(fun(fun(cell)))) {
+        case VAR:
+          cell = call(call(at_(env, idx(fun(fun(cell)))), arg(fun(cell))), arg(cell));
+          break;
+        case LAMBDA:
+          cell = call(call(proc_stack(body(fun(fun(cell))), env), arg(fun(cell))), arg(cell));
+          break;
+        case PROC:
+          tmp = pair(wrap(arg(cell), env), stack(fun(fun(cell))));
+          cell = call(term(fun(fun(cell))), wrap(arg(fun(cell)), env));
+          env = tmp;
+          break;
+        case WRAP:
+          tmp = context(fun(fun(cell)));
+          cell = call(call(unwrap(fun(fun(cell))), wrap(arg(fun(cell)), env)), wrap(arg(cell), env));
+          env = tmp;
+          break;
+        default:
+          // 0:VAR, 1:LAMBDA, 2:CALL, 3:PROC, 4:WRAP, 5:MEMOIZE, 6:INPUT, 7:OUTPUT
+          fputs("eval_expr: ", stderr); display(cell, stderr); fputc('\n', stderr);
+          fprintf(stderr, "Unexpected binary function of type %d in function 'eval_expr'!\n", type(fun(fun(cell))));
+          assert(0);
+          abort();
+        };
+        break;
+      case PROC:
+        env = pair(wrap(arg(cell), env), stack(fun(cell)));
+        cell = term(fun(cell));
+        break;
+      case WRAP:
+        tmp = context(fun(cell));
+        cell = call(unwrap(fun(cell)), wrap(arg(cell), env));
+        env = tmp;
+        break;
+      case OUTPUT:
+        retval = eval_atom(arg(cell), env);
+        quit = 1;
+        break;
+      default:
+        // 0:VAR, 1:LAMBDA, 2:CALL, 3:PROC, 4:WRAP, 5:MEMOIZE, 6:INPUT, 7:OUTPUT
+        fputs("eval_expr: ", stderr); display(cell, stderr); fputc('\n', stderr);
+        fprintf(stderr, "Unexpected unary function of type %d in function 'eval_expr'!\n", type(fun(cell)));
+        assert(0);
+        abort();
+      };
+      break;
+    default:
+      // 0:VAR, 1:LAMBDA, 2:CALL, 3:PROC, 4:WRAP, 5:MEMOIZE, 6:INPUT, 7:OUTPUT
+      fputs("eval_expr: ", stderr); display(cell, stderr); fputc('\n', stderr);
+      fprintf(stderr, "Unexpected type %d in function 'eval_expr'!\n", type(cell));
+      assert(0);
+      abort();
+    };
+  };
+#ifndef NDEBUG
+  fprintf(stderr, "-> "); display(retval, stderr); fputc('\n', stderr);
+#endif
+  return retval;
+}
+
+#if 0
+int eval_expr(int cell, int in)
 {
   int retval;
   int quit = 0;
   int cont = fun(cell);
   int expr = arg(cell);
-  int env = pair(in, f());
+  // int env = pair(in, f());
+  int env = f();
   while (!quit) {
 #ifndef NDEBUG
-    fputs("expr: ", stderr); display(expr); fputs("\n", stderr);
-    fputs("cont: ", stderr); display(cont); fputs("\n", stderr);
-    fputs("\n", stderr);
+    //fputs("expr: ", stderr); display(expr); fputs("\n", stderr);
+    //fputs("cont: ", stderr); display(cont); fputs("\n", stderr);
+    //fputs("\n", stderr);
 #endif
     assert(is_type(cell, CALL));
     switch (type(cont)) {
@@ -431,13 +577,14 @@ int eval_cps(int cell, int in)
 #endif
   return retval;
 }
+#endif
 
 int eval(int cell)
 {
 #ifndef NDEBUG
-  display(cell); fputc('\n', stderr);
+  fputs("----------------------------------------\n", stderr);
 #endif
-  return eval_cps(cps_expr(cell, output()), f());
+  return eval_expr(cps_expr(cell, output()), f());
 }
 
 int is_f(int cell)
@@ -491,7 +638,7 @@ char *list_to_buffer_(int list, char *buffer, int bufsize)
 {
   if (bufsize <= 1) {
     fputs("Buffer too small!\n", stderr);
-    exit(1);
+    abort();
   };
   if (is_f_(list))
     *buffer = '\0';
@@ -508,7 +655,7 @@ const char *list_to_buffer(int list, char *buffer, int bufsize)
 {
   if (bufsize <= 1) {
     fputs("Buffer too small!\n", stderr);
-    exit(1);
+    abort();
   };
   int eval_list = eval(list);
   if (!is_f(empty(eval_list)))
@@ -635,7 +782,7 @@ int read_var(int in)
   int eval_in = eval(in);
   if (!is_f(empty(eval_in))) {
     fputs("Incomplete variable!\n", stderr);
-    exit(1);
+    abort();
   } else
     if (is_f(first(eval_in)))
       retval = pair(var(0), rest(eval_in));
@@ -665,13 +812,13 @@ int read_expr(int in)
   int eval_in = eval(in);
   if (!is_f(empty(eval_in))) {
     fputs("Incomplete expression!\n", stderr);
-    exit(1);
+    abort();
   } else {
     if (is_f(first(eval_in))) {
       int eval_rest = eval(rest(eval_in));
       if (!is_f(empty(eval_rest))) {
         fputs("Incomplete structure!\n", stderr);
-        exit(1);
+        abort();
       };
       if (is_f(first(eval_rest)))
         retval = read_lambda(rest(eval_rest));
@@ -685,7 +832,7 @@ int read_expr(int in)
 
 void write_expression(int expr, int in, FILE *stream)
 {
-  int list = eval_cps(bits_to_bytes(expr), in);
+  int list = eval_expr(bits_to_bytes(expr), in);
   assert(0);
   while (is_f(empty(list))) {
     fputc(num_to_int(first(list)), stream);

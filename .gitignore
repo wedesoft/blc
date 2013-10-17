@@ -8,6 +8,7 @@
 *.gif
 aclocal.m4
 autom4te.cache
+x
 blc
 blc-*.tar.bz2
 blc-*.tar.gz   
