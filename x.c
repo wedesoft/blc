@@ -24,7 +24,7 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT, OUTPUT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 
@@ -160,9 +160,6 @@ int input(FILE *file)
   return retval;
 }
 
-int output_ = -1;
-int output(void) { return output_; }
-
 int f_ = -1;
 int t_ = -1;
 
@@ -207,28 +204,36 @@ int y_comb(int fun) { return call(y_, lambda(fun)); }
 int eval_(int cell, int env)
 {
   int retval;
+  int quit = 0;
   int tmp;
-  switch (type(cell)) {
-  case VAR:
-    retval = eval_(at_(env, idx(cell)), env);
-    break;
-  case LAMBDA:
-    retval = eval_(proc(body(cell), env), env);
-    break;
-  case CALL:
-    tmp = eval_(fun(cell), env);
-    assert(is_type(tmp, PROC));
-    retval = eval_(term(tmp), pair(wrap(arg(cell), env), stack(tmp)));
-    break;
-  case WRAP:
-    retval = eval_(unwrap(cell), context(cell));
-    break;
-  case PROC:
-    retval = cell;
-    break;
-  default:
-    fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
-    abort();
+  while (!quit) {
+    switch (type(cell)) {
+    case VAR:
+      retval = eval_(at_(env, idx(cell)), env);
+      quit = 1;
+      break;
+    case LAMBDA:
+      retval = eval_(proc(body(cell), env), env);
+      quit = 1;
+      break;
+    case CALL:
+      tmp = eval_(fun(cell), env);
+      assert(is_type(tmp, PROC));
+      retval = eval_(term(tmp), pair(wrap(arg(cell), env), stack(tmp)));
+      quit = 1;
+      break;
+    case WRAP:
+      retval = eval_(unwrap(cell), context(cell));
+      quit = 1;
+      break;
+    case PROC:
+      retval = cell;
+      quit = 1;
+      break;
+    default:
+      fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
+      abort();
+    };
   };
   return retval;
 }
@@ -257,9 +262,6 @@ int eq(int a, int b)
     case INPUT:
       retval = file(a) == file(b) && used(a) == used(b);
       break;
-    case OUTPUT:
-      retval = 1;
-      break;
     default:
       assert(0);
     }
@@ -278,7 +280,6 @@ void init(void)
   int v0 = var(0);
   int v1 = var(1);
   int v2 = var(2);
-  output_ = cell(OUTPUT);
   id_ = lambda(v0);
   f_ = proc_self(lambda(v0));
   t_ = proc(lambda(v1), f());
@@ -315,9 +316,6 @@ int main(void)
   assert_equal(arg(call(lambda(var(1)), var(2))), var(2));
   assert_equal(call2(var(0), var(1), var(2)), call(call(var(0), var(2)), var(1)));
   assert_equal(call3(var(0), var(1), var(2), var(3)), call(call(call(var(0), var(3)), var(2)), var(1)));
-  // output continuation
-  assert(type(output()) == OUTPUT);
-  assert(is_type(output(), OUTPUT));
   // input
   assert(type(input(stdin)) == INPUT);
   assert(is_type(input(stdin), INPUT));
