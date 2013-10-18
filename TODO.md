@@ -1,7 +1,7 @@
 TODO
 ====
 
-* have "cps" return a function instead of a call
+* call/cc, memoization, input
 * Earley parser bootstrapped in C
 * better garbage collector? reflective?
 * meta-circular

@@ -86,6 +86,31 @@ int stack(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.stack
 int unwrap(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.context; }
 
+const char *type_id(int cell)
+{
+  const char *retval;
+  switch (type(cell)) {
+  case VAR:
+    retval = "var";
+    break;
+  case LAMBDA:
+    retval = "lambda";
+    break;
+  case CALL:
+    retval = "call";
+    break;
+  case PROC:
+    retval = "proc";
+    break;
+  case WRAP:
+    retval = "wrap";
+    break;
+  default:
+    assert(0);
+  };
+  return retval;
+}
+
 int var(int idx)
 {
   int retval = cell(VAR);
@@ -188,6 +213,50 @@ int y_ = -1;
 
 int y_comb(int fun) { return call(y_, lambda(fun)); }
 
+#ifndef NDEBUG
+void show_(int cell, FILE *stream)
+{
+  if (cells[cell].tag)
+    fprintf(stream, "%s", cells[cell].tag);
+  else {
+    switch (type(cell)) {
+    case VAR:
+      fprintf(stream, "var(%d)", idx(cell));
+      break;
+    case LAMBDA:
+      fputs("lambda(", stream);
+      show_(body(cell), stream);
+      fputs(")", stream);
+      break;
+    case CALL:
+      fputs("call(", stream);
+      show_(fun(cell), stream);
+      fputs(", ", stream);
+      show_(arg(cell), stream);
+      fputs(")", stream);
+      break;
+    case PROC:
+      fputs("proc(", stream);
+      show_(term(cell), stream);
+      fputs(")", stream);
+      break;
+    case WRAP:
+      fputs("wrap(", stream);
+      show_(unwrap(cell), stream);
+      fputs(")", stream);
+      break;
+    default:
+      assert(0);
+    };
+  };
+}
+
+void show(int cell, FILE *stream)
+{
+  show_(cell, stream); fputc('\n', stream);
+}
+#endif
+
 int reindex(int cell, int index)
 {
   int retval;
@@ -205,7 +274,7 @@ int reindex(int cell, int index)
     retval = cell;
     break;
   default:
-    fprintf(stderr, "Unexpected type %d in function 'reindex'!\n", type(cell));
+    fprintf(stderr, "Unexpected type '%s' in function 'reindex'!\n", type_id(cell));
     abort();
   };
   return retval;
@@ -230,40 +299,14 @@ int up(int cell) { return reindex(cell, 0); }
 // (+ (call/cc
 //      (λ k.
 
-// int cps(int cont, int cell)
-// {
-//   int retval;
-//   switch (type(cell)) {
-//   case VAR:
-//     retval = call(cont, cell);
-//     break;
-//   case LAMBDA:
-//     retval = call(cont, lambda(lambda(cps(var(0), up(body(cell))))));
-//     break;
-//   case CALL:
-//     retval = call(fun(cell), cont);
-//     break;
-//   case WRAP:
-//     retval = call(cont, cell);
-//     break;
-//   case PROC:
-//     retval = call(cont, cell);
-//     break;
-//   default:
-//     fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
-//     abort();
-//   };
-//   return retval;
-// }
-
 int eval_(int cell, int env, int cont)
 {
   int retval;
   int quit = 0;
-  int tmp;
   while (!quit) {
     switch (type(cell)) {
-    case VAR: // this could be a call, too!
+    case VAR:
+      // this could be a call, too!
       // cell = eval_(fun(cell), env);
       cell = at_(env, idx(cell));
       break;
@@ -271,21 +314,40 @@ int eval_(int cell, int env, int cont)
       cell = proc(body(cell), env);
       break;
     case CALL:
-      tmp = eval_(fun(cell), env, cont); // !!!
-      assert(is_type(tmp, PROC));
-      retval = eval_(term(tmp), pair(wrap(arg(cell), env), stack(tmp)), cont); //
-      quit = 1;
+      cont = lambda(call(cont, call(var(0), wrap(arg(cell), env))));
+      cell = fun(cell);
       break;
     case WRAP:
       env = context(cell);
       cell = unwrap(cell);
       break;
     case PROC:
-      retval = cell;
-      quit = 1; // !!!
+      switch (type(cont)) {
+      case LAMBDA:
+        cont = proc(body(cont), env);
+        break;
+      case CALL:
+        cell = at_(env, idx(fun(arg(cont))));
+        env = pair(arg(arg(cont)), stack(cell));
+        cell = term(cell);
+        cont = fun(cont);
+        break;
+      case PROC:
+        if (cont == id()) {
+          retval = cell;
+          quit = 1;
+        } else {
+          env = pair(cell, stack(cont));
+          cont = term(cont);
+        };
+        break;
+      default:
+        fprintf(stderr, "Unexpected continuation type '%s' in function 'eval_'!\n", type_id(cont));
+        abort();
+      };
       break;
     default:
-      fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
+      fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
       abort();
     };
   };
@@ -296,45 +358,6 @@ int eval(int cell)
 {
   return eval_(cell, f(), id());
 }
-
-#ifndef NDEBUG
-void display(int cell, FILE *stream)
-{
-  if (cells[cell].tag)
-    fprintf(stream, "%s", cells[cell].tag);
-  else {
-    switch (type(cell)) {
-    case VAR:
-      fprintf(stream, "var(%d)", idx(cell));
-      break;
-    case LAMBDA:
-      fputs("lambda(", stream);
-      display(body(cell), stream);
-      fputs(")", stream);
-      break;
-    case CALL:
-      fputs("call(", stream);
-      display(fun(cell), stream);
-      fputs(", ", stream);
-      display(arg(cell), stream);
-      fputs(")", stream);
-      break;
-    case PROC:
-      fputs("proc(", stream);
-      display(term(cell), stream);
-      fputs(")", stream);
-      break;
-    case WRAP:
-      fputs("wrap(", stream);
-      display(unwrap(cell), stream);
-      fputs(")", stream);
-      break;
-    default:
-      assert(0);
-    };
-  };
-}
-#endif
 
 int eq(int a, int b)
 {
@@ -351,6 +374,9 @@ int eq(int a, int b)
       break;
     case CALL:
       retval = eq(fun(a), fun(b)) && eq(arg(a), arg(b));
+      break;
+    case PROC:
+      retval = eq(term(a), term(b)) && eq(stack(a), stack(b));
       break;
     default:
       assert(0);
@@ -370,9 +396,9 @@ void init(void)
   int v0 = var(0);
   int v1 = var(1);
   int v2 = var(2);
-  id_ = lambda(v0);
   f_ = proc_self(lambda(v0));
   t_ = proc(lambda(v1), f());
+  id_ = proc(v0, f());
   pair_ = lambda3(op_if(v0, v1, v2));
   y_ = lambda(call(lambda(call(v1, call(v0, v0))), lambda(call(v1, call(v0, v0)))));
 };
