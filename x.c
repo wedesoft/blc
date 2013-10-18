@@ -24,15 +24,13 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, INPUT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 
 typedef struct { int term; int stack; } proc_t;
 
 typedef struct { int unwrap; int context; int cache; } wrap_t;
-
-typedef struct { FILE *file; int used; } input_t;
 
 typedef struct {
   type_t type;
@@ -42,7 +40,6 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
-    input_t input;
   };
 #ifndef NDEBUG
   const char *tag;
@@ -88,8 +85,6 @@ int term(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.term; 
 int stack(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.stack; }
 int unwrap(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.context; }
-FILE *file(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.file; }
-int used(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.used; }
 
 int var(int idx)
 {
@@ -152,14 +147,6 @@ int wrap(int unwrap, int context)
   return retval;
 }
 
-int input(FILE *file)
-{
-  int retval = cell(INPUT);
-  cells[retval].input.file = file;
-  cells[retval].input.used = retval;
-  return retval;
-}
-
 int f_ = -1;
 int t_ = -1;
 
@@ -201,23 +188,92 @@ int y_ = -1;
 
 int y_comb(int fun) { return call(y_, lambda(fun)); }
 
-int eval_(int cell, int env)
+int reindex(int cell, int index)
+{
+  int retval;
+  switch (type(cell)) {
+  case VAR:
+    retval = var(idx(cell) + (idx(cell) >= index ? 1 : 0));
+    break;
+  case LAMBDA:
+    retval = lambda(reindex(body(cell), index + 1));
+    break;
+  case CALL:
+    retval = call(reindex(fun(cell), index), reindex(arg(cell), index));
+    break;
+  case PROC:
+    retval = cell;
+    break;
+  default:
+    fprintf(stderr, "Unexpected type %d in function 'reindex'!\n", type(cell));
+    abort();
+  };
+  return retval;
+}
+
+int up(int cell) { return reindex(cell, 0); }
+
+// (λx y.y) a b; id
+// (λy.y) a; id
+// a; id
+//
+// (+ (* 3 4) 5) -> k: (λ (v) v)              (call/cc (λ (k) (k (+ (* 3 4) 5))))
+// (* 3 4)       -> k: (λ (v) (+ v 5))        (+ (call/cc (λ (k) (k (* 3 4)))) 5)
+// 3             -> k: (λ (v) (+ (* v 4) 5))  (+ (* (call/cc (λ (k) (k 3))) 4) 5)
+// 5             -> k: (λ (v) (+ (* 3 4) v))  (+ (* 3 4) (call/cc (λ (k) (k 5))))
+
+// (call/cc (λ (k) (+ (* 3 (k 4)) 5)))) -> 4
+// *(+ (call/cc (λ (k) k)) 5)        3) -> 8
+//
+
+//
+// (+ (call/cc
+//      (λ k.
+
+// int cps(int cont, int cell)
+// {
+//   int retval;
+//   switch (type(cell)) {
+//   case VAR:
+//     retval = call(cont, cell);
+//     break;
+//   case LAMBDA:
+//     retval = call(cont, lambda(lambda(cps(var(0), up(body(cell))))));
+//     break;
+//   case CALL:
+//     retval = call(fun(cell), cont);
+//     break;
+//   case WRAP:
+//     retval = call(cont, cell);
+//     break;
+//   case PROC:
+//     retval = call(cont, cell);
+//     break;
+//   default:
+//     fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
+//     abort();
+//   };
+//   return retval;
+// }
+
+int eval_(int cell, int env, int cont)
 {
   int retval;
   int quit = 0;
   int tmp;
   while (!quit) {
     switch (type(cell)) {
-    case VAR:
+    case VAR: // this could be a call, too!
+      // cell = eval_(fun(cell), env);
       cell = at_(env, idx(cell));
       break;
     case LAMBDA:
       cell = proc(body(cell), env);
       break;
     case CALL:
-      tmp = eval_(fun(cell), env);
+      tmp = eval_(fun(cell), env, cont); // !!!
       assert(is_type(tmp, PROC));
-      retval = eval_(term(tmp), pair(wrap(arg(cell), env), stack(tmp)));
+      retval = eval_(term(tmp), pair(wrap(arg(cell), env), stack(tmp)), cont); //
       quit = 1;
       break;
     case WRAP:
@@ -226,7 +282,7 @@ int eval_(int cell, int env)
       break;
     case PROC:
       retval = cell;
-      quit = 1;
+      quit = 1; // !!!
       break;
     default:
       fprintf(stderr, "Unexpected type %d in function 'eval_'!\n", type(cell));
@@ -238,8 +294,47 @@ int eval_(int cell, int env)
 
 int eval(int cell)
 {
-  return eval_(cell, f());
+  return eval_(cell, f(), id());
 }
+
+#ifndef NDEBUG
+void display(int cell, FILE *stream)
+{
+  if (cells[cell].tag)
+    fprintf(stream, "%s", cells[cell].tag);
+  else {
+    switch (type(cell)) {
+    case VAR:
+      fprintf(stream, "var(%d)", idx(cell));
+      break;
+    case LAMBDA:
+      fputs("lambda(", stream);
+      display(body(cell), stream);
+      fputs(")", stream);
+      break;
+    case CALL:
+      fputs("call(", stream);
+      display(fun(cell), stream);
+      fputs(", ", stream);
+      display(arg(cell), stream);
+      fputs(")", stream);
+      break;
+    case PROC:
+      fputs("proc(", stream);
+      display(term(cell), stream);
+      fputs(")", stream);
+      break;
+    case WRAP:
+      fputs("wrap(", stream);
+      display(unwrap(cell), stream);
+      fputs(")", stream);
+      break;
+    default:
+      assert(0);
+    };
+  };
+}
+#endif
 
 int eq(int a, int b)
 {
@@ -256,9 +351,6 @@ int eq(int a, int b)
       break;
     case CALL:
       retval = eq(fun(a), fun(b)) && eq(arg(a), arg(b));
-      break;
-    case INPUT:
-      retval = file(a) == file(b) && used(a) == used(b);
       break;
     default:
       assert(0);
@@ -314,11 +406,6 @@ int main(void)
   assert_equal(arg(call(lambda(var(1)), var(2))), var(2));
   assert_equal(call2(var(0), var(1), var(2)), call(call(var(0), var(2)), var(1)));
   assert_equal(call3(var(0), var(1), var(2), var(3)), call(call(call(var(0), var(3)), var(2)), var(1)));
-  // input
-  assert(type(input(stdin)) == INPUT);
-  assert(is_type(input(stdin), INPUT));
-  assert(file(input(stdin)) == stdin);
-  assert(file(used(input(stdin))) == stdin);
   // booleans
   assert(is_f_(f()));
   assert(!is_f_(t()));
