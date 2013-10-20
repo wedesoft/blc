@@ -24,11 +24,11 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, CALLCC, CONT } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 
-typedef struct { int term; int stack; } proc_t;
+typedef struct { int block; int stack; } proc_t;
 
 typedef struct { int unwrap; int context; int cache; } wrap_t;
 
@@ -40,6 +40,8 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
+    int term;
+    int k;
   };
 #ifndef NDEBUG
   const char *tag;
@@ -81,10 +83,12 @@ int idx(int cell) { assert(is_type(cell, VAR)); return cells[cell].idx; }
 int body(int cell) { assert(is_type(cell, LAMBDA)); return cells[cell].body; }
 int fun(int cell) { assert(is_type(cell, CALL)); return cells[cell].call.fun; }
 int arg(int cell) { assert(is_type(cell, CALL)); return cells[cell].call.arg; }
-int term(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.term; }
+int block(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.block; }
 int stack(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.stack; }
 int unwrap(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.context; }
+int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
+int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
 
 const char *type_id(int cell)
 {
@@ -104,6 +108,12 @@ const char *type_id(int cell)
     break;
   case WRAP:
     retval = "wrap";
+    break;
+  case CALLCC:
+    retval = "callcc";
+    break;
+  case CONT:
+    retval = "cont";
     break;
   default:
     assert(0);
@@ -146,19 +156,19 @@ int op_if(int condition, int consequent, int alternative)
   return call2(condition, alternative, consequent);
 }
 
-int proc(int term, int stack)
+int proc(int block, int stack)
 {
   int retval = cell(PROC);
-  cells[retval].proc.term = term;
+  cells[retval].proc.block = block;
   cells[retval].proc.stack = stack;
   return retval;
 }
 
-int proc_self(int term)
+int proc_self(int block)
 {
   int retval = cell(PROC);
-  cells[retval].proc.term = term;
-  cells[retval].proc.stack = term;
+  cells[retval].proc.block = block;
+  cells[retval].proc.stack = block;
   return retval;
 }
 
@@ -169,6 +179,20 @@ int wrap(int unwrap, int context)
   cells[retval].wrap.unwrap = unwrap;
   cells[retval].wrap.context = context;
   cells[retval].wrap.cache = retval;
+  return retval;
+}
+
+int callcc(int body)
+{
+  int retval = cell(CALLCC);
+  cells[retval].body = body;
+  return retval;
+}
+
+int cont(int k)
+{
+  int retval = cell(CONT);
+  cells[retval].k = k;
   return retval;
 }
 
@@ -237,12 +261,22 @@ void show_(int cell, FILE *stream)
       break;
     case PROC:
       fputs("proc(", stream);
-      show_(term(cell), stream);
+      show_(block(cell), stream);
       fputs(")", stream);
       break;
     case WRAP:
       fputs("wrap(", stream);
       show_(unwrap(cell), stream);
+      fputs(")", stream);
+      break;
+    case CALLCC:
+      fputs("callcc(", stream);
+      show_(term(cell), stream);
+      fputs(")", stream);
+      break;
+    case CONT:
+      fputs("cont(", stream);
+      show_(k(cell), stream);
       fputs(")", stream);
       break;
     default:
@@ -257,35 +291,6 @@ void show(int cell, FILE *stream)
 }
 #endif
 
-int reindex(int cell, int index)
-{
-  int retval;
-  switch (type(cell)) {
-  case VAR:
-    retval = var(idx(cell) + (idx(cell) >= index ? 1 : 0));
-    break;
-  case LAMBDA:
-    retval = lambda(reindex(body(cell), index + 1));
-    break;
-  case CALL:
-    retval = call(reindex(fun(cell), index), reindex(arg(cell), index));
-    break;
-  case PROC:
-    retval = cell;
-    break;
-  default:
-    fprintf(stderr, "Unexpected type '%s' in function 'reindex'!\n", type_id(cell));
-    abort();
-  };
-  return retval;
-}
-
-int up(int cell) { return reindex(cell, 0); }
-
-// (λx y.y) a b; id
-// (λy.y) a; id
-// a; id
-//
 // (+ (* 3 4) 5) -> k: (λ (v) v)              (call/cc (λ (k) (k (+ (* 3 4) 5))))
 // (* 3 4)       -> k: (λ (v) (+ v 5))        (+ (call/cc (λ (k) (k (* 3 4)))) 5)
 // 3             -> k: (λ (v) (+ (* v 4) 5))  (+ (* (call/cc (λ (k) (k 3))) 4) 5)
@@ -293,16 +298,12 @@ int up(int cell) { return reindex(cell, 0); }
 
 // (call/cc (λ (k) (+ (* 3 (k 4)) 5)))) -> 4
 // *(+ (call/cc (λ (k) k)) 5)        3) -> 8
-//
 
-//
-// (+ (call/cc
-//      (λ k.
-
-int eval_(int cell, int env, int cont)
+int eval_(int cell, int env, int cc)
 {
   int retval;
   int quit = 0;
+  int tmp;
   while (!quit) {
     switch (type(cell)) {
     case VAR:
@@ -314,7 +315,7 @@ int eval_(int cell, int env, int cont)
       cell = proc(body(cell), env);
       break;
     case CALL:
-      cont = lambda(call(cont, call(var(0), wrap(arg(cell), env))));
+      cc = cont(call(cc, call(var(0), wrap(arg(cell), env))));
       cell = fun(cell);
       break;
     case WRAP:
@@ -322,29 +323,23 @@ int eval_(int cell, int env, int cont)
       cell = unwrap(cell);
       break;
     case PROC:
-      switch (type(cont)) {
-      case LAMBDA:
-        cont = proc(body(cont), env);
-        break;
-      case CALL:
-        cell = at_(env, idx(fun(arg(cont))));
-        env = pair(arg(arg(cont)), stack(cell));
-        cell = term(cell);
-        cont = fun(cont);
-        break;
-      case PROC:
-        if (cont == id()) {
-          retval = cell;
-          quit = 1;
-        } else {
-          env = pair(cell, stack(cont));
-          cont = term(cont);
-        };
-        break;
-      default:
-        fprintf(stderr, "Unexpected continuation type '%s' in function 'eval_'!\n", type_id(cont));
-        abort();
+      if (is_type(k(cc), VAR)) {
+        retval = cell;
+        quit = 1;
+      } else {
+        env = pair(arg(arg(k(cc))), stack(cell));
+        cell = block(cell);
+        cc = fun(k(cc));
       };
+      break;
+    case CALLCC:
+      env = pair(cc, env);
+      cell = term(cell);
+      break;
+    case CONT:
+      tmp = cell;
+      cell = arg(arg(k(cc)));
+      cc = tmp;
       break;
     default:
       fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
@@ -356,7 +351,7 @@ int eval_(int cell, int env, int cont)
 
 int eval(int cell)
 {
-  return eval_(cell, f(), id());
+  return eval_(cell, f(), cont(var(0)));
 }
 
 int eq(int a, int b)
@@ -376,7 +371,16 @@ int eq(int a, int b)
       retval = eq(fun(a), fun(b)) && eq(arg(a), arg(b));
       break;
     case PROC:
-      retval = eq(term(a), term(b)) && eq(stack(a), stack(b));
+      retval = eq(block(a), block(b)) && eq(stack(a), stack(b));
+      break;
+    case WRAP:
+      retval = eq(unwrap(a), unwrap(b)) && eq(context(a), context(b));
+      break;
+    case CALLCC:
+      retval = eq(term(a), term(b));
+      break;
+    case CONT:
+      retval = eq(k(a), k(b));
       break;
     default:
       assert(0);
@@ -454,7 +458,7 @@ int main(void)
   // procs (closures)
   assert(type(proc(lambda(var(0)), f())) == PROC);
   assert(is_type(proc(lambda(var(0)), f()), PROC));
-  assert_equal(term(proc(var(0), f())), var(0));
+  assert_equal(block(proc(var(0), f())), var(0));
   assert(is_f_(stack(proc(var(0), f()))));
   assert_equal(stack(proc(var(0), pair(t(), f()))), pair(t(), f()));
   // check lazy evaluation
@@ -489,6 +493,18 @@ int main(void)
   assert_equal(eval(call(last, pair(t(), f()))), t());
   assert_equal(eval(call(last, pair(f(), pair(f(), f())))), f());
   assert_equal(eval(call(last, pair(f(), pair(t(), f())))), t());
+  // call/cc (call with current continuation)
+  assert(type(callcc(var(0))) == CALLCC);
+  assert(is_type(callcc(var(0)), CALLCC));
+  assert_equal(term(callcc(var(0))), var(0));
+  // continuation
+  assert(type(cont(var(0))) == CONT);
+  assert(is_type(cont(var(0)), CONT));
+  assert_equal(k(cont(var(0))), var(0));
+  // evaluation of call/cc
+  assert_equal(eval(callcc(f())), f());
+  assert_equal(eval(callcc(call(var(0), f()))), f());
+  assert_equal(eval(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))), f());
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
