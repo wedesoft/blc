@@ -337,9 +337,14 @@ int eval_(int cell, int env, int cc)
       cell = term(cell);
       break;
     case CONT:
-      tmp = cell;
-      cell = arg(arg(k(cc)));
-      cc = tmp;
+      if (is_type(k(cc), VAR)) {
+        retval = cell;
+        quit = 1;
+      } else {
+        tmp = cell;
+        cell = arg(arg(k(cc)));
+        cc = tmp;
+      };
       break;
     default:
       fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
@@ -505,6 +510,8 @@ int main(void)
   assert_equal(eval(callcc(f())), f());
   assert_equal(eval(callcc(call(var(0), f()))), f());
   assert_equal(eval(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))), f());
+  assert_equal(eval(callcc(var(0))), cont(var(0)));
+  assert_equal(eval(call(call(callcc(var(0)), id()), t())), t());
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
