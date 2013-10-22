@@ -134,9 +134,7 @@ int lambda(int body)
   cells[retval].body = body;
   return retval;
 }
-
 int lambda2(int body) { return lambda(lambda(body)); }
-
 int lambda3(int body) { return lambda(lambda(lambda(body))); }
 
 int call(int fun, int arg)
@@ -146,11 +144,8 @@ int call(int fun, int arg)
   cells[retval].call.arg = arg;
   return retval;
 }
-
 int call2(int fun, int arg1, int arg2) { return call(call(fun, arg2), arg1); }
-
 int call3(int fun, int arg1, int arg2, int arg3) { return call(call(call(fun, arg3), arg2), arg1); }
-
 int op_if(int condition, int consequent, int alternative)
 {
   return call2(condition, alternative, consequent);
@@ -198,7 +193,6 @@ int cont(int k)
 
 int f_ = -1;
 int t_ = -1;
-
 int f(void) { return f_; }
 int t(void) { return t_; }
 
@@ -208,14 +202,11 @@ int is_f_(int cell)
 }
 
 int id_ = -1;
-int id(void) { return id_; }
-
 int pair_ = -1;
+int id(void) { return id_; }
 int pair(int first, int rest) { return call2(pair_, first, rest); }
-
 int first_(int list) { return arg(list); }
 int rest_(int list) { return arg(fun(list)); }
-
 int at_(int list, int i)
 {
   if (is_f_(list)) {
@@ -226,16 +217,48 @@ int at_(int list, int i)
 }
 
 int first(int list) { return call(list, t()); }
-
 int rest(int list) { return call(list, f()); }
-
 int empty(int list) { return call2(list, t(), lambda3(f())); }
-
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
 int y_ = -1;
-
 int y_comb(int fun) { return call(y_, lambda(fun)); }
+
+int eq_bool_ = -1;
+int op_not(int a) { return op_if(a, f(), t()); }
+int op_and(int a, int b) { return op_if(a, b, f()); }
+int op_or(int a, int b) { return op_if(a, t(), b); }
+int op_xor(int a, int b) { return op_if(a, op_not(b), b); }
+int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
+
+int int_to_num(int integer)
+{
+  assert(integer >= 0);
+  return integer == 0 ? f() : pair(integer & 0x1 ? t() : f(), int_to_num(integer >> 1));
+}
+
+int num_to_int_(int number)
+{
+  return is_f_(number) ? 0 : (is_f_(first_(number)) ? 0 : 0x1) | num_to_int_(rest_(number)) << 1;
+}
+
+int num_to_int(int number)
+{
+  int eval_num = eval(number);
+  return !is_f(empty(eval_num)) ? 0 : (is_f(first(eval_num)) ? 0 : 0x1) | num_to_int(rest(eval_num)) << 1;
+}
+
+int even_;
+int even(int list) { return call(even_, list); }
+
+int odd_;
+int odd(int list) { return call(odd_, list); }
+
+int shr_;
+int shr(int list) { return call(shr_, list); }
+
+int shl_;
+int shl(int list) { return call(shl_, list); }
 
 #ifndef NDEBUG
 void show_(int cell, FILE *stream)
@@ -290,14 +313,6 @@ void show(int cell, FILE *stream)
   show_(cell, stream); fputc('\n', stream);
 }
 #endif
-
-// (+ (* 3 4) 5) -> k: (λ (v) v)              (call/cc (λ (k) (k (+ (* 3 4) 5))))
-// (* 3 4)       -> k: (λ (v) (+ v 5))        (+ (call/cc (λ (k) (k (* 3 4)))) 5)
-// 3             -> k: (λ (v) (+ (* v 4) 5))  (+ (* (call/cc (λ (k) (k 3))) 4) 5)
-// 5             -> k: (λ (v) (+ (* 3 4) v))  (+ (* 3 4) (call/cc (λ (k) (k 5))))
-
-// (call/cc (λ (k) (+ (* 3 (k 4)) 5)))) -> 4
-// *(+ (call/cc (λ (k) k)) 5)        3) -> 8
 
 int eval_(int cell, int env, int cc)
 {
@@ -359,6 +374,11 @@ int eval(int cell)
   return eval_(cell, f(), cont(var(0)));
 }
 
+int is_f(int cell)
+{
+  return eval(op_if(cell, t(), f())) == f();
+}
+
 int eq(int a, int b)
 {
   int retval;
@@ -410,6 +430,11 @@ void init(void)
   id_ = proc(v0, f());
   pair_ = lambda3(op_if(v0, v1, v2));
   y_ = lambda(call(lambda(call(v1, call(v0, v0))), lambda(call(v1, call(v0, v0)))));
+  eq_bool_ = lambda2(op_if(v0, v1, op_not(v1)));
+  even_ = lambda(op_if(empty(v0), t(), op_not(first(v0))));
+  odd_ = lambda(op_if(empty(v0), f(), first(v0)));
+  shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
+  shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
 };
 
 FILE *tmp_ = NULL;
@@ -446,6 +471,8 @@ int main(void)
   assert(!is_f_(t()));
   assert_equal(eval(f()), f());
   assert_equal(eval(t()), t());
+  assert(is_f(f()));
+  assert(!is_f(t()));
   // conditional
   assert_equal(op_if(var(1), var(2), var(3)), call(call(var(1), var(2)), var(3)));
   // lists (pairs)
@@ -467,37 +494,37 @@ int main(void)
   assert(is_f_(stack(proc(var(0), f()))));
   assert_equal(stack(proc(var(0), pair(t(), f()))), pair(t(), f()));
   // check lazy evaluation
-  assert_equal(eval(call(call(t(), f()), var(123))), f());
-  assert_equal(eval(call(call(f(), var(123)), f())), f());
+  assert(is_f(call(call(t(), f()), var(123))));
+  assert(is_f(call(call(f(), var(123)), f())));
   // identity
-  assert_equal(eval(call(id(), f())), f());
-  assert_equal(eval(call(id(), t())), t());
+  assert(is_f(call(id(), f())));
+  assert(!is_f(call(id(), t())));
   // evaluation of calls
-  assert_equal(eval(call(lambda(var(0)), f())), f());
-  assert_equal(eval(call(lambda(var(0)), t())), t());
-  assert_equal(eval(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), f()), f())), f());
-  assert_equal(eval(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), t()), f())), t());
-  assert_equal(eval(call(lambda(call(lambda(var(1)), f())), f())), f());
-  assert_equal(eval(call(lambda(call(lambda(var(1)), f())), t())), t());
+  assert(is_f(call(lambda(var(0)), f())));
+  assert(!is_f(call(lambda(var(0)), t())));
+  assert(is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), f()), f())));
+  assert(!is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), t()), f())));
+  assert(is_f(call(lambda(call(lambda(var(1)), f())), f())));
+  assert(!is_f(call(lambda(call(lambda(var(1)), f())), t())));
   // if
-  assert_equal(eval(op_if(f(), t(), f())), f());
-  assert_equal(eval(op_if(t(), t(), f())), t());
-  assert_equal(eval(op_if(f(), f(), t())), t());
-  assert_equal(eval(op_if(t(), f(), t())), f());
+  assert(is_f(op_if(f(), t(), f())));
+  assert(!is_f(op_if(t(), t(), f())));
+  assert(!is_f(op_if(f(), f(), t())));
+  assert(is_f(op_if(t(), f(), t())));
   // evaluation of lists (pairs)
-  assert_equal(eval(first(pair(f(), f()))), f());
-  assert_equal(eval(rest(pair(f(), f()))), f());
-  assert_equal(eval(rest(pair(f(), t()))), t());
-  assert_equal(eval(empty(f())), t());
-  assert_equal(eval(empty(pair(f(), f()))), f());
-  assert_equal(eval(at(pair(f(), pair(f(), pair(f(), f()))), 2)), f());
-  assert_equal(eval(at(pair(f(), pair(f(), pair(t(), f()))), 2)), t());
+  assert(is_f(first(pair(f(), f()))));
+  assert(is_f(rest(pair(f(), f()))));
+  assert(!is_f(rest(pair(f(), t()))));
+  assert(!is_f(empty(f())));
+  assert(is_f(empty(pair(f(), f()))));
+  assert(is_f(at(pair(f(), pair(f(), pair(f(), f()))), 2)));
+  assert(!is_f(at(pair(f(), pair(f(), pair(t(), f()))), 2)));
   // Y-combinator
   int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
-  assert_equal(eval(call(last, pair(f(), f()))), f());
-  assert_equal(eval(call(last, pair(t(), f()))), t());
-  assert_equal(eval(call(last, pair(f(), pair(f(), f())))), f());
-  assert_equal(eval(call(last, pair(f(), pair(t(), f())))), t());
+  assert(is_f(call(last, pair(f(), f()))));
+  assert(!is_f(call(last, pair(t(), f()))));
+  assert(is_f(call(last, pair(f(), pair(f(), f())))));
+  assert(!is_f(call(last, pair(f(), pair(t(), f())))));
   // call/cc (call with current continuation)
   assert(type(callcc(var(0))) == CALLCC);
   assert(is_type(callcc(var(0)), CALLCC));
@@ -507,11 +534,50 @@ int main(void)
   assert(is_type(cont(var(0)), CONT));
   assert_equal(k(cont(var(0))), var(0));
   // evaluation of call/cc
-  assert_equal(eval(callcc(f())), f());
-  assert_equal(eval(callcc(call(var(0), f()))), f());
-  assert_equal(eval(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))), f());
+  assert(is_f(callcc(f())));
+  assert(is_f(callcc(call(var(0), f()))));
+  assert(is_f(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))));
   assert_equal(eval(callcc(var(0))), cont(var(0)));
-  assert_equal(eval(call(call(callcc(var(0)), id()), t())), t());
+  assert(!is_f(call(call(callcc(var(0)), id()), t())));
+  assert(is_f(callcc(y_comb(call(var(1), f())))));
+  // boolean 'not'
+  assert(!is_f(op_not(f())));
+  assert(is_f(op_not(t())));
+  // boolean 'and'
+  assert(is_f(op_and(f(), f())));
+  assert(is_f(op_and(f(), t())));
+  assert(is_f(op_and(t(), f())));
+  assert(!is_f(op_and(t(), t())));
+  // boolean 'or'
+  assert(is_f(op_or(f(), f())));
+  assert(!is_f(op_or(f(), t())));
+  assert(!is_f(op_or(t(), f())));
+  assert(!is_f(op_or(t(), t())));
+  // boolean 'xor'
+  assert(is_f(op_xor(f(), f())));
+  assert(!is_f(op_xor(f(), t())));
+  assert(!is_f(op_xor(t(), f())));
+  assert(is_f(op_xor(t(), t())));
+  // boolean '=='
+  assert(!is_f(eq_bool(f(), f())));
+  assert(is_f(eq_bool(f(), t())));
+  assert(is_f(eq_bool(t(), f())));
+  assert(!is_f(eq_bool(t(), t())));
+  // numbers
+  assert(is_f_(int_to_num(0)));
+  assert(!is_f_(at_(int_to_num(1), 0)));
+  assert(is_f_(at_(int_to_num(2), 0)));
+  assert(!is_f_(at_(int_to_num(2), 1)));
+  assert(num_to_int_(int_to_num(123)) == 123);
+  assert(num_to_int(first(pair(int_to_num(123), f()))) == 123);
+  // even and odd numbers
+  assert(is_f(even(int_to_num(77))));
+  assert(!is_f(even(int_to_num(50))));
+  assert(!is_f(odd(int_to_num(77))));
+  assert(is_f(odd(int_to_num(50))));
+  // shift -left and shift-right
+  assert(num_to_int(shl(int_to_num(77))) == 154);
+  assert(num_to_int(shr(int_to_num(77))) == 38);
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
