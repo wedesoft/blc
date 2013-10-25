@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_CELLS 4000000
 
@@ -323,6 +324,8 @@ void show(int cell, FILE *stream)
 }
 #endif
 
+int int_to_num(int integer);
+
 int read_char(int in)
 {
   int retval;
@@ -348,6 +351,7 @@ int eval_(int cell, int env, int cc)
     switch (type(cell)) {
     case VAR:
       // this could be a call, too!
+      // use continuation?
       // cell = eval_(fun(cell), env);
       cell = at_(env, idx(cell));
       break;
@@ -360,7 +364,7 @@ int eval_(int cell, int env, int cc)
       break;
     case WRAP:
       env = context(cell);
-      if (0) // (cache(cell) != cell)
+      if (cache(cell) != cell)
         cell = cache(cell);
       else {
         cc = cont(call(cc, memoize(var(0), cell)));
@@ -457,6 +461,58 @@ int str_to_input(const char *text)
   fputs(text, tmp_);
   rewind(tmp_);
   return input(tmp_);
+}
+
+int str_to_list(const char *str)
+{
+  return *str == '\0' ? f() : pair(int_to_num(*str), str_to_list(str + 1));
+}
+
+#define BUFSIZE 1024
+char buffer[BUFSIZE];
+
+char *list_to_buffer_(int list, char *buffer, int bufsize)
+{
+  if (bufsize <= 1) {
+    fputs("Buffer too small!\n", stderr);
+    abort();
+  };
+  if (is_f_(list))
+    *buffer = '\0';
+  else {
+    *buffer = num_to_int_(first_(list));
+    list_to_buffer_(rest_(list), buffer + 1, bufsize - 1);
+  };
+  return buffer;
+}
+
+const char *list_to_str_(int list) { return list_to_buffer_(list, buffer, BUFSIZE); }
+
+const char *list_to_buffer(int list, char *buffer, int bufsize)
+{
+  if (bufsize <= 1) {
+    fputs("Buffer too small!\n", stderr);
+    abort();
+  };
+  int eval_list = eval(list);
+  if (!is_f(empty(eval_list)))
+    *buffer = '\0';
+  else {
+    *buffer = num_to_int(first(eval_list));
+    list_to_buffer(rest(list), buffer + 1, bufsize - 1);
+  };
+  return buffer;
+}
+
+const char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
+
+void output(int expr, FILE *stream)
+{
+  int list = eval(expr);
+  while (is_f(empty(list))) {
+    fputc(num_to_int(first(list)), stream);
+    list = eval(rest(list));
+  };
 }
 
 int eq(int a, int b)
@@ -578,8 +634,10 @@ int main(void)
   // memoization of values
   int duplicate = eval(call(lambda(pair(var(0), var(0))), f()));
   assert(cache(first_(stack(duplicate))) == first_(stack(duplicate)));
-  show(eval(first(duplicate)), stderr);
+  assert(is_f(eval(first(duplicate))));
   assert(cache(first_(stack(duplicate))) == f());
+  store(first_(stack(duplicate)), t());
+  assert(!is_f(eval(first(duplicate))));
   // procs (closures)
   assert(type(proc(lambda(var(0)), f())) == PROC);
   assert(is_type(proc(lambda(var(0)), f()), PROC));
@@ -680,20 +738,39 @@ int main(void)
   assert(is_type(input(stdin), INPUT));
   assert(file(input(stdin)) == stdin);
   assert(file(used(input(stdin))) == stdin);
-  // str_to_input
+  // convert string to input object
   int in1 = str_to_input("abc");
   assert(fgetc(file(in1)) == 'a');
   assert(fgetc(file(in1)) == 'b');
   assert(fgetc(file(in1)) == 'c');
-  // read_char
+  // read characters from input object
   int in2 = str_to_input("ab");
   assert(num_to_int_(first_(read_char(in2))) == 'a');
   assert(num_to_int_(first_(read_char(rest_(read_char(in2))))) == 'b');
+  assert(is_f_(read_char(rest_(read_char(rest_(read_char(in2)))))));
   // evaluation of input
   int in3 = str_to_input("abc");
   assert(num_to_int(first(in3)) == 'a');
   assert(num_to_int(first(rest(rest(in3)))) == 'c');
   assert(num_to_int(first(rest(in3))) == 'b');
+  assert(is_f(rest(rest(rest(in3)))));
+  // convert string to list
+  int list = str_to_list("abc");
+  assert(num_to_int_(first_(list)) == 'a');
+  assert(num_to_int_(first_(rest_(rest_(list)))) == 'c');
+  assert(num_to_int_(first_(rest_(list))) == 'b');
+  // convert list to string
+  assert(!strcmp(list_to_str_(str_to_list("abc")), "abc"));
+  // convert expression to string
+  assert(!strcmp(list_to_str(call(lambda(pair(var(0), pair(var(0), f()))), int_to_num('x'))), "xx"));
+  // write expression to stream
+  FILE *of = tmpfile();
+  output(str_to_input("xy"), of);
+  rewind(of);
+  assert(fgetc(of) == 'x');
+  assert(fgetc(of) == 'y');
+  assert(fgetc(of) == EOF);
+  fclose(of);
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
