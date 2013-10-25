@@ -1,7 +1,6 @@
 TODO
 ====
 
-* memoization, input
 * use Church numbers for variables?
 * Earley parser bootstrapped in C
 * better garbage collector? reflective?

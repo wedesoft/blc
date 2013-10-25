@@ -24,13 +24,13 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, CALLCC, CONT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, CALLCC, CONT, INPUT } type_t;
 
 typedef struct { int fun; int arg; } call_t;
-
 typedef struct { int block; int stack; } proc_t;
-
 typedef struct { int unwrap; int context; int cache; } wrap_t;
+typedef struct { int value; int target; } memoize_t;
+typedef struct { FILE *file; int used; } input_t;
 
 typedef struct {
   type_t type;
@@ -40,6 +40,8 @@ typedef struct {
     call_t call;
     proc_t proc;
     wrap_t wrap;
+    memoize_t memoize;
+    input_t input;
     int term;
     int k;
   };
@@ -87,8 +89,13 @@ int block(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.block
 int stack(int cell) { assert(is_type(cell, PROC)); return cells[cell].proc.stack; }
 int unwrap(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.unwrap; }
 int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.context; }
+int cache(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.cache; }
+int value(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.value; }
+int target(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.target; }
 int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
 int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
+FILE *file(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.file; }
+int used(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.used; }
 
 const char *type_id(int cell)
 {
@@ -109,11 +116,17 @@ const char *type_id(int cell)
   case WRAP:
     retval = "wrap";
     break;
+  case MEMOIZE:
+    retval = "memoize";
+    break;
   case CALLCC:
     retval = "callcc";
     break;
   case CONT:
     retval = "cont";
+    break;
+  case INPUT:
+    retval = "input()";
     break;
   default:
     assert(0);
@@ -169,11 +182,25 @@ int proc_self(int block)
 
 int wrap(int unwrap, int context)
 {
-  if (is_type(unwrap, WRAP)) return unwrap;
   int retval = cell(WRAP);
   cells[retval].wrap.unwrap = unwrap;
   cells[retval].wrap.context = context;
   cells[retval].wrap.cache = retval;
+  return retval;
+}
+
+int store(int cell, int value)
+{
+  assert(is_type(cell, WRAP));
+  cells[cell].wrap.cache = value;
+  return value;
+}
+
+int memoize(int value, int target)
+{
+  int retval = cell(MEMOIZE);
+  cells[retval].memoize.value = value;
+  cells[retval].memoize.target = target;
   return retval;
 }
 
@@ -188,6 +215,14 @@ int cont(int k)
 {
   int retval = cell(CONT);
   cells[retval].k = k;
+  return retval;
+}
+
+int input(FILE *file)
+{
+  int retval = cell(INPUT);
+  cells[retval].input.file = file;
+  cells[retval].input.used = retval;
   return retval;
 }
 
@@ -231,6 +266,159 @@ int op_or(int a, int b) { return op_if(a, t(), b); }
 int op_xor(int a, int b) { return op_if(a, op_not(b), b); }
 int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
 
+#ifndef NDEBUG
+void show_(int cell, FILE *stream)
+{
+  if (cells[cell].tag)
+    fprintf(stream, "%s", cells[cell].tag);
+  else {
+    switch (type(cell)) {
+    case VAR:
+      fprintf(stream, "var(%d)", idx(cell));
+      break;
+    case LAMBDA:
+      fputs("lambda(", stream);
+      show_(body(cell), stream);
+      fputs(")", stream);
+      break;
+    case CALL:
+      fputs("call(", stream);
+      show_(fun(cell), stream);
+      fputs(", ", stream);
+      show_(arg(cell), stream);
+      fputs(")", stream);
+      break;
+    case PROC:
+      fputs("proc(", stream);
+      show_(block(cell), stream);
+      fputs(")", stream);
+      break;
+    case WRAP:
+      show_(unwrap(cell), stream);
+      break;
+    case MEMOIZE:
+      fputs("memoize(", stream);
+      show_(target(cell), stream);
+      fputs(")", stream);
+      break;
+    case CALLCC:
+      fputs("callcc(", stream);
+      show_(term(cell), stream);
+      fputs(")", stream);
+      break;
+    case CONT:
+      fputs("cont(", stream);
+      show_(k(cell), stream);
+      fputs(")", stream);
+      break;
+    default:
+      assert(0);
+    };
+  };
+}
+
+void show(int cell, FILE *stream)
+{
+  show_(cell, stream); fputc('\n', stream);
+}
+#endif
+
+int read_char(int in)
+{
+  int retval;
+  if (used(in) != in)
+    retval = used(in);
+  else {
+    int c = fgetc(file(in));
+    if (c == EOF)
+      retval = f();
+    else
+      retval = pair(int_to_num(c), input(file(in)));
+    cells[in].input.used = retval;
+  }
+  return retval;
+}
+
+int eval_(int cell, int env, int cc)
+{
+  int retval;
+  int quit = 0;
+  int tmp;
+  while (!quit) {
+    switch (type(cell)) {
+    case VAR:
+      // this could be a call, too!
+      // cell = eval_(fun(cell), env);
+      cell = at_(env, idx(cell));
+      break;
+    case LAMBDA:
+      cell = proc(body(cell), env);
+      break;
+    case CALL:
+      cc = cont(call(cc, call(var(0), wrap(arg(cell), env))));
+      cell = fun(cell);
+      break;
+    case WRAP:
+      env = context(cell);
+      if (0) // (cache(cell) != cell)
+        cell = cache(cell);
+      else {
+        cc = cont(call(cc, memoize(var(0), cell)));
+        cell = unwrap(cell);
+      };
+      break;
+    case PROC:
+      if (is_type(k(cc), VAR)) {
+        retval = cell;
+        quit = 1;
+      } else if (is_type(arg(k(cc)), MEMOIZE)) {
+        store(target(arg(k(cc))), cell);
+        cc = fun(k(cc));
+      } else {
+        env = pair(arg(arg(k(cc))), stack(cell));
+        cell = block(cell);
+        cc = fun(k(cc));
+      };
+      break;
+    case CALLCC:
+      env = pair(cc, env);
+      cell = term(cell);
+      break;
+    case CONT:
+      if (is_type(k(cc), VAR)) {
+        retval = cell;
+        quit = 1;
+      } else {
+        tmp = cell;
+        cell = arg(arg(k(cc)));
+        cc = tmp;
+      };
+      break;
+    case INPUT:
+      if (is_type(k(cc), VAR)) {
+        retval = cell;
+        quit = 1;
+      } else
+        cell = read_char(cell);
+      break;
+    default:
+      fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
+      abort();
+    };
+  };
+  return retval;
+}
+
+int eval(int cell)
+{
+  return eval_(cell, f(), cont(var(0)));
+}
+
+int is_f(int cell)
+{
+  return eval(op_if(cell, t(), f())) == f();
+}
+
 int int_to_num(int integer)
 {
   assert(integer >= 0);
@@ -260,123 +448,15 @@ int shr(int list) { return call(shr_, list); }
 int shl_;
 int shl(int list) { return call(shl_, list); }
 
-#ifndef NDEBUG
-void show_(int cell, FILE *stream)
-{
-  if (cells[cell].tag)
-    fprintf(stream, "%s", cells[cell].tag);
-  else {
-    switch (type(cell)) {
-    case VAR:
-      fprintf(stream, "var(%d)", idx(cell));
-      break;
-    case LAMBDA:
-      fputs("lambda(", stream);
-      show_(body(cell), stream);
-      fputs(")", stream);
-      break;
-    case CALL:
-      fputs("call(", stream);
-      show_(fun(cell), stream);
-      fputs(", ", stream);
-      show_(arg(cell), stream);
-      fputs(")", stream);
-      break;
-    case PROC:
-      fputs("proc(", stream);
-      show_(block(cell), stream);
-      fputs(")", stream);
-      break;
-    case WRAP:
-      fputs("wrap(", stream);
-      show_(unwrap(cell), stream);
-      fputs(")", stream);
-      break;
-    case CALLCC:
-      fputs("callcc(", stream);
-      show_(term(cell), stream);
-      fputs(")", stream);
-      break;
-    case CONT:
-      fputs("cont(", stream);
-      show_(k(cell), stream);
-      fputs(")", stream);
-      break;
-    default:
-      assert(0);
-    };
-  };
-}
+FILE *tmp_ = NULL;
 
-void show(int cell, FILE *stream)
+int str_to_input(const char *text)
 {
-  show_(cell, stream); fputc('\n', stream);
-}
-#endif
-
-int eval_(int cell, int env, int cc)
-{
-  int retval;
-  int quit = 0;
-  int tmp;
-  while (!quit) {
-    switch (type(cell)) {
-    case VAR:
-      // this could be a call, too!
-      // cell = eval_(fun(cell), env);
-      cell = at_(env, idx(cell));
-      break;
-    case LAMBDA:
-      cell = proc(body(cell), env);
-      break;
-    case CALL:
-      cc = cont(call(cc, call(var(0), wrap(arg(cell), env))));
-      cell = fun(cell);
-      break;
-    case WRAP:
-      env = context(cell);
-      cell = unwrap(cell);
-      break;
-    case PROC:
-      if (is_type(k(cc), VAR)) {
-        retval = cell;
-        quit = 1;
-      } else {
-        env = pair(arg(arg(k(cc))), stack(cell));
-        cell = block(cell);
-        cc = fun(k(cc));
-      };
-      break;
-    case CALLCC:
-      env = pair(cc, env);
-      cell = term(cell);
-      break;
-    case CONT:
-      if (is_type(k(cc), VAR)) {
-        retval = cell;
-        quit = 1;
-      } else {
-        tmp = cell;
-        cell = arg(arg(k(cc)));
-        cc = tmp;
-      };
-      break;
-    default:
-      fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
-      abort();
-    };
-  };
-  return retval;
-}
-
-int eval(int cell)
-{
-  return eval_(cell, f(), cont(var(0)));
-}
-
-int is_f(int cell)
-{
-  return eval(op_if(cell, t(), f())) == f();
+  if (tmp_) fclose(tmp_);
+  tmp_ = tmpfile();
+  fputs(text, tmp_);
+  rewind(tmp_);
+  return input(tmp_);
 }
 
 int eq(int a, int b)
@@ -400,6 +480,9 @@ int eq(int a, int b)
       break;
     case WRAP:
       retval = eq(unwrap(a), unwrap(b)) && eq(context(a), context(b));
+      break;
+    case MEMOIZE:
+      retval = eq(value(a), value(b)) && eq(target(a), target(b));
       break;
     case CALLCC:
       retval = eq(term(a), term(b));
@@ -436,8 +519,6 @@ void init(void)
   shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
   shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
 };
-
-FILE *tmp_ = NULL;
 
 void destroy(void)
 {
@@ -487,6 +568,18 @@ int main(void)
   assert(is_type(wrap(var(0), pair(f(), f())), WRAP));
   assert_equal(unwrap(wrap(var(0), pair(f(), f()))), var(0));
   assert_equal(context(wrap(var(0), pair(f(), f()))), pair(f(), f()));
+  int w = wrap(var(0), f()); assert(cache(w) == w);
+  store(w, f()); assert(cache(w) == f());
+  // memoization
+  assert(type(memoize(var(0), wrap(f(), f()))) == MEMOIZE);
+  assert(is_type(memoize(var(0), wrap(f(), f())), MEMOIZE));
+  assert_equal(value(memoize(var(0), wrap(f(), f()))), var(0));
+  assert_equal(target(memoize(var(0), wrap(f(), f()))), wrap(f(), f()));
+  // memoization of values
+  int duplicate = eval(call(lambda(pair(var(0), var(0))), f()));
+  assert(cache(first_(stack(duplicate))) == first_(stack(duplicate)));
+  show(eval(first(duplicate)), stderr);
+  assert(cache(first_(stack(duplicate))) == f());
   // procs (closures)
   assert(type(proc(lambda(var(0)), f())) == PROC);
   assert(is_type(proc(lambda(var(0)), f()), PROC));
@@ -496,6 +589,10 @@ int main(void)
   // check lazy evaluation
   assert(is_f(call(call(t(), f()), var(123))));
   assert(is_f(call(call(f(), var(123)), f())));
+  // Evaluation of variables and functions
+  assert(is_f(wrap(var(0), pair(f(), f()))));
+  assert(!is_f(wrap(var(0), pair(t(), f()))));
+  assert_equal(eval(lambda(var(0))), proc(var(0), f()));
   // identity
   assert(is_f(call(id(), f())));
   assert(!is_f(call(id(), t())));
@@ -506,7 +603,7 @@ int main(void)
   assert(!is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), t()), f())));
   assert(is_f(call(lambda(call(lambda(var(1)), f())), f())));
   assert(!is_f(call(lambda(call(lambda(var(1)), f())), t())));
-  // if
+  // if-statement
   assert(is_f(op_if(f(), t(), f())));
   assert(!is_f(op_if(t(), t(), f())));
   assert(!is_f(op_if(f(), f(), t())));
@@ -578,6 +675,25 @@ int main(void)
   // shift -left and shift-right
   assert(num_to_int(shl(int_to_num(77))) == 154);
   assert(num_to_int(shr(int_to_num(77))) == 38);
+  // input
+  assert(type(input(stdin)) == INPUT);
+  assert(is_type(input(stdin), INPUT));
+  assert(file(input(stdin)) == stdin);
+  assert(file(used(input(stdin))) == stdin);
+  // str_to_input
+  int in1 = str_to_input("abc");
+  assert(fgetc(file(in1)) == 'a');
+  assert(fgetc(file(in1)) == 'b');
+  assert(fgetc(file(in1)) == 'c');
+  // read_char
+  int in2 = str_to_input("ab");
+  assert(num_to_int_(first_(read_char(in2))) == 'a');
+  assert(num_to_int_(first_(read_char(rest_(read_char(in2))))) == 'b');
+  // evaluation of input
+  int in3 = str_to_input("abc");
+  assert(num_to_int(first(in3)) == 'a');
+  assert(num_to_int(first(rest(rest(in3)))) == 'c');
+  assert(num_to_int(first(rest(in3))) == 'b');
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
