@@ -373,12 +373,14 @@ int eval_(int cell, int env, int cc)
       break;
     case PROC:
       if (is_type(k(cc), VAR)) {
+        assert(idx(k(cc)) == 0);
         retval = cell;
         quit = 1;
       } else if (is_type(arg(k(cc)), MEMOIZE)) {
         store(target(arg(k(cc))), cell);
         cc = fun(k(cc));
       } else {
+        assert(idx(fun(arg(k(cc)))) == 0);
         env = pair(arg(arg(k(cc))), stack(cell));
         cell = block(cell);
         cc = fun(k(cc));
@@ -390,9 +392,11 @@ int eval_(int cell, int env, int cc)
       break;
     case CONT:
       if (is_type(k(cc), VAR)) {
+        assert(idx(k(cc)) == 0);
         retval = cell;
         quit = 1;
       } else {
+        assert(idx(fun(arg(k(cc)))) == 0);
         tmp = cell;
         cell = arg(arg(k(cc)));
         cc = tmp;
@@ -400,6 +404,7 @@ int eval_(int cell, int env, int cc)
       break;
     case INPUT:
       if (is_type(k(cc), VAR)) {
+        assert(idx(k(cc)) == 0);
         retval = cell;
         quit = 1;
       } else
