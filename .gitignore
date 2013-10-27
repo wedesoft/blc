@@ -9,7 +9,6 @@
 aclocal.m4
 autom4te.cache
 x
-blc
 blc-*.tar.bz2
 blc-*.tar.gz   
 config.h
@@ -21,18 +20,10 @@ config.sub
 configure
 depcomp
 install-sh
-lambda
-lambda_bison.c
-lambda_bison.h
-lambda_flex.c
 libtool
 ltmain.sh
 Makefile
 Makefile.in
 m4
 missing
-spec_blc
-spec_dsl
-spec_lambda
 stamp-h1
-ylwrap
