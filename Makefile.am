@@ -47,8 +47,7 @@ CLEANFILES = *.gif *.png *~ *.tmp *.html
 
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \
-	libtool config.cache config.h config.h.in acinclude.m4 depcomp \
-	ylwrap
+	libtool config.cache config.h config.h.in acinclude.m4 depcomp
 
 maintainer-clean-local:
 	-rm -rf m4

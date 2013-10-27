@@ -265,7 +265,7 @@ int op_not(int a) { return op_if(a, f(), t()); }
 int op_and(int a, int b) { return op_if(a, b, f()); }
 int op_or(int a, int b) { return op_if(a, t(), b); }
 int op_xor(int a, int b) { return op_if(a, op_not(b), b); }
-int eq_bool(int a, int b) { return op_if(eq_bool_, a, b); }
+int eq_bool(int a, int b) { return call2(eq_bool_, a, b); }
 
 #ifndef NDEBUG
 void show_(int cell, FILE *stream)
@@ -457,6 +457,9 @@ int shr(int list) { return call(shr_, list); }
 int shl_;
 int shl(int list) { return call(shl_, list); }
 
+int eq_list_ = -1;
+int eq_num(int a, int b) { return call3(eq_list_, a, b, eq_bool_); }
+
 FILE *tmp_ = NULL;
 
 int str_to_input(const char *text)
@@ -579,6 +582,12 @@ void init(void)
   odd_ = lambda(op_if(empty(v0), f(), first(v0)));
   shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
   shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
+  eq_list_ = lambda(y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+                    t(),
+                    op_if(op_or(empty(var(0)), empty(var(1))),
+                          f(),
+                          op_and(call2(var(3), first(var(0)), first(var(1))),
+                                 call2(var(2), rest(var(0)), rest(var(1)))))))));
 };
 
 void destroy(void)
@@ -738,6 +747,14 @@ int main(void)
   // shift -left and shift-right
   assert(num_to_int(shl(int_to_num(77))) == 154);
   assert(num_to_int(shr(int_to_num(77))) == 38);
+  // list equality
+  assert(is_f(eq_num(int_to_num(0), int_to_num(1))));
+  assert(is_f(eq_num(int_to_num(1), int_to_num(0))));
+  assert(is_f(eq_num(int_to_num(1), int_to_num(2))));
+  assert(is_f(eq_num(int_to_num(2), int_to_num(1))));
+  assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
+  assert(!is_f(eq_num(int_to_num(1), int_to_num(1))));
+  assert(!is_f(eq_num(int_to_num(2), int_to_num(2))));
   // input
   assert(type(input(stdin)) == INPUT);
   assert(is_type(input(stdin), INPUT));
