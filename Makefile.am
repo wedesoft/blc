@@ -45,6 +45,8 @@ x.tmp: x$(EXEEXT)
 
 CLEANFILES = *.gif *.png *~ *.tmp *.html
 
+DISTCLEANFILES = .*.un~ .*.swp
+
 MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 	install-sh ltmain.sh Makefile.in missing mkinstalldirs stamp-h.in \
 	libtool config.cache config.h config.h.in acinclude.m4 depcomp

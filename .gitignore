@@ -1,6 +1,6 @@
 .deps
-*~
-*.swp
+.*.un~
+.*.swp
 *.o
 *.tmp
 *.html

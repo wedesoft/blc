@@ -1,7 +1,7 @@
 TODO
 ====
 
-* eq_list with eq_elem as argument
+* eq_str, assoc
 * Earley parser bootstrapped in C
 * garbage collector? reflective?
 * meta-circular
