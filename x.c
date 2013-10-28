@@ -461,7 +461,15 @@ int shl_;
 int shl(int list) { return call(shl_, list); }
 
 int eq_list_ = -1;
-int eq_num(int a, int b) { return call3(eq_list_, a, b, eq_bool_); }
+int eq_list(int eq_elem) { return call(eq_list_, eq_elem); }
+int eq_num(int a, int b) { return call2(eq_list(eq_bool_), a, b); }
+
+int assoc_ = -1;
+int assoc(int eq_elem) { return call(assoc_, eq_elem); }
+int assoc_num(int key, int alist)
+{
+  return call2(assoc(eq_list(eq_bool_)), key, alist);
+}
 
 FILE *tmp_ = NULL;
 
@@ -591,6 +599,11 @@ void init(void)
                           f(),
                           op_and(call2(var(3), first(var(0)), first(var(1))),
                                  call2(var(2), rest(var(0)), rest(var(1)))))))));
+  assoc_ = lambda(y_comb(lambda2(op_if(empty(var(1)),
+                  f(),
+                  op_if(call2(var(3), var(0), first(first(var(1)))),
+                        rest(first(var(1))),
+                        call2(var(2), var(0), rest(var(1))))))));
 };
 
 void destroy(void)
@@ -758,6 +771,14 @@ int main(void)
   assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
   assert(!is_f(eq_num(int_to_num(1), int_to_num(1))));
   assert(!is_f(eq_num(int_to_num(2), int_to_num(2))));
+  // Association lists
+  int alist = list3(pair(int_to_num(2), int_to_num(1)),
+                    pair(int_to_num(3), int_to_num(2)),
+                    pair(int_to_num(5), int_to_num(3)));
+  assert(num_to_int(assoc_num(int_to_num(2), alist)) == 1);
+  assert(num_to_int(assoc_num(int_to_num(3), alist)) == 2);
+  assert(num_to_int(assoc_num(int_to_num(5), alist)) == 3);
+  assert(is_f(assoc_num(int_to_num(4), alist)));
   // input
   assert(type(input(stdin)) == INPUT);
   assert(is_type(input(stdin), INPUT));
