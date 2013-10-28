@@ -251,6 +251,9 @@ int at_(int list, int i)
   };
   return i > 0 ? at_(rest_(list), i - 1) : first_(list);
 }
+int list1(int a) { return pair(a, f()); }
+int list2(int a, int b) { return pair(a, list1(b)); }
+int list3(int a, int b, int c) { return pair(a, list2(b, c)); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
@@ -627,17 +630,17 @@ int main(void)
   // conditional
   assert_equal(op_if(var(1), var(2), var(3)), call(call(var(1), var(2)), var(3)));
   // lists (pairs)
-  assert(!is_f_(pair(t(), f())));
-  assert_equal(first_(pair(var(1), f())), var(1));
-  assert(is_f_(rest_(pair(var(1), f()))));
-  assert_equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 0), var(1));
-  assert_equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 1), var(2));
-  assert_equal(at_(pair(var(1), pair(var(2), pair(var(3), f()))), 2), var(3));
+  assert(!is_f_(list1(t())));
+  assert_equal(first_(list1(var(1))), var(1));
+  assert(is_f_(rest_(list1(var(1)))));
+  assert_equal(at_(list3(var(1), var(2), var(3)), 0), var(1));
+  assert_equal(at_(list3(var(1), var(2), var(3)), 1), var(2));
+  assert_equal(at_(list3(var(1), var(2), var(3)), 2), var(3));
   // wraps
-  assert(type(wrap(var(0), pair(f(), f()))) == WRAP);
-  assert(is_type(wrap(var(0), pair(f(), f())), WRAP));
-  assert_equal(unwrap(wrap(var(0), pair(f(), f()))), var(0));
-  assert_equal(context(wrap(var(0), pair(f(), f()))), pair(f(), f()));
+  assert(type(wrap(var(0), list1(f()))) == WRAP);
+  assert(is_type(wrap(var(0), list1(f())), WRAP));
+  assert_equal(unwrap(wrap(var(0), list1(f()))), var(0));
+  assert_equal(context(wrap(var(0), list1(f()))), list1(f()));
   int w = wrap(var(0), f()); assert(cache(w) == w);
   store(w, f()); assert(cache(w) == f());
   // memoization
@@ -657,13 +660,13 @@ int main(void)
   assert(is_type(proc(lambda(var(0)), f()), PROC));
   assert_equal(block(proc(var(0), f())), var(0));
   assert(is_f_(stack(proc(var(0), f()))));
-  assert_equal(stack(proc(var(0), pair(t(), f()))), pair(t(), f()));
+  assert_equal(stack(proc(var(0), list1(t()))), list1(t()));
   // check lazy evaluation
   assert(is_f(call(call(t(), f()), var(123))));
   assert(is_f(call(call(f(), var(123)), f())));
   // Evaluation of variables and functions
-  assert(is_f(wrap(var(0), pair(f(), f()))));
-  assert(!is_f(wrap(var(0), pair(t(), f()))));
+  assert(is_f(wrap(var(0), list1(f()))));
+  assert(!is_f(wrap(var(0), list1(t()))));
   assert_equal(eval(lambda(var(0))), proc(var(0), f()));
   // identity
   assert(is_f(call(id(), f())));
@@ -681,19 +684,19 @@ int main(void)
   assert(!is_f(op_if(f(), f(), t())));
   assert(is_f(op_if(t(), f(), t())));
   // evaluation of lists (pairs)
-  assert(is_f(first(pair(f(), f()))));
-  assert(is_f(rest(pair(f(), f()))));
+  assert(is_f(first(list1(f()))));
+  assert(is_f(rest(list1(f()))));
   assert(!is_f(rest(pair(f(), t()))));
   assert(!is_f(empty(f())));
-  assert(is_f(empty(pair(f(), f()))));
-  assert(is_f(at(pair(f(), pair(f(), pair(f(), f()))), 2)));
-  assert(!is_f(at(pair(f(), pair(f(), pair(t(), f()))), 2)));
+  assert(is_f(empty(list1(f()))));
+  assert(is_f(at(list3(f(), f(), f()), 2)));
+  assert(!is_f(at(list3(f(), f(), t()), 2)));
   // Y-combinator
   int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
-  assert(is_f(call(last, pair(f(), f()))));
-  assert(!is_f(call(last, pair(t(), f()))));
-  assert(is_f(call(last, pair(f(), pair(f(), f())))));
-  assert(!is_f(call(last, pair(f(), pair(t(), f())))));
+  assert(is_f(call(last, list1(f()))));
+  assert(!is_f(call(last, list1(t()))));
+  assert(is_f(call(last, list2(f(), f()))));
+  assert(!is_f(call(last, list2(f(), t()))));
   // call/cc (call with current continuation)
   assert(type(callcc(var(0))) == CALLCC);
   assert(is_type(callcc(var(0)), CALLCC));
@@ -738,7 +741,7 @@ int main(void)
   assert(is_f_(at_(int_to_num(2), 0)));
   assert(!is_f_(at_(int_to_num(2), 1)));
   assert(num_to_int_(int_to_num(123)) == 123);
-  assert(num_to_int(first(pair(int_to_num(123), f()))) == 123);
+  assert(num_to_int(first(list1(int_to_num(123)))) == 123);
   // even and odd numbers
   assert(is_f(even(int_to_num(77))));
   assert(!is_f(even(int_to_num(50))));
@@ -784,7 +787,7 @@ int main(void)
   // convert list to string
   assert(!strcmp(list_to_str_(str_to_list("abc")), "abc"));
   // convert expression to string
-  assert(!strcmp(list_to_str(call(lambda(pair(var(0), pair(var(0), f()))), int_to_num('x'))), "xx"));
+  assert(!strcmp(list_to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
   // write expression to stream
   FILE *of = tmpfile();
   output(str_to_input("xy"), of);
