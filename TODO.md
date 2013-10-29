@@ -1,9 +1,9 @@
 TODO
 ====
 
-* UTF-8 strings
+* objects
 * Earley parser bootstrapped in C
-* garbage collector? reflective?
 * meta-circular
+* UTF-8 strings
 * JIT
 * ffi

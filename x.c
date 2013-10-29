@@ -510,20 +510,14 @@ int eq_num(int a, int b) { return call2(eq_num_, a, b); }
 int eq_str_ = -1;
 int eq_str(int a, int b) { return call2(eq_str_, a, b); }
 
-int assoc_ = -1;
-int assoc(int eq_elem) { return call(assoc_, eq_elem); }
-int assoc_bool(int alist, int key)
+int lookup_ = -1;
+int lookup(int alist, int eq_elem, int other)
 {
-  return call2(assoc(eq_bool_), alist, key);
+  return call3(lookup_, alist, eq_elem, other);
 }
-int assoc_num(int alist, int key)
-{
-  return call2(assoc(eq_num_), alist, key);
-}
-int assoc_str(int alist, int key)
-{
-  return call2(assoc(eq_str_), alist, key);
-}
+int lookup_bool(int alist, int other) { return lookup(alist, eq_bool_, other); }
+int lookup_num(int alist, int other) { return lookup(alist, eq_num_, other); }
+int lookup_str(int alist, int other) { return lookup(alist, eq_str_, other); }
 
 FILE *tmp_ = NULL;
 
@@ -612,11 +606,11 @@ void init(void)
                                  call2(var(2), rest(var(0)), rest(var(1)))))))));
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
-  assoc_ = lambda(y_comb(lambda2(op_if(empty(var(0)),
-                  f(),
-                  op_if(call2(var(3), first(first(var(0))), var(1)),
-                        rest(first(var(0))),
-                        call2(var(2), rest(var(0)), var(1)))))));
+  lookup_ = lambda2(y_comb(lambda2(op_if(empty(var(1)),
+                    var(4),
+                    op_if(call2(var(3), first(first(var(1))), var(0)),
+                          rest(first(var(1))),
+                          call2(var(2), var(0), rest(var(1))))))));
 };
 
 void destroy(void)
@@ -799,26 +793,27 @@ int main(void)
   assert(is_f(eq_str(str_to_list("abc"), str_to_list("ab"))));
   assert(!is_f(eq_str(str_to_list("abc"), str_to_list("abc"))));
   // association list with booleans
-  int alist1 = list2(pair(t(), int_to_num(1)),
-                     pair(f(), int_to_num(0)));
-  assert(num_to_int(assoc_bool(alist1, f())) == 0);
-  assert(num_to_int(assoc_bool(alist1, t())) == 1);
+  int alist1 = lookup_bool(list2(pair(t(), int_to_num(1)),
+                                 pair(f(), int_to_num(0))),
+                           f());
+  assert(num_to_int(call(alist1, f())) == 0);
+  assert(num_to_int(call(alist1, t())) == 1);
   // association list with numbers
-  int alist2 = list3(pair(int_to_num(2), int_to_num(1)),
-                     pair(int_to_num(3), int_to_num(2)),
-                     pair(int_to_num(5), int_to_num(3)));
-  assert(num_to_int(assoc_num(alist2, int_to_num(2))) == 1);
-  assert(num_to_int(assoc_num(alist2, int_to_num(3))) == 2);
-  assert(num_to_int(assoc_num(alist2, int_to_num(5))) == 3);
-  assert(is_f(assoc_num(alist2, int_to_num(4))));
+  int alist2 = lookup_num(list3(pair(int_to_num(2), int_to_num(1)),
+                                pair(int_to_num(3), int_to_num(2)),
+                                pair(int_to_num(5), int_to_num(3))),
+                          int_to_num(0));
+  assert(num_to_int(call(alist2, int_to_num(2))) == 1);
+  assert(num_to_int(call(alist2, int_to_num(3))) == 2);
+  assert(num_to_int(call(alist2, int_to_num(5))) == 3);
+  assert(num_to_int(call(alist2, int_to_num(4))) == 0);
   // association list with strings
-  int alist3 = list3(pair(str_to_list("Jan"), int_to_num(31)),
-                     pair(str_to_list("Feb"), int_to_num(28)),
-                     pair(str_to_list("Apr"), int_to_num(30)));
-  assert(num_to_int(assoc_str(alist3, str_to_list("Jan"))) == 31);
-  assert(num_to_int(assoc_str(alist3, str_to_list("Feb"))) == 28);
-  assert(num_to_int(assoc_str(alist3, str_to_list("Apr"))) == 30);
-  assert(is_f(assoc_num(alist3, str_to_list("Mar"))));
+  int alist3 = lookup_str(list2(pair(str_to_list("Jan"), int_to_num(31)),
+                                pair(str_to_list("Feb"), int_to_num(28))),
+                          int_to_num(30));
+  assert(num_to_int(call(alist3, str_to_list("Jan"))) == 31);
+  assert(num_to_int(call(alist3, str_to_list("Feb"))) == 28);
+  assert(num_to_int(call(alist3, str_to_list("Mar"))) == 30);
   // input
   assert(type(input(stdin)) == INPUT);
   assert(is_type(input(stdin), INPUT));
