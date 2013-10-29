@@ -460,28 +460,6 @@ int shr(int list) { return call(shr_, list); }
 int shl_;
 int shl(int list) { return call(shl_, list); }
 
-int eq_list_ = -1;
-int eq_list(int eq_elem) { return call(eq_list_, eq_elem); }
-int eq_num(int a, int b) { return call2(eq_list(eq_bool_), a, b); }
-
-int assoc_ = -1;
-int assoc(int eq_elem) { return call(assoc_, eq_elem); }
-int assoc_num(int key, int alist)
-{
-  return call2(assoc(eq_list(eq_bool_)), key, alist);
-}
-
-FILE *tmp_ = NULL;
-
-int str_to_input(const char *text)
-{
-  if (tmp_) fclose(tmp_);
-  tmp_ = tmpfile();
-  fputs(text, tmp_);
-  rewind(tmp_);
-  return input(tmp_);
-}
-
 int str_to_list(const char *str)
 {
   return *str == '\0' ? f() : pair(int_to_num(*str), str_to_list(str + 1));
@@ -524,6 +502,39 @@ const char *list_to_buffer(int list, char *buffer, int bufsize)
 }
 
 const char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
+
+int eq_list_ = -1;
+int eq_list(int eq_elem) { return call(eq_list_, eq_elem); }
+int eq_num_ = -1;
+int eq_num(int a, int b) { return call2(eq_num_, a, b); }
+int eq_str_ = -1;
+int eq_str(int a, int b) { return call2(eq_str_, a, b); }
+
+int assoc_ = -1;
+int assoc(int eq_elem) { return call(assoc_, eq_elem); }
+int assoc_bool(int key, int alist)
+{
+  return call2(assoc(eq_bool_), key, alist);
+}
+int assoc_num(int key, int alist)
+{
+  return call2(assoc(eq_num_), key, alist);
+}
+int assoc_str(int key, int alist)
+{
+  return call2(assoc(eq_str_), key, alist);
+}
+
+FILE *tmp_ = NULL;
+
+int str_to_input(const char *text)
+{
+  if (tmp_) fclose(tmp_);
+  tmp_ = tmpfile();
+  fputs(text, tmp_);
+  rewind(tmp_);
+  return input(tmp_);
+}
 
 void output(int expr, FILE *stream)
 {
@@ -599,6 +610,8 @@ void init(void)
                           f(),
                           op_and(call2(var(3), first(var(0)), first(var(1))),
                                  call2(var(2), rest(var(0)), rest(var(1)))))))));
+  eq_num_ = eq_list(eq_bool_);
+  eq_str_ = eq_list(eq_num_);
   assoc_ = lambda(y_comb(lambda2(op_if(empty(var(1)),
                   f(),
                   op_if(call2(var(3), var(0), first(first(var(1)))),
@@ -763,6 +776,15 @@ int main(void)
   // shift -left and shift-right
   assert(num_to_int(shl(int_to_num(77))) == 154);
   assert(num_to_int(shr(int_to_num(77))) == 38);
+  // convert string to list
+  int list = str_to_list("abc");
+  assert(num_to_int_(first_(list)) == 'a');
+  assert(num_to_int_(first_(rest_(rest_(list)))) == 'c');
+  assert(num_to_int_(first_(rest_(list))) == 'b');
+  // convert list to string
+  assert(!strcmp(list_to_str_(str_to_list("abc")), "abc"));
+  // convert expression to string
+  assert(!strcmp(list_to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
   // list equality
   assert(is_f(eq_num(int_to_num(0), int_to_num(1))));
   assert(is_f(eq_num(int_to_num(1), int_to_num(0))));
@@ -771,14 +793,32 @@ int main(void)
   assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
   assert(!is_f(eq_num(int_to_num(1), int_to_num(1))));
   assert(!is_f(eq_num(int_to_num(2), int_to_num(2))));
-  // Association lists
-  int alist = list3(pair(int_to_num(2), int_to_num(1)),
-                    pair(int_to_num(3), int_to_num(2)),
-                    pair(int_to_num(5), int_to_num(3)));
-  assert(num_to_int(assoc_num(int_to_num(2), alist)) == 1);
-  assert(num_to_int(assoc_num(int_to_num(3), alist)) == 2);
-  assert(num_to_int(assoc_num(int_to_num(5), alist)) == 3);
-  assert(is_f(assoc_num(int_to_num(4), alist)));
+  // string equality
+  assert(is_f(eq_str(str_to_list("abc"), str_to_list("apc"))));
+  assert(is_f(eq_str(str_to_list("ab"), str_to_list("abc"))));
+  assert(is_f(eq_str(str_to_list("abc"), str_to_list("ab"))));
+  assert(!is_f(eq_str(str_to_list("abc"), str_to_list("abc"))));
+  // association list with booleans
+  int alist1 = list2(pair(t(), int_to_num(1)),
+                     pair(f(), int_to_num(0)));
+  assert(num_to_int(assoc_bool(f(), alist1)) == 0);
+  assert(num_to_int(assoc_bool(t(), alist1)) == 1);
+  // association list with numbers
+  int alist2 = list3(pair(int_to_num(2), int_to_num(1)),
+                     pair(int_to_num(3), int_to_num(2)),
+                     pair(int_to_num(5), int_to_num(3)));
+  assert(num_to_int(assoc_num(int_to_num(2), alist2)) == 1);
+  assert(num_to_int(assoc_num(int_to_num(3), alist2)) == 2);
+  assert(num_to_int(assoc_num(int_to_num(5), alist2)) == 3);
+  assert(is_f(assoc_num(int_to_num(4), alist2)));
+  // association list with strings
+  int alist3 = list3(pair(str_to_list("Jan"), int_to_num(31)),
+                     pair(str_to_list("Feb"), int_to_num(28)),
+                     pair(str_to_list("Apr"), int_to_num(30)));
+  assert(num_to_int(assoc_str(str_to_list("Jan"), alist3)) == 31);
+  assert(num_to_int(assoc_str(str_to_list("Feb"), alist3)) == 28);
+  assert(num_to_int(assoc_str(str_to_list("Apr"), alist3)) == 30);
+  assert(is_f(assoc_num(str_to_list("Mar"), alist3)));
   // input
   assert(type(input(stdin)) == INPUT);
   assert(is_type(input(stdin), INPUT));
@@ -800,15 +840,6 @@ int main(void)
   assert(num_to_int(first(rest(rest(in3)))) == 'c');
   assert(num_to_int(first(rest(in3))) == 'b');
   assert(is_f(rest(rest(rest(in3)))));
-  // convert string to list
-  int list = str_to_list("abc");
-  assert(num_to_int_(first_(list)) == 'a');
-  assert(num_to_int_(first_(rest_(rest_(list)))) == 'c');
-  assert(num_to_int_(first_(rest_(list))) == 'b');
-  // convert list to string
-  assert(!strcmp(list_to_str_(str_to_list("abc")), "abc"));
-  // convert expression to string
-  assert(!strcmp(list_to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
   // write expression to stream
   FILE *of = tmpfile();
   output(str_to_input("xy"), of);
