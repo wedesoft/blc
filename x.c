@@ -380,12 +380,8 @@ int read_stream(int in)
 
 int read_string(int str)
 {
-  int retval;
-  if (*string(str) == '\0')
-    retval = f();
-  else
-    retval = pair(from_int(*string(str)), from_str(string(str) + 1));
-  return retval;
+  char c = *string(str);
+  return c == '\0' ? f() : pair(from_int(c), from_str(string(str) + 1));
 }
 
 int read_integer(int cell)
