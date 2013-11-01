@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CELLS 4000000
+#define MAX_CELLS 1000000
+#define MAX_FILES 1000
 
 typedef enum { VAR,
                LAMBDA,
@@ -521,7 +522,6 @@ int lookup_bool(int alist, int other) { return lookup(alist, eq_bool_, other); }
 int lookup_num(int alist, int other) { return lookup(alist, eq_num_, other); }
 int lookup_str(int alist, int other) { return lookup(alist, eq_str_, other); }
 
-#define MAX_FILES 10
 FILE *tmp_[MAX_FILES];
 
 int from_str(const char *text)
@@ -864,6 +864,13 @@ int main(void)
   assert(fgetc(of) == 'y');
   assert(fgetc(of) == EOF);
   fclose(of);
+  // classes
+  int fc = lookup_str(list1(pair(from_str("inspect"), from_str("false"))),
+                      f());
+  int tc = lookup_str(list1(pair(from_str("inspect"), from_str("true"))),
+                      f());
+  assert(!strcmp(to_str(call(fc, from_str("inspect"))), "false"));
+  assert(!strcmp(to_str(call(tc, from_str("inspect"))), "true"));
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
