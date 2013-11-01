@@ -768,6 +768,11 @@ int main(void)
   assert(is_f(eq_bool(t(), f())));
   assert(!is_f(eq_bool(t(), t())));
   // numbers
+  int x = from_int(2);
+  assert(is_f_(first_(read_integer(x))));
+  assert(intval(rest_(read_integer(x))) == 1);
+  assert(!is_f(first_(read_integer(rest_(read_integer(x))))));
+  assert(is_f(read_integer(rest_(read_integer(rest_(read_integer(x)))))));
   assert(is_f(from_int(0)));
   assert(!is_f(at(from_int(1), 0)));
   assert(is_f(at(from_int(2), 0)));
@@ -783,6 +788,10 @@ int main(void)
   assert(to_int(shl(from_int(77))) == 154);
   assert(to_int(shr(from_int(77))) == 38);
   // convert expression to string
+  int str = from_str("ab");
+  assert(to_int(first(read_stream(str))) == 'a');
+  assert(to_int(first(read_stream(rest_(read_stream(str))))) == 'b');
+  assert(is_f(read_stream(rest_(read_stream(rest_(read_stream(str)))))));
   assert(!strcmp(to_str(from_str("abc")), "abc"));
   assert(!strcmp(to_str(call(lambda(list2(var(0), var(0))), from_int('x'))), "xx"));
   // list equality
