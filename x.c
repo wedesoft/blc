@@ -868,10 +868,12 @@ int main(void)
   // classes
   int fc = lookup_str(list1(pair(from_str("inspect"), from_str("false"))),
                       f());
-  int tc = lookup_str(list1(pair(from_str("inspect"), from_str("true"))),
+  int tc = lookup_str(list2(pair(from_str("inspect"), from_str("true")),
+                            pair(from_str("not"), fc)),
                       f());
   assert(!strcmp(to_str(call(fc, from_str("inspect"))), "false"));
   assert(!strcmp(to_str(call(tc, from_str("inspect"))), "true"));
+  assert(!strcmp(to_str(call(call(tc, from_str("not")), from_str("inspect"))), "false"));
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
