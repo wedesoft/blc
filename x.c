@@ -25,13 +25,13 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, CALLCC, CONT, INPUT } type_t;
+typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, CALLCC, CONT, IFSTREAM } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 typedef struct { int block; int stack; } proc_t;
 typedef struct { int unwrap; int context; int cache; } wrap_t;
 typedef struct { int value; int target; } memoize_t;
-typedef struct { FILE *file; int used; } input_t;
+typedef struct { FILE *file; int used; } ifstream_t;
 
 typedef struct {
   type_t type;
@@ -42,7 +42,7 @@ typedef struct {
     proc_t proc;
     wrap_t wrap;
     memoize_t memoize;
-    input_t input;
+    ifstream_t ifstream;
     int term;
     int k;
   };
@@ -95,8 +95,8 @@ int value(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize
 int target(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.target; }
 int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
 int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
-FILE *file(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.file; }
-int used(int cell) { assert(is_type(cell, INPUT)); return cells[cell].input.used; }
+FILE *file(int cell) { assert(is_type(cell, IFSTREAM)); return cells[cell].ifstream.file; }
+int used(int cell) { assert(is_type(cell, IFSTREAM)); return cells[cell].ifstream.used; }
 
 const char *type_id(int cell)
 {
@@ -126,8 +126,8 @@ const char *type_id(int cell)
   case CONT:
     retval = "cont";
     break;
-  case INPUT:
-    retval = "input()";
+  case IFSTREAM:
+    retval = "ifstream()";
     break;
   default:
     assert(0);
@@ -219,11 +219,11 @@ int cont(int k)
   return retval;
 }
 
-int input(FILE *file)
+int from_file(FILE *file)
 {
-  int retval = cell(INPUT);
-  cells[retval].input.file = file;
-  cells[retval].input.used = retval;
+  int retval = cell(IFSTREAM);
+  cells[retval].ifstream.file = file;
+  cells[retval].ifstream.used = retval;
   return retval;
 }
 
@@ -339,8 +339,8 @@ int read_char(int in)
     if (c == EOF)
       retval = f();
     else
-      retval = pair(int_to_num(c), input(file(in)));
-    cells[in].input.used = retval;
+      retval = pair(int_to_num(c), from_file(file(in)));
+    cells[in].ifstream.used = retval;
   }
   return retval;
 }
@@ -405,7 +405,7 @@ int eval_(int cell, int env, int cc)
         cc = tmp;
       };
       break;
-    case INPUT:
+    case IFSTREAM:
       if (is_type(k(cc), VAR)) {
         assert(idx(k(cc)) == 0);
         retval = cell;
@@ -460,32 +460,10 @@ int shr(int list) { return call(shr_, list); }
 int shl_;
 int shl(int list) { return call(shl_, list); }
 
-int str_to_list(const char *str)
-{
-  return *str == '\0' ? f() : pair(int_to_num(*str), str_to_list(str + 1));
-}
-
 #define BUFSIZE 1024
 char buffer[BUFSIZE];
 
-char *list_to_buffer_(int list, char *buffer, int bufsize)
-{
-  if (bufsize <= 1) {
-    fputs("Buffer too small!\n", stderr);
-    abort();
-  };
-  if (is_f_(list))
-    *buffer = '\0';
-  else {
-    *buffer = num_to_int_(first_(list));
-    list_to_buffer_(rest_(list), buffer + 1, bufsize - 1);
-  };
-  return buffer;
-}
-
-const char *list_to_str_(int list) { return list_to_buffer_(list, buffer, BUFSIZE); }
-
-const char *list_to_buffer(int list, char *buffer, int bufsize)
+const char *to_buffer(int list, char *buffer, int bufsize)
 {
   if (bufsize <= 1) {
     fputs("Buffer too small!\n", stderr);
@@ -496,12 +474,12 @@ const char *list_to_buffer(int list, char *buffer, int bufsize)
     *buffer = '\0';
   else {
     *buffer = num_to_int(first(eval_list));
-    list_to_buffer(rest(list), buffer + 1, bufsize - 1);
+    to_buffer(rest(list), buffer + 1, bufsize - 1);
   };
   return buffer;
 }
 
-const char *list_to_str(int list) { return list_to_buffer(list, buffer, BUFSIZE); }
+const char *to_str(int list) { return to_buffer(list, buffer, BUFSIZE); }
 
 int eq_list_ = -1;
 int eq_list(int eq_elem) { return call(eq_list_, eq_elem); }
@@ -519,15 +497,21 @@ int lookup_bool(int alist, int other) { return lookup(alist, eq_bool_, other); }
 int lookup_num(int alist, int other) { return lookup(alist, eq_num_, other); }
 int lookup_str(int alist, int other) { return lookup(alist, eq_str_, other); }
 
-FILE *tmp_ = NULL;
+#define MAX_FILES 10
+FILE *tmp_[MAX_FILES];
 
-int str_to_input(const char *text)
+int from_str(const char *text)
 {
-  if (tmp_) fclose(tmp_);
-  tmp_ = tmpfile();
-  fputs(text, tmp_);
-  rewind(tmp_);
-  return input(tmp_);
+  FILE *h = tmp_[0];
+  if (h) fclose(h);
+  h = tmpfile();
+  fputs(text, h);
+  rewind(h);
+  int i;
+  for (i=0; i<MAX_FILES - 1; i++)
+    tmp_[i] = tmp_[i + 1];
+  tmp_[MAX_FILES - 1] = h;
+  return from_file(h);
 }
 
 void output(int expr, FILE *stream)
@@ -585,6 +569,8 @@ int eq(int a, int b)
 
 void init(void)
 {
+  int i;
+  for (i=0; i<MAX_FILES; i++) tmp_[i] = NULL;
   int v0 = var(0);
   int v1 = var(1);
   int v2 = var(2);
@@ -615,8 +601,11 @@ void init(void)
 
 void destroy(void)
 {
-  if (tmp_) fclose(tmp_);
-  tmp_ = NULL;
+  int i;
+  for (i=0; i<MAX_FILES; i++) {
+    if (tmp_[i]) fclose(tmp_[i]);
+    tmp_[i] = NULL;
+  };
 }
 
 int main(void)
@@ -770,15 +759,9 @@ int main(void)
   // shift -left and shift-right
   assert(num_to_int(shl(int_to_num(77))) == 154);
   assert(num_to_int(shr(int_to_num(77))) == 38);
-  // convert string to list
-  int list = str_to_list("abc");
-  assert(num_to_int_(first_(list)) == 'a');
-  assert(num_to_int_(first_(rest_(rest_(list)))) == 'c');
-  assert(num_to_int_(first_(rest_(list))) == 'b');
-  // convert list to string
-  assert(!strcmp(list_to_str_(str_to_list("abc")), "abc"));
   // convert expression to string
-  assert(!strcmp(list_to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
+  assert(!strcmp(to_str(from_str("abc")), "abc"));
+  assert(!strcmp(to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
   // list equality
   assert(is_f(eq_num(int_to_num(0), int_to_num(1))));
   assert(is_f(eq_num(int_to_num(1), int_to_num(0))));
@@ -788,10 +771,10 @@ int main(void)
   assert(!is_f(eq_num(int_to_num(1), int_to_num(1))));
   assert(!is_f(eq_num(int_to_num(2), int_to_num(2))));
   // string equality
-  assert(is_f(eq_str(str_to_list("abc"), str_to_list("apc"))));
-  assert(is_f(eq_str(str_to_list("ab"), str_to_list("abc"))));
-  assert(is_f(eq_str(str_to_list("abc"), str_to_list("ab"))));
-  assert(!is_f(eq_str(str_to_list("abc"), str_to_list("abc"))));
+  assert(is_f(eq_str(from_str("abc"), from_str("apc"))));
+  assert(is_f(eq_str(from_str("ab"), from_str("abc"))));
+  assert(is_f(eq_str(from_str("abc"), from_str("ab"))));
+  assert(!is_f(eq_str(from_str("abc"), from_str("abc"))));
   // association list with booleans
   int alist1 = lookup_bool(list2(pair(t(), int_to_num(1)),
                                  pair(f(), int_to_num(0))),
@@ -808,36 +791,36 @@ int main(void)
   assert(num_to_int(call(alist2, int_to_num(5))) == 3);
   assert(num_to_int(call(alist2, int_to_num(4))) == 0);
   // association list with strings
-  int alist3 = lookup_str(list2(pair(str_to_list("Jan"), int_to_num(31)),
-                                pair(str_to_list("Feb"), int_to_num(28))),
+  int alist3 = lookup_str(list2(pair(from_str("Jan"), int_to_num(31)),
+                                pair(from_str("Feb"), int_to_num(28))),
                           int_to_num(30));
-  assert(num_to_int(call(alist3, str_to_list("Jan"))) == 31);
-  assert(num_to_int(call(alist3, str_to_list("Feb"))) == 28);
-  assert(num_to_int(call(alist3, str_to_list("Mar"))) == 30);
-  // input
-  assert(type(input(stdin)) == INPUT);
-  assert(is_type(input(stdin), INPUT));
-  assert(file(input(stdin)) == stdin);
-  assert(file(used(input(stdin))) == stdin);
+  assert(num_to_int(call(alist3, from_str("Jan"))) == 31);
+  assert(num_to_int(call(alist3, from_str("Feb"))) == 28);
+  assert(num_to_int(call(alist3, from_str("Mar"))) == 30);
+  // input file stream
+  assert(type(from_file(stdin)) == IFSTREAM);
+  assert(is_type(from_file(stdin), IFSTREAM));
+  assert(file(from_file(stdin)) == stdin);
+  assert(file(used(from_file(stdin))) == stdin);
   // convert string to input object
-  int in1 = str_to_input("abc");
+  int in1 = from_str("abc");
   assert(fgetc(file(in1)) == 'a');
   assert(fgetc(file(in1)) == 'b');
   assert(fgetc(file(in1)) == 'c');
   // read characters from input object
-  int in2 = str_to_input("ab");
+  int in2 = from_str("ab");
   assert(num_to_int_(first_(read_char(in2))) == 'a');
   assert(num_to_int_(first_(read_char(rest_(read_char(in2))))) == 'b');
   assert(is_f_(read_char(rest_(read_char(rest_(read_char(in2)))))));
   // evaluation of input
-  int in3 = str_to_input("abc");
+  int in3 = from_str("abc");
   assert(num_to_int(first(in3)) == 'a');
   assert(num_to_int(first(rest(rest(in3)))) == 'c');
   assert(num_to_int(first(rest(in3))) == 'b');
   assert(is_f(rest(rest(rest(in3)))));
   // write expression to stream
   FILE *of = tmpfile();
-  output(str_to_input("xy"), of);
+  output(from_str("xy"), of);
   rewind(of);
   assert(fgetc(of) == 'x');
   assert(fgetc(of) == 'y');
