@@ -7,3 +7,4 @@ TODO
 * UTF-8 strings
 * JIT
 * ffi
+* persistence

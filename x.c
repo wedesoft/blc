@@ -281,8 +281,9 @@ int rest(int list) { return call(list, f()); }
 int empty(int list) { return call2(list, t(), lambda3(f())); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
 
-int y_ = -1;
-int y_comb(int fun) { return call(y_, lambda(fun)); }
+// Y-combinator
+int recursive_ = -1;
+int recursive(int fun) { return call(recursive_, lambda(fun)); }
 
 int eq_bool_ = -1;
 int op_not(int a) { return op_if(a, f(), t()); }
@@ -585,11 +586,6 @@ int eq(int a, int b)
   return retval;
 }
 
-#define assert_equal(a, b) \
-  ((void) (eq(a, b) ? 0 : __assert_equal(#a, #b, __FILE__, __LINE__)))
-#define __assert_equal(a, b, file, line) \
-  ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
-
 void init(void)
 {
   int i;
@@ -601,13 +597,14 @@ void init(void)
   t_ = proc(lambda(v1), f());
   id_ = proc(v0, f());
   pair_ = lambda3(op_if(v0, v1, v2));
-  y_ = lambda(call(lambda(call(v1, call(v0, v0))), lambda(call(v1, call(v0, v0)))));
+  recursive_ = lambda(call(lambda(call(v1, call(v0, v0))),
+                           lambda(call(v1, call(v0, v0)))));
   eq_bool_ = lambda2(op_if(v0, v1, op_not(v1)));
   even_ = lambda(op_if(empty(v0), t(), op_not(first(v0))));
   odd_ = lambda(op_if(empty(v0), f(), first(v0)));
   shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
   shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
-  eq_list_ = lambda(y_comb(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+  eq_list_ = lambda(recursive(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
                     t(),
                     op_if(op_or(empty(var(0)), empty(var(1))),
                           f(),
@@ -615,7 +612,7 @@ void init(void)
                                  call2(var(2), rest(var(0)), rest(var(1)))))))));
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
-  lookup_ = lambda2(y_comb(lambda2(op_if(empty(var(1)),
+  lookup_ = lambda2(recursive(lambda2(op_if(empty(var(1)),
                     var(4),
                     op_if(call2(var(3), first(first(var(1))), var(0)),
                           rest(first(var(1))),
@@ -630,6 +627,11 @@ void destroy(void)
     tmp_[i] = NULL;
   };
 }
+
+#define assert_equal(a, b) \
+  ((void) (eq(a, b) ? 0 : __assert_equal(#a, #b, __FILE__, __LINE__)))
+#define __assert_equal(a, b, file, line) \
+  ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
 
 int main(void)
 {
@@ -724,7 +726,7 @@ int main(void)
   assert(is_f(at(list3(f(), f(), f()), 2)));
   assert(!is_f(at(list3(f(), f(), t()), 2)));
   // Y-combinator
-  int last = y_comb(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
+  int last = recursive(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
   assert(is_f(call(last, list1(f()))));
   assert(!is_f(call(last, list1(t()))));
   assert(is_f(call(last, list2(f(), f()))));
@@ -743,7 +745,7 @@ int main(void)
   assert(is_f(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))));
   assert_equal(eval(callcc(var(0))), cont(var(0)));
   assert(!is_f(call(call(callcc(var(0)), id()), t())));
-  assert(is_f(callcc(y_comb(call(var(1), f())))));
+  assert(is_f(callcc(recursive(call(var(1), f())))));
   // boolean 'not'
   assert(!is_f(op_not(f())));
   assert(is_f(op_not(t())));
