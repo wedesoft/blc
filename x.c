@@ -25,13 +25,22 @@
 
 #define MAX_CELLS 4000000
 
-typedef enum { VAR, LAMBDA, CALL, PROC, WRAP, MEMOIZE, CALLCC, CONT, IFSTREAM } type_t;
+typedef enum { VAR,
+               LAMBDA,
+               CALL,
+               PROC,
+               WRAP,
+               MEMOIZE,
+               CALLCC,
+               CONT,
+               ISTREAM,
+               INTEGER } type_t;
 
 typedef struct { int fun; int arg; } call_t;
 typedef struct { int block; int stack; } proc_t;
 typedef struct { int unwrap; int context; int cache; } wrap_t;
 typedef struct { int value; int target; } memoize_t;
-typedef struct { FILE *file; int used; } ifstream_t;
+typedef struct { FILE *file; int used; } istream_t;
 
 typedef struct {
   type_t type;
@@ -42,9 +51,10 @@ typedef struct {
     proc_t proc;
     wrap_t wrap;
     memoize_t memoize;
-    ifstream_t ifstream;
+    istream_t istream;
     int term;
     int k;
+    int integer;
   };
 #ifndef NDEBUG
   const char *tag;
@@ -95,8 +105,9 @@ int value(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize
 int target(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.target; }
 int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
 int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
-FILE *file(int cell) { assert(is_type(cell, IFSTREAM)); return cells[cell].ifstream.file; }
-int used(int cell) { assert(is_type(cell, IFSTREAM)); return cells[cell].ifstream.used; }
+FILE *file(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.file; }
+int used(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.used; }
+int intval(int cell) { assert(is_type(cell, INTEGER)); return cells[cell].integer; }
 
 const char *type_id(int cell)
 {
@@ -126,8 +137,11 @@ const char *type_id(int cell)
   case CONT:
     retval = "cont";
     break;
-  case IFSTREAM:
-    retval = "ifstream()";
+  case ISTREAM:
+    retval = "istream";
+    break;
+  case INTEGER:
+    retval = "integer";
     break;
   default:
     assert(0);
@@ -221,9 +235,16 @@ int cont(int k)
 
 int from_file(FILE *file)
 {
-  int retval = cell(IFSTREAM);
-  cells[retval].ifstream.file = file;
-  cells[retval].ifstream.used = retval;
+  int retval = cell(ISTREAM);
+  cells[retval].istream.file = file;
+  cells[retval].istream.used = retval;
+  return retval;
+}
+
+int from_int(int integer)
+{
+  int retval = cell(INTEGER);
+  cells[retval].integer = integer;
   return retval;
 }
 
@@ -327,9 +348,7 @@ void show(int cell, FILE *stream)
 }
 #endif
 
-int int_to_num(int integer);
-
-int read_char(int in)
+int read_stream(int in)
 {
   int retval;
   if (used(in) != in)
@@ -339,10 +358,17 @@ int read_char(int in)
     if (c == EOF)
       retval = f();
     else
-      retval = pair(int_to_num(c), from_file(file(in)));
-    cells[in].ifstream.used = retval;
+      retval = pair(from_int(c), from_file(file(in)));
+    cells[in].istream.used = retval;
   }
   return retval;
+}
+
+int read_integer(int cell)
+{
+  int value = intval(cell);
+  assert(value >= 0);
+  return value == 0 ? f() : pair(value & 0x1 ? t() : f(), from_int(value >> 1));
 }
 
 int eval_(int cell, int env, int cc)
@@ -405,13 +431,21 @@ int eval_(int cell, int env, int cc)
         cc = tmp;
       };
       break;
-    case IFSTREAM:
+    case ISTREAM:
       if (is_type(k(cc), VAR)) {
         assert(idx(k(cc)) == 0);
         retval = cell;
         quit = 1;
       } else
-        cell = read_char(cell);
+        cell = read_stream(cell);
+      break;
+    case INTEGER:
+      if (is_type(k(cc), VAR)) {
+        assert(idx(k(cc)) == 0);
+        retval = cell;
+        quit = 1;
+      } else
+        cell = read_integer(cell);
       break;
     default:
       fprintf(stderr, "Unexpected expression type '%s' in function 'eval_'!\n", type_id(cell));
@@ -431,21 +465,10 @@ int is_f(int cell)
   return eval(op_if(cell, t(), f())) == f();
 }
 
-int int_to_num(int integer)
-{
-  assert(integer >= 0);
-  return integer == 0 ? f() : pair(integer & 0x1 ? t() : f(), int_to_num(integer >> 1));
-}
-
-int num_to_int_(int number)
-{
-  return is_f_(number) ? 0 : (is_f_(first_(number)) ? 0 : 0x1) | num_to_int_(rest_(number)) << 1;
-}
-
-int num_to_int(int number)
+int to_int(int number)
 {
   int eval_num = eval(number);
-  return !is_f(empty(eval_num)) ? 0 : (is_f(first(eval_num)) ? 0 : 0x1) | num_to_int(rest(eval_num)) << 1;
+  return !is_f(empty(eval_num)) ? 0 : (is_f(first(eval_num)) ? 0 : 0x1) | to_int(rest(eval_num)) << 1;
 }
 
 int even_;
@@ -473,7 +496,7 @@ const char *to_buffer(int list, char *buffer, int bufsize)
   if (!is_f(empty(eval_list)))
     *buffer = '\0';
   else {
-    *buffer = num_to_int(first(eval_list));
+    *buffer = to_int(first(eval_list));
     to_buffer(rest(list), buffer + 1, bufsize - 1);
   };
   return buffer;
@@ -518,7 +541,7 @@ void output(int expr, FILE *stream)
 {
   int list = eval(expr);
   while (is_f(empty(list))) {
-    fputc(num_to_int(first(list)), stream);
+    fputc(to_int(first(list)), stream);
     list = eval(rest(list));
   };
 }
@@ -745,63 +768,67 @@ int main(void)
   assert(is_f(eq_bool(t(), f())));
   assert(!is_f(eq_bool(t(), t())));
   // numbers
-  assert(is_f_(int_to_num(0)));
-  assert(!is_f_(at_(int_to_num(1), 0)));
-  assert(is_f_(at_(int_to_num(2), 0)));
-  assert(!is_f_(at_(int_to_num(2), 1)));
-  assert(num_to_int_(int_to_num(123)) == 123);
-  assert(num_to_int(first(list1(int_to_num(123)))) == 123);
+  assert(is_f(from_int(0)));
+  assert(!is_f(at(from_int(1), 0)));
+  assert(is_f(at(from_int(2), 0)));
+  assert(!is_f(at(from_int(2), 1)));
+  assert(to_int(from_int(123)) == 123);
+  assert(to_int(first(list1(from_int(123)))) == 123);
   // even and odd numbers
-  assert(is_f(even(int_to_num(77))));
-  assert(!is_f(even(int_to_num(50))));
-  assert(!is_f(odd(int_to_num(77))));
-  assert(is_f(odd(int_to_num(50))));
+  assert(is_f(even(from_int(77))));
+  assert(!is_f(even(from_int(50))));
+  assert(!is_f(odd(from_int(77))));
+  assert(is_f(odd(from_int(50))));
   // shift -left and shift-right
-  assert(num_to_int(shl(int_to_num(77))) == 154);
-  assert(num_to_int(shr(int_to_num(77))) == 38);
+  assert(to_int(shl(from_int(77))) == 154);
+  assert(to_int(shr(from_int(77))) == 38);
   // convert expression to string
   assert(!strcmp(to_str(from_str("abc")), "abc"));
-  assert(!strcmp(to_str(call(lambda(list2(var(0), var(0))), int_to_num('x'))), "xx"));
+  assert(!strcmp(to_str(call(lambda(list2(var(0), var(0))), from_int('x'))), "xx"));
   // list equality
-  assert(is_f(eq_num(int_to_num(0), int_to_num(1))));
-  assert(is_f(eq_num(int_to_num(1), int_to_num(0))));
-  assert(is_f(eq_num(int_to_num(1), int_to_num(2))));
-  assert(is_f(eq_num(int_to_num(2), int_to_num(1))));
-  assert(!is_f(eq_num(int_to_num(0), int_to_num(0))));
-  assert(!is_f(eq_num(int_to_num(1), int_to_num(1))));
-  assert(!is_f(eq_num(int_to_num(2), int_to_num(2))));
+  assert(is_f(eq_num(from_int(0), from_int(1))));
+  assert(is_f(eq_num(from_int(1), from_int(0))));
+  assert(is_f(eq_num(from_int(1), from_int(2))));
+  assert(is_f(eq_num(from_int(2), from_int(1))));
+  assert(!is_f(eq_num(from_int(0), from_int(0))));
+  assert(!is_f(eq_num(from_int(1), from_int(1))));
+  assert(!is_f(eq_num(from_int(2), from_int(2))));
   // string equality
   assert(is_f(eq_str(from_str("abc"), from_str("apc"))));
   assert(is_f(eq_str(from_str("ab"), from_str("abc"))));
   assert(is_f(eq_str(from_str("abc"), from_str("ab"))));
   assert(!is_f(eq_str(from_str("abc"), from_str("abc"))));
   // association list with booleans
-  int alist1 = lookup_bool(list2(pair(t(), int_to_num(1)),
-                                 pair(f(), int_to_num(0))),
+  int alist1 = lookup_bool(list2(pair(t(), from_int(1)),
+                                 pair(f(), from_int(0))),
                            f());
-  assert(num_to_int(call(alist1, f())) == 0);
-  assert(num_to_int(call(alist1, t())) == 1);
+  assert(to_int(call(alist1, f())) == 0);
+  assert(to_int(call(alist1, t())) == 1);
   // association list with numbers
-  int alist2 = lookup_num(list3(pair(int_to_num(2), int_to_num(1)),
-                                pair(int_to_num(3), int_to_num(2)),
-                                pair(int_to_num(5), int_to_num(3))),
-                          int_to_num(0));
-  assert(num_to_int(call(alist2, int_to_num(2))) == 1);
-  assert(num_to_int(call(alist2, int_to_num(3))) == 2);
-  assert(num_to_int(call(alist2, int_to_num(5))) == 3);
-  assert(num_to_int(call(alist2, int_to_num(4))) == 0);
+  int alist2 = lookup_num(list3(pair(from_int(2), from_int(1)),
+                                pair(from_int(3), from_int(2)),
+                                pair(from_int(5), from_int(3))),
+                          from_int(0));
+  assert(to_int(call(alist2, from_int(2))) == 1);
+  assert(to_int(call(alist2, from_int(3))) == 2);
+  assert(to_int(call(alist2, from_int(5))) == 3);
+  assert(to_int(call(alist2, from_int(4))) == 0);
   // association list with strings
-  int alist3 = lookup_str(list2(pair(from_str("Jan"), int_to_num(31)),
-                                pair(from_str("Feb"), int_to_num(28))),
-                          int_to_num(30));
-  assert(num_to_int(call(alist3, from_str("Jan"))) == 31);
-  assert(num_to_int(call(alist3, from_str("Feb"))) == 28);
-  assert(num_to_int(call(alist3, from_str("Mar"))) == 30);
+  int alist3 = lookup_str(list2(pair(from_str("Jan"), from_int(31)),
+                                pair(from_str("Feb"), from_int(28))),
+                          from_int(30));
+  assert(to_int(call(alist3, from_str("Jan"))) == 31);
+  assert(to_int(call(alist3, from_str("Feb"))) == 28);
+  assert(to_int(call(alist3, from_str("Mar"))) == 30);
   // input file stream
-  assert(type(from_file(stdin)) == IFSTREAM);
-  assert(is_type(from_file(stdin), IFSTREAM));
+  assert(type(from_file(stdin)) == ISTREAM);
+  assert(is_type(from_file(stdin), ISTREAM));
   assert(file(from_file(stdin)) == stdin);
   assert(file(used(from_file(stdin))) == stdin);
+  // integers
+  assert(type(from_int(5)) == INTEGER);
+  assert(is_type(from_int(5), INTEGER));
+  assert(intval(from_int(5)) == 5);
   // convert string to input object
   int in1 = from_str("abc");
   assert(fgetc(file(in1)) == 'a');
@@ -809,14 +836,14 @@ int main(void)
   assert(fgetc(file(in1)) == 'c');
   // read characters from input object
   int in2 = from_str("ab");
-  assert(num_to_int_(first_(read_char(in2))) == 'a');
-  assert(num_to_int_(first_(read_char(rest_(read_char(in2))))) == 'b');
-  assert(is_f_(read_char(rest_(read_char(rest_(read_char(in2)))))));
+  assert(to_int(first(read_stream(in2))) == 'a');
+  assert(to_int(first(read_stream(rest_(read_stream(in2))))) == 'b');
+  assert(is_f(read_stream(rest_(read_stream(rest_(read_stream(in2)))))));
   // evaluation of input
   int in3 = from_str("abc");
-  assert(num_to_int(first(in3)) == 'a');
-  assert(num_to_int(first(rest(rest(in3)))) == 'c');
-  assert(num_to_int(first(rest(in3))) == 'b');
+  assert(to_int(first(in3)) == 'a');
+  assert(to_int(first(rest(rest(in3)))) == 'c');
+  assert(to_int(first(rest(in3))) == 'b');
   assert(is_f(rest(rest(rest(in3)))));
   // write expression to stream
   FILE *of = tmpfile();
