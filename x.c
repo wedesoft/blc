@@ -24,7 +24,6 @@
 #include <string.h>
 
 #define MAX_CELLS 1000000
-#define MAX_FILES 1000
 
 typedef enum { VAR,
                LAMBDA,
@@ -35,6 +34,7 @@ typedef enum { VAR,
                CALLCC,
                CONT,
                ISTREAM,
+               STRING,
                INTEGER } type_t;
 
 typedef struct { int fun; int arg; } call_t;
@@ -53,6 +53,7 @@ typedef struct {
     wrap_t wrap;
     memoize_t memoize;
     istream_t istream;
+    const char *string;
     int term;
     int k;
     int integer;
@@ -108,6 +109,7 @@ int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
 int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
 FILE *file(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.file; }
 int used(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.used; }
+const char *string(int cell) { assert(is_type(cell, STRING)); return cells[cell].string; }
 int intval(int cell) { assert(is_type(cell, INTEGER)); return cells[cell].integer; }
 
 const char *type_id(int cell)
@@ -140,6 +142,9 @@ const char *type_id(int cell)
     break;
   case ISTREAM:
     retval = "istream";
+    break;
+  case STRING:
+    retval = "string";
     break;
   case INTEGER:
     retval = "integer";
@@ -239,6 +244,13 @@ int from_file(FILE *file)
   int retval = cell(ISTREAM);
   cells[retval].istream.file = file;
   cells[retval].istream.used = retval;
+  return retval;
+}
+
+int from_str(const char *string)
+{
+  int retval = cell(STRING);
+  cells[retval].string = string;
   return retval;
 }
 
@@ -366,6 +378,16 @@ int read_stream(int in)
   return retval;
 }
 
+int read_string(int str)
+{
+  int retval;
+  if (*string(str) == '\0')
+    retval = f();
+  else
+    retval = pair(from_int(*string(str)), from_str(string(str) + 1));
+  return retval;
+}
+
 int read_integer(int cell)
 {
   int value = intval(cell);
@@ -440,6 +462,14 @@ int eval_(int cell, int env, int cc)
         quit = 1;
       } else
         cell = read_stream(cell);
+      break;
+    case STRING:
+      if (is_type(k(cc), VAR)) {
+        assert(idx(k(cc)) == 0);
+        retval = cell;
+        quit = 1;
+      } else
+        cell = read_string(cell);
       break;
     case INTEGER:
       if (is_type(k(cc), VAR)) {
@@ -522,22 +552,6 @@ int lookup_bool(int alist, int other) { return lookup(alist, eq_bool_, other); }
 int lookup_num(int alist, int other) { return lookup(alist, eq_num_, other); }
 int lookup_str(int alist, int other) { return lookup(alist, eq_str_, other); }
 
-FILE *tmp_[MAX_FILES];
-
-int from_str(const char *text)
-{
-  FILE *h = tmp_[0];
-  if (h) fclose(h);
-  h = tmpfile();
-  fputs(text, h);
-  rewind(h);
-  int i;
-  for (i=0; i<MAX_FILES - 1; i++)
-    tmp_[i] = tmp_[i + 1];
-  tmp_[MAX_FILES - 1] = h;
-  return from_file(h);
-}
-
 void output(int expr, FILE *stream)
 {
   int list = eval(expr);
@@ -588,8 +602,6 @@ int eq(int a, int b)
 
 void init(void)
 {
-  int i;
-  for (i=0; i<MAX_FILES; i++) tmp_[i] = NULL;
   int v0 = var(0);
   int v1 = var(1);
   int v2 = var(2);
@@ -621,11 +633,6 @@ void init(void)
 
 void destroy(void)
 {
-  int i;
-  for (i=0; i<MAX_FILES; i++) {
-    if (tmp_[i]) fclose(tmp_[i]);
-    tmp_[i] = NULL;
-  };
 }
 
 #define assert_equal(a, b) \
@@ -789,11 +796,12 @@ int main(void)
   // shift -left and shift-right
   assert(to_int(shl(from_int(77))) == 154);
   assert(to_int(shr(from_int(77))) == 38);
-  // convert expression to string
+  // strings
   int str = from_str("ab");
-  assert(to_int(first(read_stream(str))) == 'a');
-  assert(to_int(first(read_stream(rest_(read_stream(str))))) == 'b');
-  assert(is_f(read_stream(rest_(read_stream(rest_(read_stream(str)))))));
+  assert(to_int(first_(read_string(str))) == 'a');
+  assert(to_int(first_(read_string(rest_(read_string(str))))) == 'b');
+  assert(is_f(read_string(rest_(read_string(rest_(read_string(str)))))));
+  // evaluation of string expressions
   assert(!strcmp(to_str(from_str("abc")), "abc"));
   assert(!strcmp(to_str(call(lambda(list2(var(0), var(0))), from_int('x'))), "xx"));
   // list equality
@@ -836,20 +844,17 @@ int main(void)
   assert(is_type(from_file(stdin), ISTREAM));
   assert(file(from_file(stdin)) == stdin);
   assert(file(used(from_file(stdin))) == stdin);
+  int in1 = from_file(tmpfile());
+  fputs("ab", file(in1));
+  rewind(file(in1));
+  assert(to_int(first_(read_stream(in1))) == 'a');
+  assert(to_int(first_(read_stream(rest_(read_stream(in1))))) == 'b');
+  assert(is_f(read_stream(rest_(read_stream(rest_(read_stream(in1)))))));
+  fclose(file(in1));
   // integers
   assert(type(from_int(5)) == INTEGER);
   assert(is_type(from_int(5), INTEGER));
   assert(intval(from_int(5)) == 5);
-  // convert string to input object
-  int in1 = from_str("abc");
-  assert(fgetc(file(in1)) == 'a');
-  assert(fgetc(file(in1)) == 'b');
-  assert(fgetc(file(in1)) == 'c');
-  // read characters from input object
-  int in2 = from_str("ab");
-  assert(to_int(first(read_stream(in2))) == 'a');
-  assert(to_int(first(read_stream(rest_(read_stream(in2))))) == 'b');
-  assert(is_f(read_stream(rest_(read_stream(rest_(read_stream(in2)))))));
   // evaluation of input
   int in3 = from_str("abc");
   assert(to_int(first(in3)) == 'a');
