@@ -636,6 +636,8 @@ void destroy(void)
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
 
+int send(int obj, const char *msg) { return call(obj, from_str(msg)); }
+
 int main(void)
 {
   init();
@@ -871,9 +873,9 @@ int main(void)
   int tc = lookup_str(list2(pair(from_str("inspect"), from_str("true")),
                             pair(from_str("not"), fc)),
                       f());
-  assert(!strcmp(to_str(call(fc, from_str("inspect"))), "false"));
-  assert(!strcmp(to_str(call(tc, from_str("inspect"))), "true"));
-  assert(!strcmp(to_str(call(call(tc, from_str("not")), from_str("inspect"))), "false"));
+  assert(!strcmp(to_str(send(fc, "inspect")), "false"));
+  assert(!strcmp(to_str(send(tc, "inspect")), "true"));
+  assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
