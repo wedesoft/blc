@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CELLS 1000000
+#define MAX_CELLS 8000000
 
 typedef enum { VAR,
                LAMBDA,
@@ -288,6 +288,7 @@ int at_(int list, int i)
 int list1(int a) { return pair(a, f()); }
 int list2(int a, int b) { return pair(a, list1(b)); }
 int list3(int a, int b, int c) { return pair(a, list2(b, c)); }
+int list4(int a, int b, int c, int d) { return pair(a, list3(b, c, d)); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
@@ -636,7 +637,15 @@ void destroy(void)
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
 
-int send(int obj, const char *msg) { return call(obj, from_str(msg)); }
+int send(int obj, const char *msg)
+{
+  return call(obj, from_str(msg));
+}
+
+int send1(int obj, const char *msg, int arg)
+{
+  return call(call(obj, from_str(msg)), arg);
+}
 
 int main(void)
 {
@@ -868,14 +877,37 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
-  int fc = lookup_str(list1(pair(from_str("inspect"), from_str("false"))),
-                      f());
-  int tc = lookup_str(list2(pair(from_str("inspect"), from_str("true")),
-                            pair(from_str("not"), fc)),
-                      f());
+  int fc_ = lambda(lookup_str(
+        list4(pair(from_str("inspect"), from_str("false")),
+              pair(from_str("not"), send(var(0), "true")),
+              pair(from_str("and"), lambda(send(var(1), "false"))),
+              pair(from_str("or"), lambda(var(0)))),
+        f()));
+  int tc_ = lambda(lookup_str(
+        list4(pair(from_str("inspect"), from_str("true")),
+              pair(from_str("not"), send(var(0), "false")),
+              pair(from_str("and"), lambda(var(0))),
+              pair(from_str("or"), lambda(send(var(1), "true")))),
+        f()));
+  int env = recursive(lookup_str(
+        list2(pair(from_str("false"), call(fc_, var(0))),
+              pair(from_str("true"), call(tc_, var(0)))),
+        f()));
+  int fc = eval(send(env, "false"));
+  int tc = eval(send(env, "true"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
   assert(!strcmp(to_str(send(tc, "inspect")), "true"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send(fc, "not"), "inspect")), "true"));
+  assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send1(fc, "and", fc), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send1(fc, "and", tc), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send1(tc, "and", fc), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send1(tc, "and", tc), "inspect")), "true"));
+  assert(!strcmp(to_str(send(send1(fc, "or", fc), "inspect")), "false"));
+  assert(!strcmp(to_str(send(send1(fc, "or", tc), "inspect")), "true"));
+  assert(!strcmp(to_str(send(send1(tc, "or", fc), "inspect")), "true"));
+  assert(!strcmp(to_str(send(send1(tc, "or", tc), "inspect")), "true"));
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
