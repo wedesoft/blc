@@ -289,6 +289,7 @@ int list1(int a) { return pair(a, f()); }
 int list2(int a, int b) { return pair(a, list1(b)); }
 int list3(int a, int b, int c) { return pair(a, list2(b, c)); }
 int list4(int a, int b, int c, int d) { return pair(a, list3(b, c, d)); }
+int list5(int a, int b, int c, int d, int e) { return pair(a, list4(b, c, d, e)); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
@@ -877,26 +878,36 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
+  int oc_ = lambda(lookup_str(
+        list1(pair(from_str("inspect"), from_str("Object"))),
+        f()));
   int fc_ = lambda(lookup_str(
-        list4(pair(from_str("inspect"), from_str("false")),
+        list5(pair(from_str("superclass"), send(var(0), "Object")),
+              pair(from_str("inspect"), from_str("false")),
               pair(from_str("not"), send(var(0), "true")),
               pair(from_str("and"), lambda(send(var(1), "false"))),
               pair(from_str("or"), lambda(var(0)))),
         f()));
   int tc_ = lambda(lookup_str(
-        list4(pair(from_str("inspect"), from_str("true")),
+        list5(pair(from_str("superclass"), send(var(0), "Object")),
+              pair(from_str("inspect"), from_str("true")),
               pair(from_str("not"), send(var(0), "false")),
               pair(from_str("and"), lambda(var(0))),
               pair(from_str("or"), lambda(send(var(1), "true")))),
         f()));
   int env = recursive(lookup_str(
-        list2(pair(from_str("false"), call(fc_, var(0))),
+        list3(pair(from_str("Object"), call(oc_, var(0))),
+              pair(from_str("false"), call(fc_, var(0))),
               pair(from_str("true"), call(tc_, var(0)))),
         f()));
+  int oc = eval(send(env, "Object"));
   int fc = eval(send(env, "false"));
   int tc = eval(send(env, "true"));
+  assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
   assert(!strcmp(to_str(send(tc, "inspect")), "true"));
+  assert(!strcmp(to_str(send(send(fc, "superclass"), "inspect")), "Object"));
+  assert(!strcmp(to_str(send(send(tc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
   assert(!strcmp(to_str(send(send(fc, "not"), "inspect")), "true"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
