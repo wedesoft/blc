@@ -653,6 +653,11 @@ int methods(int alist, int other)
   return lookup(alist, eq_str_, other);
 }
 
+int method(const char *name, int body)
+{
+  return pair(from_str(name), lambda(body));
+}
+
 int send(int self, const char *msg)
 {
   return call(call(self, from_str(msg)), self);
@@ -899,22 +904,22 @@ int main(void)
   fclose(of);
   // classes
   int oc_ = lambda(recursive(methods(
-    list2(pair(from_str("inspect"), lambda(from_str("Object"))),
-          pair(from_str("to_s"), lambda(send(var(0), "inspect")))),
+    list2(method("inspect", from_str("Object")),
+          method("to_s", send(var(0), "inspect"))),
     lambda(f()))));
   int fc_ = lambda(recursive(methods(
-    list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
-          pair(from_str("inspect"), lambda(from_str("false"))),
-          pair(from_str("not"), lambda(call(var(2), from_str("true")))),
-          pair(from_str("and"), lambda2(var(1))),
-          pair(from_str("or"), lambda2(var(0)))),
+    list5(method("superclass", call(var(2), from_str("Object"))),
+          method("inspect", from_str("false")),
+          method("not", call(var(2), from_str("true"))),
+          method("and", lambda(var(1))),
+          method("or", lambda(var(0)))),
     lambda(call(superclass(var(1)), var(0))))));
   int tc_ = lambda(recursive(methods(
-    list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
-          pair(from_str("inspect"), lambda(from_str("true"))),
-          pair(from_str("not"), lambda(call(var(2), from_str("false")))),
-          pair(from_str("and"), lambda2(var(0))),
-          pair(from_str("or"), lambda2(var(1)))),
+    list5(method("superclass", call(var(2), from_str("Object"))),
+          method("inspect", from_str("true")),
+          method("not", call(var(2), from_str("false"))),
+          method("and", lambda(var(0))),
+          method("or", lambda(var(1)))),
     lambda(call(superclass(var(1)), var(0))))));
   int env = recursive(lookup_str(
     list3(pair(from_str("Object"), call(oc_, var(0))),
