@@ -660,7 +660,7 @@ int send(int self, const char *msg)
 
 int send1(int self, const char *msg, int arg)
 {
-  return call2(call(self, from_str(msg)), self, arg);
+  return call(send(self, msg), arg);
 }
 
 int superclass(int self)
@@ -906,15 +906,15 @@ int main(void)
     list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
           pair(from_str("inspect"), lambda(from_str("false"))),
           pair(from_str("not"), lambda(call(var(2), from_str("true")))),
-          pair(from_str("and"), lambda2(var(0))),
-          pair(from_str("or"), lambda2(var(1)))),
+          pair(from_str("and"), lambda2(var(1))),
+          pair(from_str("or"), lambda2(var(0)))),
     lambda(call(superclass(var(1)), var(0))))));
   int tc_ = lambda(recursive(methods(
     list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
           pair(from_str("inspect"), lambda(from_str("true"))),
           pair(from_str("not"), lambda(call(var(2), from_str("false")))),
-          pair(from_str("and"), lambda2(var(1))),
-          pair(from_str("or"), lambda2(var(0)))),
+          pair(from_str("and"), lambda2(var(0))),
+          pair(from_str("or"), lambda2(var(1)))),
     lambda(call(superclass(var(1)), var(0))))));
   int env = recursive(lookup_str(
     list3(pair(from_str("Object"), call(oc_, var(0))),
