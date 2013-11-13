@@ -653,14 +653,19 @@ int methods(int alist, int other)
   return lookup(alist, eq_str_, other);
 }
 
-int send(int obj, const char *msg)
+int send(int self, const char *msg)
 {
-  return call(obj, from_str(msg));
+  return call(call(self, from_str(msg)), self);
 }
 
-int send1(int obj, const char *msg, int arg)
+int send1(int self, const char *msg, int arg)
 {
-  return call(call(obj, from_str(msg)), arg);
+  return call2(call(self, from_str(msg)), self, arg);
+}
+
+int superclass(int self)
+{
+  return send(self, "superclass");
 }
 
 int main(void)
@@ -894,33 +899,37 @@ int main(void)
   fclose(of);
   // classes
   int oc_ = lambda(recursive(methods(
-        list1(pair(from_str("inspect"), from_str("Object"))),
-        lambda(f()))));
+    list2(pair(from_str("inspect"), lambda(from_str("Object"))),
+          pair(from_str("to_s"), lambda(send(var(0), "inspect")))),
+    lambda(f()))));
   int fc_ = lambda(recursive(methods(
-        list5(pair(from_str("superclass"), send(var(1), "Object")),
-              pair(from_str("inspect"), from_str("false")),
-              pair(from_str("not"), send(var(1), "true")),
-              pair(from_str("and"), lambda(var(1))),
-              pair(from_str("or"), lambda(var(0)))),
-        lambda(call(send(var(1), "superclass"), var(0))))));
+    list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
+          pair(from_str("inspect"), lambda(from_str("false"))),
+          pair(from_str("not"), lambda(call(var(2), from_str("true")))),
+          pair(from_str("and"), lambda2(var(0))),
+          pair(from_str("or"), lambda2(var(1)))),
+    lambda(call(superclass(var(1)), var(0))))));
   int tc_ = lambda(recursive(methods(
-        list5(pair(from_str("superclass"), send(var(1), "Object")),
-              pair(from_str("inspect"), from_str("true")),
-              pair(from_str("not"), send(var(1), "false")),
-              pair(from_str("and"), lambda(var(0))),
-              pair(from_str("or"), lambda(var(1)))),
-        lambda(call(send(var(1), "superclass"), var(0))))));
+    list5(pair(from_str("superclass"), lambda(call(var(2), from_str("Object")))),
+          pair(from_str("inspect"), lambda(from_str("true"))),
+          pair(from_str("not"), lambda(call(var(2), from_str("false")))),
+          pair(from_str("and"), lambda2(var(1))),
+          pair(from_str("or"), lambda2(var(0)))),
+    lambda(call(superclass(var(1)), var(0))))));
   int env = recursive(lookup_str(
-        list3(pair(from_str("Object"), call(oc_, var(0))),
-              pair(from_str("false"), call(fc_, var(0))),
-              pair(from_str("true"), call(tc_, var(0)))),
-        f()));
-  int oc = eval(send(env, "Object"));
-  int fc = eval(send(env, "false"));
-  int tc = eval(send(env, "true"));
+    list3(pair(from_str("Object"), call(oc_, var(0))),
+          pair(from_str("false"), call(fc_, var(0))),
+          pair(from_str("true"), call(tc_, var(0)))),
+    f()));
+  int oc = call(oc_, env);
+  int fc = call(fc_, env);
+  int tc = call(tc_, env);
   assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
+  assert(!strcmp(to_str(send(oc, "to_s")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
+  assert(!strcmp(to_str(send(fc, "to_s")), "false"));
   assert(!strcmp(to_str(send(tc, "inspect")), "true"));
+  assert(!strcmp(to_str(send(tc, "to_s")), "true"));
   assert(!strcmp(to_str(send(send(fc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
