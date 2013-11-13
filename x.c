@@ -290,6 +290,7 @@ int list2(int a, int b) { return pair(a, list1(b)); }
 int list3(int a, int b, int c) { return pair(a, list2(b, c)); }
 int list4(int a, int b, int c, int d) { return pair(a, list3(b, c, d)); }
 int list5(int a, int b, int c, int d, int e) { return pair(a, list4(b, c, d, e)); }
+int list6(int a, int b, int c, int d, int e, int f) { return pair(a, list5(b, c, d, e, f)); }
 
 int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
@@ -546,9 +547,18 @@ int lookup(int alist, int eq_elem, int other)
 {
   return call3(lookup_, alist, eq_elem, other);
 }
-int lookup_bool(int alist, int other) { return lookup(alist, eq_bool_, other); }
-int lookup_num(int alist, int other) { return lookup(alist, eq_num_, other); }
-int lookup_str(int alist, int other) { return lookup(alist, eq_str_, other); }
+int lookup_bool(int alist, int other)
+{
+  return lookup(alist, eq_bool_, lambda(other));
+}
+int lookup_num(int alist, int other)
+{
+  return lookup(alist, eq_num_, lambda(other));
+}
+int lookup_str(int alist, int other)
+{
+  return lookup(alist, eq_str_, lambda(other));
+}
 
 void output(int expr, FILE *stream)
 {
@@ -623,7 +633,7 @@ void init(void)
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
   lookup_ = lambda2(recursive(lambda2(op_if(empty(var(1)),
-                    var(4),
+                    call(var(4), var(0)),
                     op_if(call2(var(3), first(first(var(1))), var(0)),
                           rest(first(var(1))),
                           call2(var(2), var(0), rest(var(1))))))));
@@ -637,6 +647,11 @@ void destroy(void)
   ((void) (eq(a, b) ? 0 : __assert_equal(#a, #b, __FILE__, __LINE__)))
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
+
+int methods(int alist, int other)
+{
+  return lookup(alist, eq_str_, other);
+}
 
 int send(int obj, const char *msg)
 {
@@ -878,23 +893,23 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
-  int oc_ = lambda(lookup_str(
+  int oc_ = lambda(recursive(methods(
         list1(pair(from_str("inspect"), from_str("Object"))),
-        f()));
-  int fc_ = lambda(lookup_str(
-        list5(pair(from_str("superclass"), send(var(0), "Object")),
+        lambda(f()))));
+  int fc_ = lambda(recursive(methods(
+        list5(pair(from_str("superclass"), send(var(1), "Object")),
               pair(from_str("inspect"), from_str("false")),
-              pair(from_str("not"), send(var(0), "true")),
-              pair(from_str("and"), lambda(send(var(1), "false"))),
+              pair(from_str("not"), send(var(1), "true")),
+              pair(from_str("and"), lambda(var(1))),
               pair(from_str("or"), lambda(var(0)))),
-        f()));
-  int tc_ = lambda(lookup_str(
-        list5(pair(from_str("superclass"), send(var(0), "Object")),
+        lambda(call(send(var(1), "superclass"), var(0))))));
+  int tc_ = lambda(recursive(methods(
+        list5(pair(from_str("superclass"), send(var(1), "Object")),
               pair(from_str("inspect"), from_str("true")),
-              pair(from_str("not"), send(var(0), "false")),
+              pair(from_str("not"), send(var(1), "false")),
               pair(from_str("and"), lambda(var(0))),
-              pair(from_str("or"), lambda(send(var(1), "true")))),
-        f()));
+              pair(from_str("or"), lambda(var(1)))),
+        lambda(call(send(var(1), "superclass"), var(0))))));
   int env = recursive(lookup_str(
         list3(pair(from_str("Object"), call(oc_, var(0))),
               pair(from_str("false"), call(fc_, var(0))),
