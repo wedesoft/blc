@@ -85,3 +85,4 @@ External Links
 * [Filinski: Declarative Continuations and Categorical Duality](http://www.diku.dk/hjemmesider/ansatte/andrzej/papers/DCaCD.ps.gz)
 * [Earley parser](en.wikipedia.org/wiki/Earley\_parser)
 * [Binary numbers](http://en.wikipedia.org/wiki/Binary\_number)
+* [Stuart - Programming with Nothing](http://codon.com/programming-with-nothing)
