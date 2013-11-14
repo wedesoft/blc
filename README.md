@@ -22,32 +22,12 @@ This is how to build the project under GNU/Linux.
 Usage
 -----
 
-The [REPL](http://en.wikipedia.org/wiki/Read-eval-print\_loop) can be started as follows.
-
-    ./run.sh
+...
 
 Example
 -------
 
-Here's an example program consuming zeros until it encounters '1' or the end of input.
-
-    I      = ->self.self
-    true   = ->first second.first
-    false  = ->first second.second
-    not    = ->value.(value false true)
-    or     = ->x y.(x true y)
-    and    = ->x y.(x y false)
-    if     = ->condition consequent alternative.(condition consequent alternative)
-    null   = false
-    pair   = ->first rest.->select.(select first rest)
-    first  = ->pair.(pair true)
-    rest   = ->pair.(pair false)
-    empty? = ->list.(list ->first rest bool.false true)
-    Y      = ->self.(->arg.(self (arg arg)) ->arg.(self (arg arg)))
-
-    ((Y ->f input.((first input) true (f (rest input)))) input)
-
-    001
+...
 
 Testing
 -------
