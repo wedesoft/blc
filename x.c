@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CELLS 8000000
+#define MAX_CELLS 16000000
 
 typedef enum { VAR,
                LAMBDA,
@@ -682,7 +682,7 @@ int define_class(int env, const char *name)
 {
   int class_ = lambda(recursive(methods(recursive(
     list2(method("superclass", call(var(3), from_str("Object"))),
-          method("inspect", from_str(name)))),
+          method("name", from_str(name)))),
     lambda(call(superclass(var(1)), var(0))))));
   return recursive(lookup_str(recursive(
     list1(pair(from_str(name), call(class_, var(1))))),
@@ -920,19 +920,19 @@ int main(void)
   fclose(of);
   // classes
   int oc_ = lambda(recursive(methods(recursive(
-    list2(method("inspect", from_str("Object")),
-          method("to_s", send(var(0), "inspect")))),
+    list2(method("name", from_str("Object")),
+          method("inspect", send(var(0), "name")))),
     lambda(lambda(f())))));
   int fc_ = lambda(recursive(methods(recursive(
     list5(method("superclass", const_get(var(3), "Object")),
-          method("inspect", from_str("false")),
+          method("name", from_str("false")),
           method("not", const_get(var(3), "true")),
           method("and", lambda(var(1))),
           method("or", lambda(var(0))))),
     lambda(call(superclass(var(1)), var(0))))));
   int tc_ = lambda(recursive(methods(recursive(
     list5(method("superclass", const_get(var(3), "Object")),
-          method("inspect", from_str("true")),
+          method("name", from_str("true")),
           method("not", const_get(var(3), "false")),
           method("and", lambda(var(0))),
           method("or", lambda(var(1))))),
@@ -951,11 +951,8 @@ int main(void)
   assert(is_f(send(oc, "nosuchmethod")));
   assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
   assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
-  assert(!strcmp(to_str(send(oc, "to_s")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
-  assert(!strcmp(to_str(send(fc, "to_s")), "false"));
   assert(!strcmp(to_str(send(tc, "inspect")), "true"));
-  assert(!strcmp(to_str(send(tc, "to_s")), "true"));
   assert(!strcmp(to_str(send(send(fc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
