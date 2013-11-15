@@ -658,9 +658,14 @@ int method(const char *name, int body)
   return pair(from_str(name), lambda(body));
 }
 
+int const_get(int env, const char *name)
+{
+  return call(env, from_str(name));
+}
+
 int send(int self, const char *msg)
 {
-  return call(call(self, from_str(msg)), self);
+  return call(const_get(self, msg), self);
 }
 
 int send1(int self, const char *msg, int arg)
@@ -671,6 +676,17 @@ int send1(int self, const char *msg, int arg)
 int superclass(int self)
 {
   return send(self, "superclass");
+}
+
+int define_class(int env, const char *name)
+{
+  int class_ = lambda(recursive(methods(recursive(
+    list2(method("superclass", call(var(3), from_str("Object"))),
+          method("inspect", from_str(name)))),
+    lambda(call(superclass(var(1)), var(0))))));
+  return recursive(lookup_str(recursive(
+    list1(pair(from_str(name), call(class_, var(1))))),
+    lambda(call2(env, var(0), var(1)))));
 }
 
 int main(void)
@@ -903,32 +919,37 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
-  int oc_ = lambda(recursive(methods(
+  int oc_ = lambda(recursive(methods(recursive(
     list2(method("inspect", from_str("Object")),
-          method("to_s", send(var(0), "inspect"))),
-    lambda(f()))));
-  int fc_ = lambda(recursive(methods(
-    list5(method("superclass", call(var(2), from_str("Object"))),
+          method("to_s", send(var(0), "inspect")))),
+    lambda(lambda(f())))));
+  int fc_ = lambda(recursive(methods(recursive(
+    list5(method("superclass", const_get(var(3), "Object")),
           method("inspect", from_str("false")),
-          method("not", call(var(2), from_str("true"))),
+          method("not", const_get(var(3), "true")),
           method("and", lambda(var(1))),
-          method("or", lambda(var(0)))),
+          method("or", lambda(var(0))))),
     lambda(call(superclass(var(1)), var(0))))));
-  int tc_ = lambda(recursive(methods(
-    list5(method("superclass", call(var(2), from_str("Object"))),
+  int tc_ = lambda(recursive(methods(recursive(
+    list5(method("superclass", const_get(var(3), "Object")),
           method("inspect", from_str("true")),
-          method("not", call(var(2), from_str("false"))),
+          method("not", const_get(var(3), "false")),
           method("and", lambda(var(0))),
-          method("or", lambda(var(1)))),
+          method("or", lambda(var(1))))),
     lambda(call(superclass(var(1)), var(0))))));
-  int env = recursive(lookup_str(
-    list3(pair(from_str("Object"), call(oc_, var(0))),
-          pair(from_str("false"), call(fc_, var(0))),
-          pair(from_str("true"), call(tc_, var(0)))),
-    f()));
+  int env = recursive(lookup_str(recursive(
+    list3(pair(from_str("Object"), call(oc_, var(1))),
+          pair(from_str("false"), call(fc_, var(1))),
+          pair(from_str("true"), call(tc_, var(1))))),
+    lambda(f())));
+  env = define_class(env, "Test");
   int oc = call(oc_, env);
   int fc = call(fc_, env);
   int tc = call(tc_, env);
+  int testc = const_get(env, "Test");
+  assert(is_f(send(env, "Nosuchclass")));
+  assert(is_f(send(oc, "nosuchmethod")));
+  assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
   assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
   assert(!strcmp(to_str(send(oc, "to_s")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
