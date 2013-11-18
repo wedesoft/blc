@@ -696,19 +696,14 @@ int method(const char *name, int body)
   return pair(from_str(name), lambda(body));
 }
 
-int const_get(int env, const char *name)
-{
-  return call(env, from_str(name));
-}
-
 int const_defined(int env, const char *name)
 {
-  return call(member_str(const_get(env, "constants")), from_str(name));
+  return call(member_str(call(env, from_str("constants"))), from_str(name));
 }
 
 int send(int self, const char *msg)
 {
-  return call(const_get(self, msg), self);
+  return call(call(self, from_str(msg)), self);
 }
 
 int send1(int self, const char *msg, int arg)
@@ -989,34 +984,33 @@ int main(void)
           method("inspect", send(var(0), "name")))),
     lambda(lambda(f())))));
   int fc_ = lambda(recursive(methods(recursive(
-    list5(method("superclass", const_get(var(3), "Object")),
+    list5(method("superclass", send(var(3), "Object")),
           method("name", from_str("false")),
-          method("not", const_get(var(3), "true")),
+          method("not", send(var(3), "true")),
           method("and", lambda(var(1))),
           method("or", lambda(var(0))))),
     lambda(call(superclass(var(1)), var(0))))));
   int tc_ = lambda(recursive(methods(recursive(
-    list5(method("superclass", const_get(var(3), "Object")),
+    list5(method("superclass", send(var(3), "Object")),
           method("name", from_str("true")),
-          method("not", const_get(var(3), "false")),
+          method("not", send(var(3), "false")),
           method("and", lambda(var(0))),
           method("or", lambda(var(1))))),
     lambda(call(superclass(var(1)), var(0))))));
-  int env = recursive(lookup_str(recursive(
+  int env = lookup_str(recursive(
     list4(pair(from_str("constants"), keys(var(0))),
-          pair(from_str("Object"), call(oc_, var(1))),
-          pair(from_str("false"), call(fc_, var(1))),
-          pair(from_str("true"), call(tc_, var(1))))),
-    lambda(lambda(f()))));
+          pair(from_str("Object"), lambda(call(oc_, var(0)))),
+          pair(from_str("false"), lambda(call(fc_, var(0)))),
+          pair(from_str("true"), lambda(call(tc_, var(0)))))),
+    lambda(f()));
   assert(!is_f(const_defined(env, "Object")));
   assert(is_f(const_defined(env, "Nosuchclass")));
   //env = define_class(env, "Test");
-  int oc = const_get(env, "Object");
-  int fc = const_get(env, "false");
-  int tc = const_get(env, "true");
-  //int testc = const_get(env, "Test");
-  assert(is_f(const_get(env, "Nosuchclass")));
-  assert(is_f(send(oc, "nosuchmethod")));
+  int oc = send(env, "Object");
+  int fc = send(env, "false");
+  int tc = send(env, "true");
+  //int testc = send(env, "Test");
+  //assert(is_f(send(oc, "nosuchmethod")));
   //assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
   assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
