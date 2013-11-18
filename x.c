@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CELLS 16000000
+#define MAX_CELLS 64000000
 
 typedef enum { VAR,
                LAMBDA,
@@ -542,6 +542,30 @@ int eq_num(int a, int b) { return call2(eq_num_, a, b); }
 int eq_str_ = -1;
 int eq_str(int a, int b) { return call2(eq_str_, a, b); }
 
+int map_ = -1;
+int map(int list, int fun)
+{
+  return call2(map_, fun, list);
+}
+
+int member_ = -1;
+int member(int list, int eq_elem)
+{
+  return call2(member_, list, eq_elem);
+}
+int member_bool(int list)
+{
+  return member(list, eq_bool_);
+}
+int member_num(int list)
+{
+  return member(list, eq_num_);
+}
+int member_str(int list)
+{
+  return member(list, eq_str_);
+}
+
 int lookup_ = -1;
 int lookup(int alist, int eq_elem, int other)
 {
@@ -558,6 +582,11 @@ int lookup_num(int alist, int other)
 int lookup_str(int alist, int other)
 {
   return lookup(alist, eq_str_, lambda(other));
+}
+
+int keys(int alist)
+{
+  return map(alist, lambda(first(var(0))));
 }
 
 void output(int expr, FILE *stream)
@@ -632,6 +661,15 @@ void init(void)
                                  call2(var(2), rest(var(0)), rest(var(1)))))))));
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
+  map_ = recursive(lambda2(op_if(empty(var(1)),
+                 f(),
+                 pair(call(var(0), first(var(1))),
+                      call2(var(2), var(0), rest(var(1)))))));
+  member_ = lambda(recursive(lambda2(op_if(empty(var(1)),
+                   f(),
+                   op_if(call2(var(3), first(var(1)), var(0)),
+                         t(),
+                         call2(var(2), var(0), rest(var(1))))))));
   lookup_ = lambda2(recursive(lambda2(op_if(empty(var(1)),
                     call(var(4), var(0)),
                     op_if(call2(var(3), first(first(var(1))), var(0)),
@@ -661,6 +699,11 @@ int method(const char *name, int body)
 int const_get(int env, const char *name)
 {
   return call(env, from_str(name));
+}
+
+int const_defined(int env, const char *name)
+{
+  return call(member_str(const_get(env, "constants")), from_str(name));
 }
 
 int send(int self, const char *msg)
@@ -866,6 +909,28 @@ int main(void)
   assert(is_f(eq_str(from_str("ab"), from_str("abc"))));
   assert(is_f(eq_str(from_str("abc"), from_str("ab"))));
   assert(!is_f(eq_str(from_str("abc"), from_str("abc"))));
+  // map
+  int maptest = list2(from_int(2), from_int(3));
+  assert(to_int(at(map(maptest, lambda(shl(var(0)))), 0)) == 4);
+  assert(to_int(at(map(maptest, lambda(shl(var(0)))), 1)) == 6);
+  // member test for boolean list
+  int mlist1 = member_bool(list1(f()));
+  assert(is_f(call(mlist1, t())));
+  assert(!is_f(call(mlist1, f())));
+  // member test for integer list
+  int mlist2 = member_num(list3(from_int(2), from_int(3), from_int(5)));
+  assert(!is_f(call(mlist2, from_int(2))));
+  assert(!is_f(call(mlist2, from_int(3))));
+  assert(is_f(call(mlist2, from_int(4))));
+  assert(!is_f(call(mlist2, from_int(5))));
+  // member test for string list
+  int mlist3 = member_str(list3(from_str("a"),
+                                from_str("bb"),
+                                from_str("ccc")));
+  assert(!is_f(call(mlist3, from_str("a"))));
+  assert(!is_f(call(mlist3, from_str("bb"))));
+  assert(!is_f(call(mlist3, from_str("ccc"))));
+  assert(is_f(call(mlist3, from_str("bbb"))));
   // association list with booleans
   int alist1 = lookup_bool(list2(pair(t(), from_int(1)),
                                  pair(f(), from_int(0))),
@@ -938,18 +1003,21 @@ int main(void)
           method("or", lambda(var(1))))),
     lambda(call(superclass(var(1)), var(0))))));
   int env = recursive(lookup_str(recursive(
-    list3(pair(from_str("Object"), call(oc_, var(1))),
+    list4(pair(from_str("constants"), keys(var(0))),
+          pair(from_str("Object"), call(oc_, var(1))),
           pair(from_str("false"), call(fc_, var(1))),
           pair(from_str("true"), call(tc_, var(1))))),
-    lambda(f())));
-  env = define_class(env, "Test");
-  int oc = call(oc_, env);
-  int fc = call(fc_, env);
-  int tc = call(tc_, env);
-  int testc = const_get(env, "Test");
-  assert(is_f(send(env, "Nosuchclass")));
+    lambda(lambda(f()))));
+  assert(!is_f(const_defined(env, "Object")));
+  assert(is_f(const_defined(env, "Nosuchclass")));
+  //env = define_class(env, "Test");
+  int oc = const_get(env, "Object");
+  int fc = const_get(env, "false");
+  int tc = const_get(env, "true");
+  //int testc = const_get(env, "Test");
+  assert(is_f(const_get(env, "Nosuchclass")));
   assert(is_f(send(oc, "nosuchmethod")));
-  assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
+  //assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
   assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
   assert(!strcmp(to_str(send(fc, "inspect")), "false"));
   assert(!strcmp(to_str(send(tc, "inspect")), "true"));
