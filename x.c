@@ -686,14 +686,30 @@ void destroy(void)
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
 
-int methods(int alist, int other)
-{
-  return lookup(alist, eq_str_, other);
-}
-
 int method(const char *name, int body)
 {
   return pair(from_str(name), lambda(body));
+}
+
+int dispatcher(int list)
+{
+  return recursive(lambda(call(call(lookup(pair(method("@mmap", list), list), eq_str_, lambda(f())), var(0)), var(1))));
+}
+
+int define_method(int self, const char *name, int body)
+{
+  return dispatcher(pair(method(name, body), send(self, "@mmap")));
+}
+
+int send(int self, const char *msg)
+{
+  return call(self, from_str(msg));
+}
+
+#if 0
+int methods(int alist, int other)
+{
+  return lookup(alist, eq_str_, other);
 }
 
 int const_defined(int env, const char *name)
@@ -715,8 +731,9 @@ int superclass(int self)
 {
   return send(self, "superclass");
 }
+#endif
 
-int define_class(int env, const char *name)
+/* int define_class(int env, const char *name)
 {
   int class_ = lambda(recursive(methods(recursive(
     list2(method("superclass", call(var(3), from_str("Object"))),
@@ -725,7 +742,7 @@ int define_class(int env, const char *name)
   return recursive(lookup_str(recursive(
     list1(pair(from_str(name), call(class_, var(1))))),
     lambda(call2(env, var(0), var(1)))));
-}
+} */
 
 int main(void)
 {
@@ -979,44 +996,111 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
-  int oc_ = lambda(recursive(methods(recursive(
-    list2(method("name", from_str("Object")),
-          method("inspect", send(var(0), "name")))),
-    lambda(lambda(f())))));
-  int fc_ = lambda(recursive(methods(recursive(
-    list5(method("superclass", send(var(3), "Object")),
+  int oc = dispatcher(f());
+  oc = define_method(oc, "name", from_str("Object"));
+  oc = define_method(oc, "inspect", send(var(0), "name"));
+  oc = define_method(oc, "to_s", send(var(0), "inspect"));
+  printf("Object.name = %s\n", to_str(send(oc, "name")));
+  printf("Object.to_s = %s\n", to_str(send(oc, "to_s")));
+  printf("Object.inspect = %s\n", to_str(send(oc, "inspect")));
+#if 0
+  int env = methods(f(), lambda(f()));
+  int oc = recursive(methods(
+      list2(pair(from_str("name"), from_str("Object")),
+            pair(from_str("inspect"), call(var(0), from_str("name")))),
+      lambda(call(var(2), var(0)))));
+  env = recursive(methods(
+      list1(pair(from_str("Object"), oc)),
+      f()));
+  int ac = recursive(methods(
+      list2(pair(from_str("name"), from_str("A")),
+            pair(from_str("inspect"), call(var(0), from_str("name")))),
+      lambda(call(var(2), var(0)))));
+  env = recursive(methods(
+      list2(pair(from_str("Object"), oc),
+            pair(from_str("A"), ac)),
+      f()));
+  oc = call(env, from_str("Object"));
+  printf("Object.name = %s\n",
+         to_str(call(oc, from_str("name"))));
+  printf("Object.inspect = %s\n",
+         to_str(call(oc, from_str("inspect"))));
+  printf("Object.Object.name = %s\n",
+         to_str(call(call(oc, from_str("Object")), from_str("name"))));
+  printf("Object.Object.inspect = %s\n",
+         to_str(call(call(oc, from_str("Object")), from_str("inspect"))));
+  ac = call(env, from_str("A"));
+  printf("A.name = %s\n",
+         to_str(call(ac, from_str("name"))));
+  printf("A.inspect = %s\n",
+         to_str(call(ac, from_str("inspect"))));
+  printf("A.A.name = %s\n",
+         to_str(call(call(ac, from_str("A")), from_str("name"))));
+  printf("A.A.inspect = %s\n",
+         to_str(call(call(ac, from_str("A")), from_str("inspect"))));
+#endif
+#if 0
+  int oc_ = methods(
+    list3(method("name", from_str("Object")),
+          method("base", from_str("base")),
+          method("inspect", send(var(0), "name"))),
+    lambda(lambda(f())));
+  int fc_ = methods(
+    list5(method("superclass", send(var(1), "Object")),
           method("name", from_str("false")),
-          method("not", send(var(3), "true")),
+          method("not", send(var(1), "true")),
           method("and", lambda(var(1))),
-          method("or", lambda(var(0))))),
-    lambda(call(superclass(var(1)), var(0))))));
-  int tc_ = lambda(recursive(methods(recursive(
-    list5(method("superclass", send(var(3), "Object")),
+          method("or", lambda(var(0)))),
+  //  lambda(call(oc_, var(0))));
+    lambda(call(call(call(var(2), from_str("Object")), var(2)), var(0))));
+  int tc_ = methods(
+    list5(method("superclass", send(var(1), "Object")),
           method("name", from_str("true")),
-          method("not", send(var(3), "false")),
+          method("not", send(var(1), "false")),
           method("and", lambda(var(0))),
-          method("or", lambda(var(1))))),
-    lambda(call(superclass(var(1)), var(0))))));
-  int env = lookup_str(recursive(
-    list4(pair(from_str("constants"), keys(var(0))),
-          pair(from_str("Object"), lambda(call(oc_, var(0)))),
-          pair(from_str("false"), lambda(call(fc_, var(0)))),
-          pair(from_str("true"), lambda(call(tc_, var(0)))))),
+          method("or", lambda(var(1)))),
+    lambda(call(oc_, var(0))));
+  assert(!strcmp(to_str(send(oc_, "name")), "Object"));
+  assert(!strcmp(to_str(send(fc_, "name")), "false"));
+  assert(!strcmp(to_str(send(tc_, "name")), "true"));
+  int env = methods(recursive(
+    list4(method("constants", keys(var(1))),
+          method("Object", oc_),
+          method("false", fc_),
+          method("true", tc_))),
     lambda(f()));
-  assert(!is_f(const_defined(env, "Object")));
-  assert(is_f(const_defined(env, "Nosuchclass")));
-  //env = define_class(env, "Test");
+  // assert(!is_f(const_defined(env, "Object")));
+  // assert(is_f(const_defined(env, "Test")));
+  // assert(is_f(const_defined(env, "Nosuchclass")));
+  /* int testc_ = lambda(recursive(methods(recursive(
+    list2(method("superclass", call(var(3), from_str("Object"))),
+          method("name", from_str("Test")))),
+    lambda(call(superclass(var(1)), var(0))))));
+  env = lookup_str(recursive(
+        list1(pair(from_str("Test"), lambda(call(testc_, var(0)))))),
+        lambda(call(call(env, var(1)), var(0)))); */
+  // assert(!is_f(const_defined(env, "Object")));
+  // assert(!is_f(const_defined(env, "Test")));
+  // assert(is_f(const_defined(env, "Nosuchclass")));
+  // int oc = send(env, "Object");
   int oc = send(env, "Object");
   int fc = send(env, "false");
   int tc = send(env, "true");
   //int testc = send(env, "Test");
   //assert(is_f(send(oc, "nosuchmethod")));
-  //assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
-  assert(!strcmp(to_str(send(oc, "inspect")), "Object"));
-  assert(!strcmp(to_str(send(fc, "inspect")), "false"));
-  assert(!strcmp(to_str(send(tc, "inspect")), "true"));
+  assert(!strcmp(to_str(send(oc, "name")), "Object"));
+  assert(!strcmp(to_str(send(fc, "name")), "false"));
+  assert(!strcmp(to_str(send(tc, "name")), "true"));
+  printf("%s\n", to_str(send(oc, "base")));
+  printf("%s\n", to_str(send(fc, "base")));
+  printf("%s\n", to_str(send(tc, "base")));
   assert(!strcmp(to_str(send(send(fc, "superclass"), "inspect")), "Object"));
   assert(!strcmp(to_str(send(send(tc, "superclass"), "inspect")), "Object"));
+  printf("%s\n", to_str(send(oc, "inspect")));
+  printf("%s\n", to_str(send(fc, "inspect")));
+  printf("%s\n", to_str(send(tc, "inspect")));
+  //assert(!strcmp(to_str(send(testc, "name")), "Test"));
+  //assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
   assert(!strcmp(to_str(send(send(fc, "not"), "inspect")), "true"));
   assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
@@ -1028,6 +1112,7 @@ int main(void)
   assert(!strcmp(to_str(send(send1(fc, "or", tc), "inspect")), "true"));
   assert(!strcmp(to_str(send(send1(tc, "or", fc), "inspect")), "true"));
   assert(!strcmp(to_str(send(send1(tc, "or", tc), "inspect")), "true"));
+#endif
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();

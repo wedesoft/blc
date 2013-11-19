@@ -66,3 +66,4 @@ External Links
 * [Earley parser](en.wikipedia.org/wiki/Earley\_parser)
 * [Binary numbers](http://en.wikipedia.org/wiki/Binary\_number)
 * [Stuart - Programming with Nothing](http://codon.com/programming-with-nothing)
+* [Pure OO system in Scheme](https://github.com/alvatar/code-ttrs/blob/master/scheme/pure-oo-system.scm)
