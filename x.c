@@ -691,9 +691,20 @@ int method(const char *name, int body)
   return pair(from_str(name), lambda(body));
 }
 
+int send(int self, const char *msg)
+{
+  return call(self, from_str(msg));
+}
+
 int dispatcher(int list)
 {
   return recursive(lambda(call(call(lookup(pair(method("@mmap", list), list), eq_str_, lambda(f())), var(0)), var(1))));
+}
+
+int define_module(const char *name)
+{
+  return recursive(dispatcher(list2(method(name, var(0)),
+                                    method("name", from_str(name)))));
 }
 
 int define_method(int self, const char *name, int body)
@@ -701,9 +712,9 @@ int define_method(int self, const char *name, int body)
   return dispatcher(pair(method(name, body), send(self, "@mmap")));
 }
 
-int send(int self, const char *msg)
+int define_class(const char *name, int env)
 {
-  return call(self, from_str(msg));
+  return define_method(env, name, define_module(name));
 }
 
 #if 0
@@ -996,13 +1007,17 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
-  int oc = dispatcher(f());
-  oc = define_method(oc, "name", from_str("Object"));
+  int env = define_module("Object");
+  int oc = send(env, "Object");
   oc = define_method(oc, "inspect", send(var(0), "name"));
   oc = define_method(oc, "to_s", send(var(0), "inspect"));
   printf("Object.name = %s\n", to_str(send(oc, "name")));
   printf("Object.to_s = %s\n", to_str(send(oc, "to_s")));
   printf("Object.inspect = %s\n", to_str(send(oc, "inspect")));
+  printf("Object::Object.inspect = %s\n", to_str(send(send(oc, "Object"), "inspect")));
+  env = define_class("Point", env);
+  int pc = send(env, "Point");
+  printf("Point.name = %s\n", to_str(send(pc, "name")));
 #if 0
   int env = methods(f(), lambda(f()));
   int oc = recursive(methods(
