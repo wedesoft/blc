@@ -21,7 +21,7 @@ AC_ARG_ENABLE(debug,
   [  --enable-debug=DEBUG    compile with debugging assertions (default=no)],
   enable_debug=$enableval, enable_debug=no)
 if test "x$enable_debug" == "xyes"; then
-  AM_CFLAGS='-Wall -g'
+  AM_CFLAGS='-Wall'
 else
   AM_CFLAGS='-Wall -DNDEBUG'
 fi
