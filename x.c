@@ -707,14 +707,23 @@ int define_module(const char *name)
                                     method("name", from_str(name)))));
 }
 
-int define_method(int self, const char *name, int body)
+int define_method(int env, const char *obj, const char *name, int body)
 {
-  return dispatcher(pair(method(name, body), send(self, "@mmap")));
+  // obj: breadcrumb/list
+  int self = send(env, obj);
+  int changed = dispatcher(pair(method(name, body), send(self, "@mmap")));
+  return dispatcher(pair(method(obj, changed),
+                         send(env, "@mmap")));
 }
 
-int define_class(const char *name, int env)
+int define_class(int env, const char *name, const char *base)
 {
-  return define_method(env, name, define_module(name));
+  int self = recursive(dispatcher(
+        pair(method(name, var(0)),
+             pair(method("name", from_str(name)),
+                  send(send(env, base), "@mmap")))));
+  return dispatcher(pair(method(name, self),
+                         send(env, "@mmap")));
 }
 
 #if 0
@@ -1008,16 +1017,22 @@ int main(void)
   fclose(of);
   // classes
   int env = define_module("Object");
+  env = define_method(env, "Object", "inspect", send(var(0), "name"));
+  env = define_method(env, "Object", "to_s", send(var(0), "inspect"));
   int oc = send(env, "Object");
-  oc = define_method(oc, "inspect", send(var(0), "name"));
-  oc = define_method(oc, "to_s", send(var(0), "inspect"));
   printf("Object.name = %s\n", to_str(send(oc, "name")));
   printf("Object.to_s = %s\n", to_str(send(oc, "to_s")));
   printf("Object.inspect = %s\n", to_str(send(oc, "inspect")));
   printf("Object::Object.inspect = %s\n", to_str(send(send(oc, "Object"), "inspect")));
-  env = define_class("Point", env);
+  env = define_class(env, "Point", "Object");
+  oc = send(env, "Object");
+  printf("Object.name = %s\n", to_str(send(oc, "name")));
   int pc = send(env, "Point");
   printf("Point.name = %s\n", to_str(send(pc, "name")));
+  printf("Point.to_s = %s\n", to_str(send(pc, "to_s")));
+  printf("Point.inspect = %s\n", to_str(send(pc, "inspect")));
+  printf("Point::Point.inspect = %s\n", to_str(send(send(pc, "Point"), "inspect")));
+  printf("Point::Object.inspect = %s\n", to_str(send(send(pc, "Object"), "inspect")));
 #if 0
   int env = methods(f(), lambda(f()));
   int oc = recursive(methods(
