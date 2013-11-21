@@ -686,6 +686,8 @@ void destroy(void)
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
 
+#if 0
+
 int method(const char *name, int body)
 {
   return pair(from_str(name), lambda(body));
@@ -726,6 +728,7 @@ int define_class(int env, const char *name, const char *base)
                          send(env, "@mmap")));
 }
 
+#endif
 #if 0
 int methods(int alist, int other)
 {
@@ -1016,6 +1019,38 @@ int main(void)
   assert(fgetc(of) == EOF);
   fclose(of);
   // classes
+  int olist = lambda(list4(pair(from_str("name"),
+                                lambda(from_str("Object"))),
+                           pair(from_str("Object"),
+                                lambda(var(1))),
+                           pair(from_str("inspect"),
+                                lambda(call(var(0), from_str("name")))),
+                           pair(from_str("class"),
+                                lambda(from_str("Class")))));
+  int olook = lambda(lookup(call(olist, var(0)), eq_str_,
+                            f()));
+  int o = recursive(lambda(call(call(call(olook, var(1)), var(0)), var(1))));
+  assert(!strcmp(to_str(call(o, from_str("name"))), "Object"));
+  assert(!strcmp(to_str(call(o, from_str("inspect"))), "Object"));
+  assert(!strcmp(to_str(call(o, from_str("class"))), "Class"));
+  assert(!strcmp(to_str(call(call(o, from_str("Object")),
+                             from_str("inspect"))), "Object"));
+  int plist = lambda(list2(pair(from_str("name"),
+                                lambda(from_str("Point"))),
+                           pair(from_str("Point"),
+                                lambda(var(1)))));
+  int plook = lambda(lookup(call(plist, var(0)), eq_str_,
+                            lambda(call(call(olook, o), var(0)))));
+  int p = recursive(lambda(call(call(call(plook, var(1)), var(0)), var(1))));
+  assert(!strcmp(to_str(call(p, from_str("name"))), "Point"));
+  assert(!strcmp(to_str(call(p, from_str("inspect"))), "Point"));
+  assert(!strcmp(to_str(call(p, from_str("class"))), "Class"));
+  assert(!strcmp(to_str(call(call(p, from_str("Object")),
+                             from_str("inspect"))), "Object"));
+  assert(!strcmp(to_str(call(call(p, from_str("Point")),
+                             from_str("inspect"))), "Point"));
+  // Object::Point.inspect?
+#if 0
   int env = define_module("Object");
   env = define_method(env, "Object", "inspect", send(var(0), "name"));
   env = define_method(env, "Object", "to_s", send(var(0), "inspect"));
@@ -1033,6 +1068,7 @@ int main(void)
   printf("Point.inspect = %s\n", to_str(send(pc, "inspect")));
   printf("Point::Point.inspect = %s\n", to_str(send(send(pc, "Point"), "inspect")));
   printf("Point::Object.inspect = %s\n", to_str(send(send(pc, "Object"), "inspect")));
+#endif
 #if 0
   int env = methods(f(), lambda(f()));
   int oc = recursive(methods(
