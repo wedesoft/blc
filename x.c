@@ -543,9 +543,18 @@ int eq_str_ = -1;
 int eq_str(int a, int b) { return call2(eq_str_, a, b); }
 
 int map_ = -1;
-int map(int list, int fun)
+int map(int list, int fun) { return call2(map_, fun, list); }
+
+int inject_;
+int inject(int list, int start, int fun)
 {
-  return call2(map_, fun, list);
+  return call3(inject_, list, start, fun);
+}
+
+int foldleft_;
+int foldleft(int list, int start, int fun)
+{
+  return call3(foldleft_, list, start, fun);
 }
 
 int member_ = -1;
@@ -642,6 +651,8 @@ void init(void)
   int v0 = var(0);
   int v1 = var(1);
   int v2 = var(2);
+  int v3 = var(3);
+  int v4 = var(4);
   f_ = proc_self(lambda(v0));
   t_ = proc(lambda(v1), f());
   id_ = proc(v0, f());
@@ -653,28 +664,39 @@ void init(void)
   odd_ = lambda(op_if(empty(v0), f(), first(v0)));
   shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
   shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
-  eq_list_ = lambda(recursive(lambda2(op_if(op_and(empty(var(0)), empty(var(1))),
+  eq_list_ = lambda(recursive(lambda2(op_if(op_and(empty(v0), empty(v1)),
                     t(),
-                    op_if(op_or(empty(var(0)), empty(var(1))),
+                    op_if(op_or(empty(v0), empty(v1)),
                           f(),
-                          op_and(call2(var(3), first(var(0)), first(var(1))),
-                                 call2(var(2), rest(var(0)), rest(var(1)))))))));
+                          op_and(call2(v3, first(v0), first(v1)),
+                                 call2(v2, rest(v0), rest(v1))))))));
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
-  map_ = recursive(lambda2(op_if(empty(var(1)),
-                 f(),
-                 pair(call(var(0), first(var(1))),
-                      call2(var(2), var(0), rest(var(1)))))));
-  member_ = lambda(recursive(lambda2(op_if(empty(var(1)),
+  map_ = recursive(lambda2(op_if(empty(v1),
+                                 f(),
+                                 pair(call(v0, first(v1)),
+                                      call2(v2, v0, rest(v1))))));
+  inject_ = recursive(lambda3(op_if(empty(v0),
+                              v1,
+                              call3(v3,
+                                    rest(v0),
+                                    call2(v2, v1, first(v0)),
+                                    v2))));
+  foldleft_ = recursive(lambda3(op_if(empty(v0),
+                                      v1,
+                                      call2(v2,
+                                            call3(v3, rest(v0), v1, v2),
+                                            first(v0)))));
+  member_ = lambda(recursive(lambda2(op_if(empty(v1),
                    f(),
-                   op_if(call2(var(3), first(var(1)), var(0)),
+                   op_if(call2(v3, first(v1), v0),
                          t(),
-                         call2(var(2), var(0), rest(var(1))))))));
-  lookup_ = lambda2(recursive(lambda2(op_if(empty(var(1)),
-                    call(var(4), var(0)),
-                    op_if(call2(var(3), first(first(var(1))), var(0)),
-                          rest(first(var(1))),
-                          call2(var(2), var(0), rest(var(1))))))));
+                         call2(v2, v0, rest(v1)))))));
+  lookup_ = lambda2(recursive(lambda2(op_if(empty(v1),
+                    call(v4, v0),
+                    op_if(call2(v3, first(first(v1)), v0),
+                          rest(first(v1)),
+                          call2(v2, v0, rest(v1)))))));
 };
 
 void destroy(void)
@@ -948,6 +970,28 @@ int main(void)
   int maptest = list2(from_int(2), from_int(3));
   assert(to_int(at(map(maptest, lambda(shl(var(0)))), 0)) == 4);
   assert(to_int(at(map(maptest, lambda(shl(var(0)))), 1)) == 6);
+  // Test injection (fold right)
+  assert(!is_f(inject(pair(t(), pair(t(), pair(t(), f()))), t(),
+                      lambda2(op_and(var(0), var(1))))));
+  assert(is_f(inject(pair(t(), pair(t(), pair(f(), f()))), t(),
+                     lambda2(op_and(var(0), var(1))))));
+  assert(!is_f(inject(pair(f(), pair(f(), pair(t(), f()))), f(),
+                      lambda2(op_or(var(0), var(1))))));
+  assert(is_f(inject(pair(f(), pair(f(), pair(f(), f()))), f(),
+                     lambda2(op_or(var(0), var(1))))));
+  assert(to_int(inject(from_int(11), f(),
+                       lambda2(pair(var(1), var(0))))) == 13);
+  // Test left fold
+  assert(!is_f(foldleft(pair(t(), pair(t(), pair(t(), f()))), t(),
+                        lambda2(op_and(var(0), var(1))))));
+  assert(is_f(foldleft(pair(t(), pair(t(), pair(f(), f()))), t(),
+                       lambda2(op_and(var(0), var(1))))));
+  assert(!is_f(foldleft(pair(f(), pair(f(), pair(t(), f()))), f(),
+                        lambda2(op_or(var(0), var(1))))));
+  assert(is_f(foldleft(pair(f(), pair(f(), pair(f(), f()))), f(),
+                       lambda2(op_or(var(0), var(1))))));
+  assert(to_int(foldleft(from_int(11), f(),
+                         lambda2(pair(var(1), var(0))))) == 11);
   // member test for boolean list
   int mlist1 = member_bool(list1(f()));
   assert(is_f(call(mlist1, t())));
@@ -1018,6 +1062,7 @@ int main(void)
   assert(fgetc(of) == 'y');
   assert(fgetc(of) == EOF);
   fclose(of);
+#if 0
   // classes
   int olist = lambda(list4(pair(from_str("name"),
                                 lambda(from_str("Object"))),
@@ -1050,6 +1095,7 @@ int main(void)
   assert(!strcmp(to_str(call(call(p, from_str("Point")),
                              from_str("inspect"))), "Point"));
   // Object::Point.inspect?
+#endif
 #if 0
   int env = define_module("Object");
   env = define_method(env, "Object", "inspect", send(var(0), "name"));
