@@ -566,6 +566,9 @@ int foldleft(int list, int start, int fun)
   return call3(foldleft_, list, start, fun);
 }
 
+int concat_ = -1;
+int concat(int a, int b) { return call2(concat_, a, b); }
+
 int select_if_ = -1;
 int select_if(int list, int fun) { return call2(select_if_, list, fun); }
 
@@ -722,11 +725,14 @@ void init(void)
                                       call2(v2,
                                             call3(v3, rest(v0), v1, v2),
                                             first(v0)))));
+  concat_ = lambda2(foldleft(v0,
+                             v1,
+                             lambda2(pair(v1, v0))));
   select_if_ = lambda2(foldleft(v0,
                                 f(),
-                                lambda(lambda(op_if(call(v3, v1),
-                                                    pair(v1, v0),
-                                                    v0)))));
+                                lambda2(op_if(call(v3, v1),
+                                              pair(v1, v0),
+                                              v0))));
   member_ = lambda(recursive(lambda2(op_if(empty(v1),
                    f(),
                    op_if(call2(v3, first(v1), v0),
@@ -819,8 +825,8 @@ int main(void)
   // evaluation of calls
   assert(is_f(call(lambda(var(0)), f())));
   assert(!is_f(call(lambda(var(0)), t())));
-  assert(is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), f()), f())));
-  assert(!is_f(call(call(lambda(lambda(call(lambda(var(0)), var(1)))), t()), f())));
+  assert(is_f(call(call(lambda2(call(lambda(var(0)), var(1))), f()), f())));
+  assert(!is_f(call(call(lambda2(call(lambda(var(0)), var(1))), t()), f())));
   assert(is_f(call(lambda(call(lambda(var(1)), f())), f())));
   assert(!is_f(call(lambda(call(lambda(var(1)), f())), t())));
   // if-statement
@@ -947,6 +953,8 @@ int main(void)
                        lambda2(op_or(var(0), var(1))))));
   assert(to_int(foldleft(from_int(11), f(),
                          lambda2(pair(var(1), var(0))))) == 11);
+  // List concatenation
+  assert(!strcmp(to_str(concat(from_str("ab"), from_str("cd"))), "abcd"));
   // select_if
   int is_plus = lambda(eq_num(from_int('+'), var(0)));
   assert(!strcmp(to_str(select_if(from_str("-"), is_plus)), ""));
@@ -1040,6 +1048,34 @@ int main(void)
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
+  // REPL
+  int repl = call(recursive(lambda2(op_if(empty(var(0)),
+                  op_if(empty(var(1)),
+                        f(),
+                        from_str("Error\n")),
+                  call(lookup_num(list1(pair(from_int('\n'),
+                                        concat(concat(var(1),
+                                                      list1(from_int('\n'))),
+                                               call2(var(2),
+                                                     rest(var(0)),
+                                                     f())))),
+                                  call2(var(3), rest(var(1)),
+                                        concat(var(2), list1(first(var(1)))))),
+                       first(var(0)))))),
+                  f());
+  assert(!strcmp(to_str(call(repl, from_str(""))), ""));
+  assert(!strcmp(to_str(call(repl, from_str("12"))), "Error\n"));
+  assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
+#if 0
+  int interpreter = call(repl, from_file(stdin));
+  while (1) {
+    interpreter = eval(interpreter);
+    if (!is_f(empty(interpreter)))
+      break;
+    fputc(to_int(first(interpreter)), stdout);
+    interpreter = rest(interpreter);
+  };
+#endif
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   return 0;
