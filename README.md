@@ -64,6 +64,7 @@ External Links
 * [Might: How to compile with continuations](http://matt.might.net/articles/cps-conversion/)
 * [Filinski: Declarative Continuations and Categorical Duality](http://www.diku.dk/hjemmesider/ansatte/andrzej/papers/DCaCD.ps.gz)
 * [Earley parser](en.wikipedia.org/wiki/Earley\_parser)
+* [Aycock: Practical Earley Parsing](http://www.cs.illinois.edu/class/sp12/cs421/project/PracticalEarleyParsing.pdf)
 * [Binary numbers](http://en.wikipedia.org/wiki/Binary\_number)
 * [Stuart - Programming with Nothing](http://codon.com/programming-with-nothing)
 * [Pure OO system in Scheme](https://github.com/alvatar/code-ttrs/blob/master/scheme/pure-oo-system.scm)

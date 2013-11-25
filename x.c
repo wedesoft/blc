@@ -514,6 +514,15 @@ int shr(int list) { return call(shr_, list); }
 int shl_;
 int shl(int list) { return call(shl_, list); }
 
+int add_;
+int add(int a, int b) { return call3(add_, a, b, f()); }
+
+int sub_;
+int sub(int a, int b) { return call3(sub_, a, b, f()); }
+
+int mul_;
+int mul(int a, int b) { return call2(mul_, a, b); }
+
 #define BUFSIZE 1024
 char buffer[BUFSIZE];
 
@@ -664,12 +673,35 @@ void init(void)
   odd_ = lambda(op_if(empty(v0), f(), first(v0)));
   shr_ = lambda(op_if(empty(v0), f(), rest(v0)));
   shl_ = lambda(op_if(empty(v0), f(), pair(f(), v0)));
+  add_ = recursive(lambda3(op_if(op_and(empty(v0), empty(v1)),
+                   op_if(v2, pair(t(), f()), f()),
+                   call(lambda(pair(op_xor(op_xor(odd(v1), odd(v2)), v3),
+                                    v0)),
+                        call3(v3,
+                              shr(v1), shr(v0),
+                              op_if(v2,
+                                    op_or(odd(v0), odd(v1)),
+                                    op_and(odd(v0), odd(v1))))))));
+  sub_ = recursive(lambda3(op_if(op_and(empty(v0), empty(v1)),
+                   op_if(v2, pair(t(), call3(v3, shr(v0), shr(v1), v2)), f()),
+                   call(lambda(op_if(op_xor(op_xor(odd(v1), odd(v2)), v3),
+                                     pair(t(), v0),
+                                     op_if(empty(v0), f(), pair(f(), v0)))),
+                        call3(v3,
+                              shr(v0), shr(v1),
+                              op_if(v2,
+                                    op_or(even(v0), odd(v1)),
+                                    op_and(even(v0), odd(v1))))))));
+  mul_ = recursive(lambda2(op_if(empty(v0),
+                   f(),
+                   call(lambda(op_if(first(v1), add(v2, v0), v0)),
+                        shl(call2(v2, v1, shr(v0)))))));
   eq_list_ = lambda(recursive(lambda2(op_if(op_and(empty(v0), empty(v1)),
-                    t(),
-                    op_if(op_or(empty(v0), empty(v1)),
-                          f(),
-                          op_and(call2(v3, first(v0), first(v1)),
-                                 call2(v2, rest(v0), rest(v1))))))));
+                       t(),
+                       op_if(op_or(empty(v0), empty(v1)),
+                             f(),
+                             op_and(call2(v3, first(v0), first(v1)),
+                                    call2(v2, rest(v0), rest(v1))))))));
   eq_num_ = eq_list(eq_bool_);
   eq_str_ = eq_list(eq_num_);
   map_ = recursive(lambda2(op_if(empty(v1),
@@ -707,87 +739,6 @@ void destroy(void)
   ((void) (eq(a, b) ? 0 : __assert_equal(#a, #b, __FILE__, __LINE__)))
 #define __assert_equal(a, b, file, line) \
   ((void) printf("%s:%u: failed assertion `%s' not equal to `%s'\n", file, line, a, b), abort())
-
-#if 0
-
-int method(const char *name, int body)
-{
-  return pair(from_str(name), lambda(body));
-}
-
-int send(int self, const char *msg)
-{
-  return call(self, from_str(msg));
-}
-
-int dispatcher(int list)
-{
-  return recursive(lambda(call(call(lookup(pair(method("@mmap", list), list), eq_str_, lambda(f())), var(0)), var(1))));
-}
-
-int define_module(const char *name)
-{
-  return recursive(dispatcher(list2(method(name, var(0)),
-                                    method("name", from_str(name)))));
-}
-
-int define_method(int env, const char *obj, const char *name, int body)
-{
-  // obj: breadcrumb/list
-  int self = send(env, obj);
-  int changed = dispatcher(pair(method(name, body), send(self, "@mmap")));
-  return dispatcher(pair(method(obj, changed),
-                         send(env, "@mmap")));
-}
-
-int define_class(int env, const char *name, const char *base)
-{
-  int self = recursive(dispatcher(
-        pair(method(name, var(0)),
-             pair(method("name", from_str(name)),
-                  send(send(env, base), "@mmap")))));
-  return dispatcher(pair(method(name, self),
-                         send(env, "@mmap")));
-}
-
-#endif
-#if 0
-int methods(int alist, int other)
-{
-  return lookup(alist, eq_str_, other);
-}
-
-int const_defined(int env, const char *name)
-{
-  return call(member_str(call(env, from_str("constants"))), from_str(name));
-}
-
-int send(int self, const char *msg)
-{
-  return call(call(self, from_str(msg)), self);
-}
-
-int send1(int self, const char *msg, int arg)
-{
-  return call(send(self, msg), arg);
-}
-
-int superclass(int self)
-{
-  return send(self, "superclass");
-}
-#endif
-
-/* int define_class(int env, const char *name)
-{
-  int class_ = lambda(recursive(methods(recursive(
-    list2(method("superclass", call(var(3), from_str("Object"))),
-          method("name", from_str(name)))),
-    lambda(call(superclass(var(1)), var(0))))));
-  return recursive(lookup_str(recursive(
-    list1(pair(from_str(name), call(class_, var(1))))),
-    lambda(call2(env, var(0), var(1)))));
-} */
 
 int main(void)
 {
@@ -1062,169 +1013,22 @@ int main(void)
   assert(fgetc(of) == 'y');
   assert(fgetc(of) == EOF);
   fclose(of);
-#if 0
-  // classes
-  int olist = lambda(list4(pair(from_str("name"),
-                                lambda(from_str("Object"))),
-                           pair(from_str("Object"),
-                                lambda(var(1))),
-                           pair(from_str("inspect"),
-                                lambda(call(var(0), from_str("name")))),
-                           pair(from_str("class"),
-                                lambda(from_str("Class")))));
-  int olook = lambda(lookup(call(olist, var(0)), eq_str_,
-                            f()));
-  int o = recursive(lambda(call(call(call(olook, var(1)), var(0)), var(1))));
-  assert(!strcmp(to_str(call(o, from_str("name"))), "Object"));
-  assert(!strcmp(to_str(call(o, from_str("inspect"))), "Object"));
-  assert(!strcmp(to_str(call(o, from_str("class"))), "Class"));
-  assert(!strcmp(to_str(call(call(o, from_str("Object")),
-                             from_str("inspect"))), "Object"));
-  int plist = lambda(list2(pair(from_str("name"),
-                                lambda(from_str("Point"))),
-                           pair(from_str("Point"),
-                                lambda(var(1)))));
-  int plook = lambda(lookup(call(plist, var(0)), eq_str_,
-                            lambda(call(call(olook, o), var(0)))));
-  int p = recursive(lambda(call(call(call(plook, var(1)), var(0)), var(1))));
-  assert(!strcmp(to_str(call(p, from_str("name"))), "Point"));
-  assert(!strcmp(to_str(call(p, from_str("inspect"))), "Point"));
-  assert(!strcmp(to_str(call(p, from_str("class"))), "Class"));
-  assert(!strcmp(to_str(call(call(p, from_str("Object")),
-                             from_str("inspect"))), "Object"));
-  assert(!strcmp(to_str(call(call(p, from_str("Point")),
-                             from_str("inspect"))), "Point"));
-  // Object::Point.inspect?
-#endif
-#if 0
-  int env = define_module("Object");
-  env = define_method(env, "Object", "inspect", send(var(0), "name"));
-  env = define_method(env, "Object", "to_s", send(var(0), "inspect"));
-  int oc = send(env, "Object");
-  printf("Object.name = %s\n", to_str(send(oc, "name")));
-  printf("Object.to_s = %s\n", to_str(send(oc, "to_s")));
-  printf("Object.inspect = %s\n", to_str(send(oc, "inspect")));
-  printf("Object::Object.inspect = %s\n", to_str(send(send(oc, "Object"), "inspect")));
-  env = define_class(env, "Point", "Object");
-  oc = send(env, "Object");
-  printf("Object.name = %s\n", to_str(send(oc, "name")));
-  int pc = send(env, "Point");
-  printf("Point.name = %s\n", to_str(send(pc, "name")));
-  printf("Point.to_s = %s\n", to_str(send(pc, "to_s")));
-  printf("Point.inspect = %s\n", to_str(send(pc, "inspect")));
-  printf("Point::Point.inspect = %s\n", to_str(send(send(pc, "Point"), "inspect")));
-  printf("Point::Object.inspect = %s\n", to_str(send(send(pc, "Object"), "inspect")));
-#endif
-#if 0
-  int env = methods(f(), lambda(f()));
-  int oc = recursive(methods(
-      list2(pair(from_str("name"), from_str("Object")),
-            pair(from_str("inspect"), call(var(0), from_str("name")))),
-      lambda(call(var(2), var(0)))));
-  env = recursive(methods(
-      list1(pair(from_str("Object"), oc)),
-      f()));
-  int ac = recursive(methods(
-      list2(pair(from_str("name"), from_str("A")),
-            pair(from_str("inspect"), call(var(0), from_str("name")))),
-      lambda(call(var(2), var(0)))));
-  env = recursive(methods(
-      list2(pair(from_str("Object"), oc),
-            pair(from_str("A"), ac)),
-      f()));
-  oc = call(env, from_str("Object"));
-  printf("Object.name = %s\n",
-         to_str(call(oc, from_str("name"))));
-  printf("Object.inspect = %s\n",
-         to_str(call(oc, from_str("inspect"))));
-  printf("Object.Object.name = %s\n",
-         to_str(call(call(oc, from_str("Object")), from_str("name"))));
-  printf("Object.Object.inspect = %s\n",
-         to_str(call(call(oc, from_str("Object")), from_str("inspect"))));
-  ac = call(env, from_str("A"));
-  printf("A.name = %s\n",
-         to_str(call(ac, from_str("name"))));
-  printf("A.inspect = %s\n",
-         to_str(call(ac, from_str("inspect"))));
-  printf("A.A.name = %s\n",
-         to_str(call(call(ac, from_str("A")), from_str("name"))));
-  printf("A.A.inspect = %s\n",
-         to_str(call(call(ac, from_str("A")), from_str("inspect"))));
-#endif
-#if 0
-  int oc_ = methods(
-    list3(method("name", from_str("Object")),
-          method("base", from_str("base")),
-          method("inspect", send(var(0), "name"))),
-    lambda(lambda(f())));
-  int fc_ = methods(
-    list5(method("superclass", send(var(1), "Object")),
-          method("name", from_str("false")),
-          method("not", send(var(1), "true")),
-          method("and", lambda(var(1))),
-          method("or", lambda(var(0)))),
-  //  lambda(call(oc_, var(0))));
-    lambda(call(call(call(var(2), from_str("Object")), var(2)), var(0))));
-  int tc_ = methods(
-    list5(method("superclass", send(var(1), "Object")),
-          method("name", from_str("true")),
-          method("not", send(var(1), "false")),
-          method("and", lambda(var(0))),
-          method("or", lambda(var(1)))),
-    lambda(call(oc_, var(0))));
-  assert(!strcmp(to_str(send(oc_, "name")), "Object"));
-  assert(!strcmp(to_str(send(fc_, "name")), "false"));
-  assert(!strcmp(to_str(send(tc_, "name")), "true"));
-  int env = methods(recursive(
-    list4(method("constants", keys(var(1))),
-          method("Object", oc_),
-          method("false", fc_),
-          method("true", tc_))),
-    lambda(f()));
-  // assert(!is_f(const_defined(env, "Object")));
-  // assert(is_f(const_defined(env, "Test")));
-  // assert(is_f(const_defined(env, "Nosuchclass")));
-  /* int testc_ = lambda(recursive(methods(recursive(
-    list2(method("superclass", call(var(3), from_str("Object"))),
-          method("name", from_str("Test")))),
-    lambda(call(superclass(var(1)), var(0))))));
-  env = lookup_str(recursive(
-        list1(pair(from_str("Test"), lambda(call(testc_, var(0)))))),
-        lambda(call(call(env, var(1)), var(0)))); */
-  // assert(!is_f(const_defined(env, "Object")));
-  // assert(!is_f(const_defined(env, "Test")));
-  // assert(is_f(const_defined(env, "Nosuchclass")));
-  // int oc = send(env, "Object");
-  int oc = send(env, "Object");
-  int fc = send(env, "false");
-  int tc = send(env, "true");
-  //int testc = send(env, "Test");
-  //assert(is_f(send(oc, "nosuchmethod")));
-  assert(!strcmp(to_str(send(oc, "name")), "Object"));
-  assert(!strcmp(to_str(send(fc, "name")), "false"));
-  assert(!strcmp(to_str(send(tc, "name")), "true"));
-  printf("%s\n", to_str(send(oc, "base")));
-  printf("%s\n", to_str(send(fc, "base")));
-  printf("%s\n", to_str(send(tc, "base")));
-  assert(!strcmp(to_str(send(send(fc, "superclass"), "inspect")), "Object"));
-  assert(!strcmp(to_str(send(send(tc, "superclass"), "inspect")), "Object"));
-  printf("%s\n", to_str(send(oc, "inspect")));
-  printf("%s\n", to_str(send(fc, "inspect")));
-  printf("%s\n", to_str(send(tc, "inspect")));
-  //assert(!strcmp(to_str(send(testc, "name")), "Test"));
-  //assert(!strcmp(to_str(send(testc, "inspect")), "Test"));
-  assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send(fc, "not"), "inspect")), "true"));
-  assert(!strcmp(to_str(send(send(tc, "not"), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send1(fc, "and", fc), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send1(fc, "and", tc), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send1(tc, "and", fc), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send1(tc, "and", tc), "inspect")), "true"));
-  assert(!strcmp(to_str(send(send1(fc, "or", fc), "inspect")), "false"));
-  assert(!strcmp(to_str(send(send1(fc, "or", tc), "inspect")), "true"));
-  assert(!strcmp(to_str(send(send1(tc, "or", fc), "inspect")), "true"));
-  assert(!strcmp(to_str(send(send1(tc, "or", tc), "inspect")), "true"));
-#endif
+  int i, j;
+  // Integer addition
+  for (i=0; i<5; i++)
+    for (j=0; j<5; j++)
+      assert(to_int(add(from_int(i), from_int(j))) == i + j);
+  // Integer subtraction
+  for (i=0; i<5; i++) {
+    assert(is_f(sub(from_int(i), from_int(i))));
+    for (j=0; j<5; j++)
+      if (i >= j)
+        assert(to_int(sub(from_int(i), from_int(j))) == i - j);
+  };
+  // Integer multiplication
+  for (i=0; i<5; i++)
+    for (j=0; j<5; j++)
+      assert(to_int(mul(from_int(i), from_int(j))) == i * j);
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
   destroy();
