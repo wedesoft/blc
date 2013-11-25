@@ -566,6 +566,9 @@ int foldleft(int list, int start, int fun)
   return call3(foldleft_, list, start, fun);
 }
 
+int select_if_ = -1;
+int select_if(int list, int fun) { return call2(select_if_, list, fun); }
+
 int member_ = -1;
 int member(int list, int eq_elem)
 {
@@ -719,6 +722,11 @@ void init(void)
                                       call2(v2,
                                             call3(v3, rest(v0), v1, v2),
                                             first(v0)))));
+  select_if_ = lambda2(foldleft(v0,
+                                f(),
+                                lambda(lambda(op_if(call(v3, v1),
+                                                    pair(v1, v0),
+                                                    v0)))));
   member_ = lambda(recursive(lambda2(op_if(empty(v1),
                    f(),
                    op_if(call2(v3, first(v1), v0),
@@ -730,10 +738,6 @@ void init(void)
                           rest(first(v1)),
                           call2(v2, v0, rest(v1)))))));
 };
-
-void destroy(void)
-{
-}
 
 #define assert_equal(a, b) \
   ((void) (eq(a, b) ? 0 : __assert_equal(#a, #b, __FILE__, __LINE__)))
@@ -943,6 +947,13 @@ int main(void)
                        lambda2(op_or(var(0), var(1))))));
   assert(to_int(foldleft(from_int(11), f(),
                          lambda2(pair(var(1), var(0))))) == 11);
+  // select_if
+  int is_plus = lambda(eq_num(from_int('+'), var(0)));
+  assert(!strcmp(to_str(select_if(from_str("-"), is_plus)), ""));
+  assert(!strcmp(to_str(select_if(from_str("+"), is_plus)), "+"));
+  assert(!strcmp(to_str(select_if(from_str("a+b+"), is_plus)), "++"));
+  int not_plus = lambda(op_not(call(is_plus, var(0))));
+  assert(!strcmp(to_str(select_if(from_str("a+b+"), not_plus)), "ab"));
   // member test for boolean list
   int mlist1 = member_bool(list1(f()));
   assert(is_f(call(mlist1, t())));
@@ -1031,6 +1042,5 @@ int main(void)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
   // show statistics
   fprintf(stderr, "Test suite requires %d cells.\n", cell(VAR) - n - 1);
-  destroy();
   return 0;
 }
