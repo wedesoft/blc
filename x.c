@@ -1064,18 +1064,31 @@ int main(void)
   // REPL
   // state: parsed name, parsed string, lut of variables
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
-    op_if(empty(var(1)), f(), from_str("Error\n")),
+    op_if(empty(at(var(1), 0)),
+          f(),
+          from_str("Error\n")),
     call(lookup_num(list3(pair(from_int('\n'),
-                               concat(concat(var(1), list1(from_int('\n'))),
-                                      call2(var(2), rest(var(0)), f()))),
+                               concat(concat(at(var(1), 0),
+                                             list1(from_int('\n'))),
+                                      call2(var(2),
+                                            rest(var(0)),
+                                            replace(var(1), 0, f())))),
                           pair(from_int(' '),
-                               call2(var(2), rest(var(0)), var(1))),
+                               call2(var(2),
+                                     rest(var(0)),
+                                     var(1))),
                           pair(from_int('\t'),
-                               call2(var(2), rest(var(0)), var(1)))),
-                    lambda(call2(var(3), rest(var(1)),
-                                 concat(var(2), list1(first(var(1))))))),
+                               call2(var(2),
+                                     rest(var(0)),
+                                     var(1)))),
+                    lambda(call2(var(3),
+                                 rest(var(1)),
+                                 replace(var(2),
+                                         0,
+                                         concat(at(var(2), 0),
+                                                list1(first(var(1)))))))),
          first(var(0)))))),
-    f());
+    list1(f()));
   assert(!strcmp(to_str(call(repl, from_str(""))), ""));
   assert(!strcmp(to_str(call(repl, from_str("12"))), "Error\n"));
   assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
