@@ -597,15 +597,15 @@ int lookup(int alist, int eq_elem, int other)
 }
 int lookup_bool(int alist, int other)
 {
-  return lookup(alist, eq_bool_, lambda(other));
+  return lookup(alist, eq_bool_, other);
 }
 int lookup_num(int alist, int other)
 {
-  return lookup(alist, eq_num_, lambda(other));
+  return lookup(alist, eq_num_, other);
 }
 int lookup_str(int alist, int other)
 {
-  return lookup(alist, eq_str_, lambda(other));
+  return lookup(alist, eq_str_, other);
 }
 
 int keys(int alist)
@@ -983,14 +983,14 @@ int main(void)
   // association list with booleans
   int alist1 = lookup_bool(list2(pair(t(), from_int(1)),
                                  pair(f(), from_int(0))),
-                           f());
+                           lambda(f()));
   assert(to_int(call(alist1, f())) == 0);
   assert(to_int(call(alist1, t())) == 1);
   // association list with numbers
   int alist2 = lookup_num(list3(pair(from_int(2), from_int(1)),
                                 pair(from_int(3), from_int(2)),
                                 pair(from_int(5), from_int(3))),
-                          from_int(0));
+                          lambda(from_int(0)));
   assert(to_int(call(alist2, from_int(2))) == 1);
   assert(to_int(call(alist2, from_int(3))) == 2);
   assert(to_int(call(alist2, from_int(5))) == 3);
@@ -998,7 +998,7 @@ int main(void)
   // association list with strings
   int alist3 = lookup_str(list2(pair(from_str("Jan"), from_int(31)),
                                 pair(from_str("Feb"), from_int(28))),
-                          from_int(30));
+                          lambda(from_int(30)));
   assert(to_int(call(alist3, from_str("Jan"))) == 31);
   assert(to_int(call(alist3, from_str("Feb"))) == 28);
   assert(to_int(call(alist3, from_str("Mar"))) == 30);
@@ -1050,22 +1050,22 @@ int main(void)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
   // REPL
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
-                  op_if(empty(var(1)),
-                        f(),
-                        from_str("Error\n")),
-                  call(lookup_num(list1(pair(from_int('\n'),
-                                        concat(concat(var(1),
-                                                      list1(from_int('\n'))),
-                                               call2(var(2),
-                                                     rest(var(0)),
-                                                     f())))),
-                                  call2(var(3), rest(var(1)),
-                                        concat(var(2), list1(first(var(1)))))),
-                       first(var(0)))))),
-                  f());
+    op_if(empty(var(1)), f(), from_str("Error\n")),
+    call(lookup_num(list3(pair(from_int('\n'),
+                               concat(concat(var(1), list1(from_int('\n'))),
+                                      call2(var(2), rest(var(0)), f()))),
+                          pair(from_int(' '),
+                               call2(var(2), rest(var(0)), var(1))),
+                          pair(from_int('\t'),
+                               call2(var(2), rest(var(0)), var(1)))),
+                    lambda(call2(var(3), rest(var(1)),
+                                 concat(var(2), list1(first(var(1))))))),
+         first(var(0)))))),
+    f());
   assert(!strcmp(to_str(call(repl, from_str(""))), ""));
   assert(!strcmp(to_str(call(repl, from_str("12"))), "Error\n"));
   assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
+  assert(!strcmp(to_str(call(repl, from_str("1\t2 3\n"))), "123\n"));
 #if 0
   int interpreter = call(repl, from_file(stdin));
   while (1) {

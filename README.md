@@ -68,3 +68,4 @@ External Links
 * [Binary numbers](http://en.wikipedia.org/wiki/Binary\_number)
 * [Stuart - Programming with Nothing](http://codon.com/programming-with-nothing)
 * [Pure OO system in Scheme](https://github.com/alvatar/code-ttrs/blob/master/scheme/pure-oo-system.scm)
+* [Cello - Higher level programming in C](http://libcello.org/)
