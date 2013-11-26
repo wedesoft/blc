@@ -1,7 +1,6 @@
 TODO
 ====
 
-* zip
 * open classes
 * macros
 * Earley parser bootstrapped in C

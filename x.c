@@ -296,6 +296,17 @@ int first(int list) { return call(list, t()); }
 int rest(int list) { return call(list, f()); }
 int empty(int list) { return call2(list, t(), lambda3(f())); }
 int at(int list, int i) { return i > 0 ? at(rest(list), i - 1) : first(list); }
+int replace(int list, int i, int value)
+{
+  int retval;
+  if (i > 0)
+    retval = pair(first(list), replace(rest(list), i - 1, value));
+  else {
+    assert(i == 0);
+    retval = pair(value, rest(list));
+  };
+  return retval;
+}
 
 // Y-combinator
 int recursive_ = -1;
@@ -842,6 +853,8 @@ int main(void)
   assert(is_f(empty(list1(f()))));
   assert(is_f(at(list3(f(), f(), f()), 2)));
   assert(!is_f(at(list3(f(), f(), t()), 2)));
+  assert(is_f(at(replace(list3(f(), f(), t()), 2, f()), 2)));
+  assert(!is_f(at(replace(list3(f(), f(), f()), 2, t()), 2)));
   // Y-combinator
   int last = recursive(lambda(op_if(empty(rest(var(0))), first(var(0)), call(var(1), rest(var(0))))));
   assert(is_f(call(last, list1(f()))));
@@ -1049,6 +1062,7 @@ int main(void)
     for (j=0; j<5; j++)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
   // REPL
+  // state: parsed name, parsed string, lut of variables
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
     op_if(empty(var(1)), f(), from_str("Error\n")),
     call(lookup_num(list3(pair(from_int('\n'),
@@ -1066,6 +1080,7 @@ int main(void)
   assert(!strcmp(to_str(call(repl, from_str("12"))), "Error\n"));
   assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
   assert(!strcmp(to_str(call(repl, from_str("1\t2 3\n"))), "123\n"));
+  // assert(!strcmp(to_str(call(repl, from_str("x = 1\n"))), "1\n"));
 #if 0
   int interpreter = call(repl, from_file(stdin));
   while (1) {
