@@ -1066,8 +1066,8 @@ int main(void)
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
     op_if(empty(at(var(1), 0)),
           f(),
-          from_str("Error\n")),
-    call(lookup_num(list3(pair(from_int('\n'),
+          from_str("Unexpected EOF\n")),
+    call(lookup_num(list4(pair(from_int('\n'),
                                concat(concat(at(var(1), 0),
                                              list1(from_int('\n'))),
                                       call2(var(2),
@@ -1080,7 +1080,9 @@ int main(void)
                           pair(from_int('\t'),
                                call2(var(2),
                                      rest(var(0)),
-                                     var(1)))),
+                                     var(1))),
+                          pair(from_int('='),
+                               from_str("Unexpected '='\n"))),
                     lambda(call2(var(3),
                                  rest(var(1)),
                                  replace(var(2),
@@ -1090,9 +1092,10 @@ int main(void)
          first(var(0)))))),
     list1(f()));
   assert(!strcmp(to_str(call(repl, from_str(""))), ""));
-  assert(!strcmp(to_str(call(repl, from_str("12"))), "Error\n"));
+  assert(!strcmp(to_str(call(repl, from_str("12"))), "Unexpected EOF\n"));
   assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
   assert(!strcmp(to_str(call(repl, from_str("1\t2 3\n"))), "123\n"));
+  assert(!strcmp(to_str(call(repl, from_str("= 1\n"))), "Unexpected '='\n"));
   // assert(!strcmp(to_str(call(repl, from_str("x = 1\n"))), "1\n"));
 #if 0
   int interpreter = call(repl, from_file(stdin));
