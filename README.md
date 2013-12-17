@@ -69,3 +69,4 @@ External Links
 * [Stuart - Programming with Nothing](http://codon.com/programming-with-nothing)
 * [Pure OO system in Scheme](https://github.com/alvatar/code-ttrs/blob/master/scheme/pure-oo-system.scm)
 * [Cello - Higher level programming in C](http://libcello.org/)
+* [Bauer: Programming with Algebraic Effects and Handlers](http://math.andrej.com/2012/03/08/programming-with-algebraic-effects-and-handlers/)
