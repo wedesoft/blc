@@ -876,6 +876,8 @@ int main(void)
   assert_equal(eval(callcc(var(0))), cont(var(0)));
   assert(!is_f(call(call(callcc(var(0)), id()), t())));
   assert(is_f(callcc(recursive(call(var(1), f())))));
+  printf("%s\n", to_str(callcc(concat(from_str("ab"), call(var(0), from_str("c"))))));
+  assert(!strcmp(to_str(callcc(concat(from_str("ab"), call(var(0), from_str("c"))))), "abc")); // !!!
   // boolean 'not'
   assert(!is_f(op_not(f())));
   assert(is_f(op_not(t())));
@@ -1061,6 +1063,7 @@ int main(void)
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
+#if 0
   // REPL
   // state: parsed name, parsed string, lut of variables
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
@@ -1081,6 +1084,7 @@ int main(void)
   assert(!strcmp(to_str(call(repl, from_str("123\n"))), "123\n"));
   assert(!strcmp(to_str(call(repl, from_str("1\t2 3\n"))), "123\n"));
   // assert(!strcmp(to_str(call(repl, from_str("x = 1\n"))), "1\n"));
+#endif
 #if 0
   int interpreter = call(repl, from_file(stdin));
   while (1) {
