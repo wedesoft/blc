@@ -31,7 +31,6 @@ typedef enum { VAR,
                PROC,
                WRAP,
                MEMOIZE,
-               CALLCC,
                CONT,
                ISTREAM,
                STRING,
@@ -105,7 +104,6 @@ int context(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.con
 int cache(int cell) { assert(is_type(cell, WRAP)); return cells[cell].wrap.cache; }
 int value(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.value; }
 int target(int cell) { assert(is_type(cell, MEMOIZE)); return cells[cell].memoize.target; }
-int term(int cell) { assert(is_type(cell, CALLCC)); return cells[cell].term; }
 int k(int cell) { assert(is_type(cell, CONT)); return cells[cell].k; }
 FILE *file(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.file; }
 int used(int cell) { assert(is_type(cell, ISTREAM)); return cells[cell].istream.used; }
@@ -133,9 +131,6 @@ const char *type_id(int cell)
     break;
   case MEMOIZE:
     retval = "memoize";
-    break;
-  case CALLCC:
-    retval = "callcc";
     break;
   case CONT:
     retval = "cont";
@@ -222,13 +217,6 @@ int memoize(int value, int target)
   int retval = cell(MEMOIZE);
   cells[retval].memoize.value = value;
   cells[retval].memoize.target = target;
-  return retval;
-}
-
-int callcc(int body)
-{
-  int retval = cell(CALLCC);
-  cells[retval].body = body;
   return retval;
 }
 
@@ -354,11 +342,6 @@ void show_(int cell, FILE *stream)
       show_(target(cell), stream);
       fputs(")", stream);
       break;
-    case CALLCC:
-      fputs("callcc(", stream);
-      show_(term(cell), stream);
-      fputs(")", stream);
-      break;
     case CONT:
       fputs("cont(", stream);
       show_(k(cell), stream);
@@ -448,10 +431,6 @@ int eval_(int cell, int env, int cc)
         cell = block(cell);
         cc = fun(k(cc));
       };
-      break;
-    case CALLCC:
-      env = pair(cc, env);
-      cell = term(cell);
       break;
     case CONT:
       if (is_type(k(cc), VAR)) {
@@ -658,9 +637,6 @@ int eq(int a, int b)
     case MEMOIZE:
       retval = eq(value(a), value(b)) && eq(target(a), target(b));
       break;
-    case CALLCC:
-      retval = eq(term(a), term(b));
-      break;
     case CONT:
       retval = eq(k(a), k(b));
       break;
@@ -861,21 +837,10 @@ int main(void)
   assert(!is_f(call(last, list1(t()))));
   assert(is_f(call(last, list2(f(), f()))));
   assert(!is_f(call(last, list2(f(), t()))));
-  // call/cc (call with current continuation)
-  assert(type(callcc(var(0))) == CALLCC);
-  assert(is_type(callcc(var(0)), CALLCC));
-  assert_equal(term(callcc(var(0))), var(0));
   // continuation
   assert(type(cont(var(0))) == CONT);
   assert(is_type(cont(var(0)), CONT));
   assert_equal(k(cont(var(0))), var(0));
-  // evaluation of call/cc
-  assert(is_f(callcc(f())));
-  assert(is_f(callcc(call(var(0), f()))));
-  assert(is_f(callcc(call(lambda(op_if(var(0), f(), t())), call(var(0), f())))));
-  assert_equal(eval(callcc(var(0))), cont(var(0)));
-  assert(!is_f(call(call(callcc(var(0)), id()), t())));
-  assert(is_f(callcc(recursive(call(var(1), f())))));
   // boolean 'not'
   assert(!is_f(op_not(f())));
   assert(is_f(op_not(t())));
@@ -1061,6 +1026,7 @@ int main(void)
   for (i=0; i<5; i++)
     for (j=0; j<5; j++)
       assert(to_int(mul(from_int(i), from_int(j))) == i * j);
+#if 1
   // REPL
   // state: parsed name, parsed string, lut of variables
   int repl = call(recursive(lambda2(op_if(empty(var(0)),
@@ -1097,6 +1063,7 @@ int main(void)
   assert(!strcmp(to_str(call(repl, from_str("1\t2 3\n"))), "123\n"));
   assert(!strcmp(to_str(call(repl, from_str("= 1\n"))), "Unexpected '='\n"));
   // assert(!strcmp(to_str(call(repl, from_str("x = 1\n"))), "1\n"));
+#endif
 #if 0
   int interpreter = call(repl, from_file(stdin));
   while (1) {
