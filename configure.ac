@@ -33,6 +33,7 @@ prefix                               : $prefix
 debug mode                           : $enable_debug"
 
 AC_OUTPUT(Makefile
+          src/Makefile
           logo/Makefile,
           echo "$info",
           info="$info")

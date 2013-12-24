@@ -8,7 +8,6 @@
 *.gif
 aclocal.m4
 autom4te.cache
-x
 blc-*.tar.bz2
 blc-*.tar.gz   
 config.h
@@ -27,3 +26,4 @@ Makefile.in
 m4
 missing
 stamp-h1
+src/x

@@ -25,7 +25,7 @@ blc$(LFRAME).png: blca$(LFRAME).png
 blc.gif: blc$(LFRAME).png
 	$(CONVERT) blc??.png -delay 4 -colors 32 +dither $@
 
-CLEANFILES = *~ *.gif *.png *~ *.tmp
+CLEANFILES = *~ *.gif *.png *~
 
 DISTCLEANFILES = .*.un~ .*.swp
 

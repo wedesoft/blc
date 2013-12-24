@@ -1,25 +1,15 @@
 SUFFIXES = .c .h .tmp .y .l
 
-SUBDIRS = logo
+SUBDIRS = src logo
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_YFLAGS = -d
-
-bin_PROGRAMS = x
-
-x_SOURCES = x.c
-x_LDFLAGS =
-x_LDADD =
-
 noinst_DATA = README.html TODO.html
 
-EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING
 
-test: x.tmp
-
-x.tmp: x$(EXEEXT)
-	./x$(EXEEXT) && $(TOUCH) $@
+test:
+	test src = . || ($(am__cd) src && $(MAKE) $(AM_MAKEFLAGS) test)
 
 .md.html:
 	$(PANDOC) -o $@ $< || echo "Install Pandoc to compile Markdown to HTML"
@@ -34,4 +24,3 @@ MAINTAINERCLEANFILES = aclocal.m4 config.guess config.sub configure \
 
 maintainer-clean-local:
 	-rm -rf m4
-
