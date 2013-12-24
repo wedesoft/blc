@@ -1,8 +1,8 @@
-SUFFIXES = .c .h .tmp .y .l .ini .pov .png .gif
+SUFFIXES = .c .h .tmp .y .l
+
+SUBDIRS = logo
 
 ACLOCAL_AMFLAGS = -I m4
-
-LFRAME = 99
 
 AM_YFLAGS = -d
 
@@ -14,26 +14,7 @@ x_LDADD =
 
 noinst_DATA = README.html TODO.html
 
-EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh blc.ini blcanim.ini blc.pov opensans.ttf
-
-logo: blc.png blc.gif
-
-blca.png: blc.ini blc.pov opensans.ttf
-	$(POVRAY) blc
-
-blca$(LFRAME).png: blc.ini blc.pov opensans.ttf
-	$(POVRAY) blcanim
-
-blc.png: blca.png
-	$(CONVERT) blca.png -background white -flatten blc.png
-
-blc$(LFRAME).png: blca$(LFRAME).png
-	for i in $(shell seq -f '%02g' 0 $(LFRAME)); do \
-		$(CONVERT) blca$$i.png -background white -flatten blc$$i.png; \
-	done
-
-blc.gif: blc$(LFRAME).png
-	$(CONVERT) blc??.png -delay 4 -colors 32 +dither $@
+EXTRA_DIST = Makefile.dist configure.ac README.md TODO.md COPYING run.sh
 
 test: x.tmp
 
@@ -43,7 +24,7 @@ x.tmp: x$(EXEEXT)
 .md.html:
 	$(PANDOC) -o $@ $< || echo "Install Pandoc to compile Markdown to HTML"
 
-CLEANFILES = *.gif *.png *~ *.tmp *.html
+CLEANFILES = *~ *.html
 
 DISTCLEANFILES = .*.un~ .*.swp
 

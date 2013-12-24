@@ -32,6 +32,7 @@ info="$info
 prefix                               : $prefix
 debug mode                           : $enable_debug"
 
-AC_OUTPUT(Makefile,
-  echo "$info",
-  info="$info")
+AC_OUTPUT(Makefile
+          logo/Makefile,
+          echo "$info",
+          info="$info")
